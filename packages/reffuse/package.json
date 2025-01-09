@@ -1,0 +1,28 @@
+{
+  "name": "@thilawyn/reffuse",
+  "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "./dist"
+  ],
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint:tsc": "tsc --noEmit",
+    "clean:cache": "rm -f tsconfig.tsbuildinfo",
+    "clean:dist": "rm -rf dist",
+    "clean:node": "rm -rf node_modules"
+  },
+  "devDependencies": {
+  }
+}

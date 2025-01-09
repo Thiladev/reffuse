@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "workspaces": ["./packages/*"],
+  "scripts": {
+    "clean:cache": "rm -f tsconfig.tsbuildinfo",
+    "clean:dist": "rm -rf dist",
+    "clean:node": "rm -rf node_modules"
+  }
+}
