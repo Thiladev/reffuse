@@ -1,10 +1,13 @@
 {
-  "name": "@thilawyn/reffuse",
+  "name": "reffuse",
   "version": "0.1.0",
   "type": "module",
   "files": [
+    "./README.md",
     "./dist"
   ],
+  "license": "MIT",
+  "repository": "github:Thiladev/reffuse",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -24,5 +27,8 @@
     "clean:node": "rm -rf node_modules"
   },
   "devDependencies": {
+    "@types/react": "^19.0.4",
+    "effect": "^3.12.1",
+    "react": "^19.0.0"
   }
 }

@@ -15,14 +15,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          registry-url: "https://registry.npmjs.org"
       - name: Clone repo
         uses: actions/checkout@v4
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Build
-        run: npm run build
+        run: |
+          cd packages/reffuse
+          bun run build
       - name: Publish
         run: |
-          npm config set @thilawyn:registry https://git.valverde.cloud/api/packages/thilawyn/npm/
-          npm config set -- //git.valverde.cloud/api/packages/thilawyn/npm/:_authToken "${{ vars.NODE_AUTH_TOKEN }}"
-          npm publish
+          cd packages/reffuse
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
