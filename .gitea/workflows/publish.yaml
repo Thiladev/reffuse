@@ -8,9 +8,6 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -30,6 +27,6 @@ jobs:
       - name: Publish
         run: |
           cd packages/reffuse
-          npm publish --provenance --access public
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
