@@ -7,7 +7,9 @@
     "./dist"
   ],
   "license": "MIT",
-  "repository": "github:Thiladev/reffuse",
+  "repository": {
+    "url": "git+https://github.com/Thiladev/reffuse.git"
+  },
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
