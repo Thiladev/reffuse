@@ -1,7 +1,8 @@
 import { Container, Flex, Theme } from "@radix-ui/themes"
-import "@radix-ui/themes/styles.css"
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/router-devtools"
+
+import "@radix-ui/themes/styles.css"
 import "../index.css"
 
 
@@ -17,6 +18,8 @@ function Root() {
                     <Link to="/">Index</Link>
                     <Link to="/time">Time</Link>
                     <Link to="/count">Count</Link>
+                    <Link to="/tests">Tests</Link>
+                    <Link to="/blank">Blank</Link>
                 </Flex>
             </Container>
 

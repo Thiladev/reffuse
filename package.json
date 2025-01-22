@@ -8,7 +8,7 @@
     "clean:node": "rm -rf node_modules"
   },
   "devDependencies": {
-    "npm-check-updates": "^17.1.13",
+    "npm-check-updates": "^17.1.14",
     "npm-sort": "^0.0.4",
     "typescript": "^5.7.3"
   }

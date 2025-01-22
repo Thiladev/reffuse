@@ -1,6 +1,6 @@
 import { R } from "@/reffuse"
 import { createFileRoute } from "@tanstack/react-router"
-import { Console, DateTime, Effect, Ref, Schedule, Stream } from "effect"
+import { DateTime, Ref, Schedule, Stream } from "effect"
 
 
 const timeEverySecond = Stream.repeatEffectWithSchedule(
@@ -16,21 +16,7 @@ export const Route = createFileRoute("/time")({
 function Time() {
 
     const timeRef = R.useRefFromEffect(DateTime.now)
-
-    R.useFork(Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
-        Effect.flatMap(() =>
-            Stream.runForEach(timeEverySecond, v => Ref.set(timeRef, v))
-        )
-    ), [timeRef])
-    // Reffuse.useFork(Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
-    //     Effect.flatMap(() => DateTime.now),
-    //     Effect.flatMap(v => Ref.set(timeRef, v)),
-    //     Effect.repeat(Schedule.intersect(
-    //         Schedule.forever,
-    //         Schedule.spaced("1 second"),
-    //     )),
-    // ), [timeRef])
-
+    R.useFork(Stream.runForEach(timeEverySecond, v => Ref.set(timeRef, v)), [timeRef])
     const [time] = R.useRefState(timeRef)
 
 

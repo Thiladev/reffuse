@@ -9,6 +9,7 @@ export class ReffuseContext<R> {
     readonly Provider: ReffuseContextReactProvider<R>
 
     constructor() {
+        // TODO: scope the layer creation
         this.Provider = (props) => {
             const runtime = ReffuseRuntime.useRuntime()
 

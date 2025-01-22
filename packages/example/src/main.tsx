@@ -1,10 +1,10 @@
 import { FetchHttpClient } from "@effect/platform"
 import { Clipboard, Geolocation, Permissions } from "@effect/platform-browser"
 import { createRouter, RouterProvider } from "@tanstack/react-router"
-import { ReffuseRuntime } from "@thilawyn/reffuse"
 import { Layer } from "effect"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
+import { ReffuseRuntime } from "reffuse"
 import { GlobalContext } from "./reffuse"
 import { routeTree } from "./routeTree.gen"
 

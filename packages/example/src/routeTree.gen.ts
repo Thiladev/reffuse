@@ -12,7 +12,9 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as TimeImport } from './routes/time'
+import { Route as TestsImport } from './routes/tests'
 import { Route as CountImport } from './routes/count'
+import { Route as BlankImport } from './routes/blank'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
@@ -23,9 +25,21 @@ const TimeRoute = TimeImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const TestsRoute = TestsImport.update({
+  id: '/tests',
+  path: '/tests',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const CountRoute = CountImport.update({
   id: '/count',
   path: '/count',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const BlankRoute = BlankImport.update({
+  id: '/blank',
+  path: '/blank',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -46,11 +60,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/blank': {
+      id: '/blank'
+      path: '/blank'
+      fullPath: '/blank'
+      preLoaderRoute: typeof BlankImport
+      parentRoute: typeof rootRoute
+    }
     '/count': {
       id: '/count'
       path: '/count'
       fullPath: '/count'
       preLoaderRoute: typeof CountImport
+      parentRoute: typeof rootRoute
+    }
+    '/tests': {
+      id: '/tests'
+      path: '/tests'
+      fullPath: '/tests'
+      preLoaderRoute: typeof TestsImport
       parentRoute: typeof rootRoute
     }
     '/time': {
@@ -67,41 +95,51 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/blank': typeof BlankRoute
   '/count': typeof CountRoute
+  '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/blank': typeof BlankRoute
   '/count': typeof CountRoute
+  '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/blank': typeof BlankRoute
   '/count': typeof CountRoute
+  '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/count' | '/time'
+  fullPaths: '/' | '/blank' | '/count' | '/tests' | '/time'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/count' | '/time'
-  id: '__root__' | '/' | '/count' | '/time'
+  to: '/' | '/blank' | '/count' | '/tests' | '/time'
+  id: '__root__' | '/' | '/blank' | '/count' | '/tests' | '/time'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BlankRoute: typeof BlankRoute
   CountRoute: typeof CountRoute
+  TestsRoute: typeof TestsRoute
   TimeRoute: typeof TimeRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BlankRoute: BlankRoute,
   CountRoute: CountRoute,
+  TestsRoute: TestsRoute,
   TimeRoute: TimeRoute,
 }
 
@@ -116,15 +154,23 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/blank",
         "/count",
+        "/tests",
         "/time"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
+    "/blank": {
+      "filePath": "blank.tsx"
+    },
     "/count": {
       "filePath": "count.tsx"
+    },
+    "/tests": {
+      "filePath": "tests.tsx"
     },
     "/time": {
       "filePath": "time.tsx"

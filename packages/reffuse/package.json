@@ -1,6 +1,6 @@
 {
   "name": "reffuse",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "files": [
     "./README.md",
@@ -29,8 +29,9 @@
     "clean:node": "rm -rf node_modules"
   },
   "devDependencies": {
-    "@types/react": "^19.0.4",
-    "effect": "^3.12.1",
+    "@typed/lazy-ref": "^0.3.3",
+    "@types/react": "^19.0.7",
+    "effect": "^3.12.5",
     "react": "^19.0.0"
   }
 }
