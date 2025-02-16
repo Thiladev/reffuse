@@ -30,8 +30,8 @@
   },
   "devDependencies": {
     "@typed/lazy-ref": "^0.3.3",
-    "@types/react": "^19.0.7",
-    "effect": "^3.12.5",
+    "@types/react": "^19.0.9",
+    "effect": "^3.13.1",
     "react": "^19.0.0"
   }
 }
