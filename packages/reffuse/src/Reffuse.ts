@@ -284,43 +284,57 @@ export class Reffuse<R> {
         ])
     }
 
-    // useSuspense<A, E>(
-    //     effect: Effect.Effect<A, E, R>,
-    //     deps?: React.DependencyList,
-    //     options?: { readonly signal?: AbortSignal } & RenderOptions,
-    // ): A {
-    //     const runPromise = this.useRunPromise()
+    usePromise<A, E>(
+        effect: Effect.Effect<A, E, R>,
+        deps?: React.DependencyList,
+        options?: { readonly signal?: AbortSignal } & RenderOptions,
+    ): Promise<A> {
+        const runPromise = this.useRunPromise()
 
-    //     const promise = React.useMemo(() => runPromise(effect, options), [
-    //         ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runPromise],
-    //         ...(deps ?? []),
-    //     ])
-    //     return React.use(promise)
-    // }
+        return React.useMemo(() => runPromise(effect, options), [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runPromise],
+            ...(deps ?? []),
+        ])
+    }
 
-    // useSuspenseScoped<A, E>(
-    //     effect: Effect.Effect<A, E, R | Scope.Scope>,
-    //     deps?: React.DependencyList,
-    //     options?: { readonly signal?: AbortSignal } & RenderOptions & ScopeOptions,
-    // ): A {
-    //     const runSync = this.useRunSync()
-    //     const runPromise = this.useRunPromise()
+    usePromiseScoped<A, E>(
+        effect: Effect.Effect<A, E, R | Scope.Scope>,
+        deps?: React.DependencyList,
+        options?: { readonly signal?: AbortSignal } & RenderOptions & ScopeOptions,
+    ): Promise<A> {
+        const runSync = this.useRunSync()
+        const runPromise = this.useRunPromise()
 
-    //     const initialPromise = React.useMemo(() => runPromise(Effect.scoped(effect)), [])
-    //     const [promise, setPromise] = React.useState(initialPromise)
+        // Calculate an initial version of the value so that it can be accessed during the first render
+        const initialScope = React.useMemo(() => runSync(Scope.make(options?.finalizerExecutionStrategy)), [])
+        const initialValue = React.useMemo(() => runPromise(Effect.provideService(effect, Scope.Scope, initialScope), options), [])
 
-    //     React.useEffect(() => {
-    //         const scope = runSync(Scope.make())
-    //         setPromise(runPromise(Effect.provideService(effect, Scope.Scope, scope), options))
+        // Keep track of the state of the initial scope
+        const initialScopeClosed = React.useRef(false)
 
-    //         return () => { runPromise(Scope.close(scope, Exit.void)) }
-    //     }, [
-    //         ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runPromise],
-    //         ...(deps ?? []),
-    //     ])
+        const [value, setValue] = React.useState(initialValue)
 
-    //     return React.use(promise)
-    // }
+        React.useEffect(() => {
+            const closeInitialScopeIfNeeded = Scope.close(initialScope, Exit.void).pipe(
+                Effect.andThen(Effect.sync(() => { initialScopeClosed.current = true })),
+                Effect.when(() => !initialScopeClosed.current),
+            )
+
+            const scope = closeInitialScopeIfNeeded.pipe(
+                Effect.andThen(Scope.make(options?.finalizerExecutionStrategy)),
+                runSync,
+            )
+
+            setValue(runPromise(Effect.provideService(effect, Scope.Scope, initialScope), options))
+
+            return () => { runSync(Scope.close(scope, Exit.void)) }
+        }, [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runPromise],
+            ...(deps ?? []),
+        ])
+
+        return value
+    }
 
 
     useRef<A>(value: A): SubscriptionRef.SubscriptionRef<A> {
