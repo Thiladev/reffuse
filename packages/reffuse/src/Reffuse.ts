@@ -301,37 +301,79 @@ export class Reffuse<R> {
     usePromiseScoped<A, E>(
         effect: Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
-        options?: { readonly signal?: AbortSignal } & RenderOptions & ScopeOptions,
+        options?: { readonly signal?: AbortSignal } & Runtime.RunForkOptions & RenderOptions & ScopeOptions,
     ): Promise<A> {
         const runSync = this.useRunSync()
-        const runPromise = this.useRunPromise()
+        const runFork = this.useRunFork()
 
-        const [value, setValue] = React.useState(new Promise<A>(() => {}))
+        const [value, setValue] = React.useState(Promise.withResolvers<A>().promise)
 
         React.useEffect(() => {
-            const controller = new AbortController()
-            const signal = AbortSignal.any([
-                controller.signal,
-                ...options?.signal ? [options.signal] : [],
-            ])
+            const { promise, resolve, reject } = Promise.withResolvers<A>()
+            setValue(promise)
 
             const scope = runSync(Scope.make(options?.finalizerExecutionStrategy))
-            setValue(runPromise(Effect.provideService(effect, Scope.Scope, scope), {
-                ...options,
-                signal,
-            }))
+
+            const fiber = effect.pipe(
+                Effect.provideService(Scope.Scope, scope),
+                Effect.match({
+                    onSuccess: resolve,
+                    onFailure: reject,
+                }),
+
+                // TODO: use scope from RunForkOptions?
+                effect => runFork(effect, options),
+            )
 
             return () => {
-                controller.abort()
-                runSync(Scope.close(scope, Exit.void))
+                Fiber.interrupt(fiber).pipe(
+                    Effect.andThen(Scope.close(scope, Exit.void)),
+                    Effect.andThen(Effect.sync(() => { reject() })), // TODO: Relevant?
+                    runFork,
+                )
             }
         }, [
-            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runPromise],
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],
             ...(deps ?? []),
         ])
 
         return value
     }
+
+    // usePromiseScoped<A, E>(
+    //     effect: Effect.Effect<A, E, R | Scope.Scope>,
+    //     deps?: React.DependencyList,
+    //     options?: { readonly signal?: AbortSignal } & RenderOptions & ScopeOptions,
+    // ): Promise<A> {
+    //     const runSync = this.useRunSync()
+    //     const runPromise = this.useRunPromise()
+
+    //     const [value, setValue] = React.useState(new Promise<A>(() => {}))
+
+    //     React.useEffect(() => {
+    //         const controller = new AbortController()
+    //         const signal = AbortSignal.any([
+    //             controller.signal,
+    //             ...options?.signal ? [options.signal] : [],
+    //         ])
+
+    //         const scope = runSync(Scope.make(options?.finalizerExecutionStrategy))
+    //         setValue(runPromise(Effect.provideService(effect, Scope.Scope, scope), {
+    //             ...options,
+    //             signal,
+    //         }))
+
+    //         return () => {
+    //             controller.abort()
+    //             runSync(Scope.close(scope, Exit.void))
+    //         }
+    //     }, [
+    //         ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runPromise],
+    //         ...(deps ?? []),
+    //     ])
+
+    //     return value
+    // }
 
 
     useRef<A>(value: A): SubscriptionRef.SubscriptionRef<A> {
