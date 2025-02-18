@@ -3,6 +3,7 @@ import React from "react"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
 
+// TODO: merge this with the Provider, just like React 19 contexts
 export class ReffuseContext<R> {
 
     readonly Context = React.createContext<Context.Context<R>>(null!)

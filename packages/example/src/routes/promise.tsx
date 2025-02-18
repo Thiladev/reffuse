@@ -15,13 +15,11 @@ const Result = Schema.Tuple(Schema.String)
 type Result = typeof Result.Type
 
 function RouteComponent() {
-    const promise = R.usePromise(HttpClient.HttpClient.pipe(
+    const promise = R.usePromiseScoped(HttpClient.HttpClient.pipe(
         Effect.flatMap(client => client.get("https://www.uuidtools.com/api/generate/v4")),
         HttpClient.withTracerPropagation(false),
         Effect.flatMap(res => res.json),
         Effect.flatMap(Schema.decodeUnknown(Result)),
-
-        Effect.scoped,
     ))
 
     return (

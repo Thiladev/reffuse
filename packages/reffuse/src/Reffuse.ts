@@ -5,6 +5,7 @@ import * as ReffuseRuntime from "./ReffuseRuntime.js"
 import * as SetStateAction from "./SetStateAction.js"
 
 
+// MAYBE: make it an Effect and match the R parameter?
 export class Reffuse<R> {
 
     constructor(
@@ -305,29 +306,25 @@ export class Reffuse<R> {
         const runSync = this.useRunSync()
         const runPromise = this.useRunPromise()
 
-        // Calculate an initial version of the value so that it can be accessed during the first render
-        const initialScope = React.useMemo(() => runSync(Scope.make(options?.finalizerExecutionStrategy)), [])
-        const initialValue = React.useMemo(() => runPromise(Effect.provideService(effect, Scope.Scope, initialScope), options), [])
-
-        // Keep track of the state of the initial scope
-        const initialScopeClosed = React.useRef(false)
-
-        const [value, setValue] = React.useState(initialValue)
+        const [value, setValue] = React.useState(new Promise<A>(() => {}))
 
         React.useEffect(() => {
-            const closeInitialScopeIfNeeded = Scope.close(initialScope, Exit.void).pipe(
-                Effect.andThen(Effect.sync(() => { initialScopeClosed.current = true })),
-                Effect.when(() => !initialScopeClosed.current),
-            )
+            const controller = new AbortController()
+            const signal = AbortSignal.any([
+                controller.signal,
+                ...options?.signal ? [options.signal] : [],
+            ])
 
-            const scope = closeInitialScopeIfNeeded.pipe(
-                Effect.andThen(Scope.make(options?.finalizerExecutionStrategy)),
-                runSync,
-            )
+            const scope = runSync(Scope.make(options?.finalizerExecutionStrategy))
+            setValue(runPromise(Effect.provideService(effect, Scope.Scope, scope), {
+                ...options,
+                signal,
+            }))
 
-            setValue(runPromise(Effect.provideService(effect, Scope.Scope, initialScope), options))
-
-            return () => { runSync(Scope.close(scope, Exit.void)) }
+            return () => {
+                controller.abort()
+                runSync(Scope.close(scope, Exit.void))
+            }
         }, [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runPromise],
             ...(deps ?? []),
@@ -370,32 +367,6 @@ export class Reffuse<R> {
 
         return [reactStateValue, setValue]
     }
-
-    /**
-     * Binds the state of a `LazyRef` from the `@typed/lazy-ref` package to the state of the React component.
-     *
-     * Returns a [value, setter] tuple just like `React.useState` and triggers a re-render everytime the value held by the ref changes.
-     *
-     * Note that the rules of React's immutable state still apply: updating a ref with the same value will not trigger a re-render.
-     */
-    // useLazyRefState<A, E>(ref: LazyRef.LazyRef<A, E, R>): [A, React.Dispatch<React.SetStateAction<A>>] {
-    //     const runSync = this.useRunSync()
-
-    //     const initialState = React.useMemo(() => runSync(ref), [])
-    //     const [reactStateValue, setReactStateValue] = React.useState(initialState)
-
-    //     this.useFork(Stream.runForEach(ref.changes, v => Effect.sync(() =>
-    //         setReactStateValue(v)
-    //     )), [ref])
-
-    //     const setValue = React.useCallback((setStateAction: React.SetStateAction<A>) =>
-    //         runSync(LazyRef.update(ref, prevState =>
-    //             SetStateAction.value(setStateAction, prevState)
-    //         )),
-    //     [ref])
-
-    //     return [reactStateValue, setValue]
-    // }
 
 }
 
