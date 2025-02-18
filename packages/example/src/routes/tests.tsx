@@ -2,7 +2,7 @@ import { R } from "@/reffuse"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
 import { Console, Effect } from "effect"
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
 
 
 export const Route = createFileRoute("/tests")({
@@ -22,20 +22,16 @@ function RouteComponent() {
     // ))
 
     const runPromise = R.useRunPromise()
-    const [promise, setPromise] = useState<Promise<void> | null>(null)
     const [, setValue] = useState("")
 
-    useEffect(() => {
-        makeUuid4.pipe(
-            Effect.provide(GetRandomValues.CryptoRandom),
-            Effect.tap(id => Effect.sync(() => setValue(id))),
-            Effect.andThen(Console.log),
-            Effect.delay("1 second"),
+    const promise = useMemo(() => makeUuid4.pipe(
+        Effect.provide(GetRandomValues.CryptoRandom),
+        Effect.tap(id => Effect.sync(() => setValue(id))),
+        Effect.andThen(Console.log),
+        Effect.delay("1 second"),
 
-            runPromise,
-            setPromise,
-        )
-    }, [runPromise])
+        runPromise,
+    ), [runPromise])
 
     console.log(promise)
 
