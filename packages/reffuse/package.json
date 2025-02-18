@@ -29,9 +29,8 @@
     "clean:node": "rm -rf node_modules"
   },
   "devDependencies": {
-    "@typed/lazy-ref": "^0.3.3",
-    "@types/react": "^19.0.9",
-    "effect": "^3.13.1",
+    "@types/react": "^19.0.10",
+    "effect": "~3.13.1",
     "react": "^19.0.0"
   }
 }

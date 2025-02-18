@@ -1,6 +1,8 @@
 {
   "private": true,
-  "workspaces": ["./packages/*"],
+  "workspaces": [
+    "./packages/*"
+  ],
   "scripts": {
     "lint:tsc": "bun run --filter '*' lint:tsc",
     "clean:cache": "rm -f tsconfig.tsbuildinfo",

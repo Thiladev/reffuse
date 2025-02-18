@@ -1,4 +1,3 @@
-import * as LazyRef from "@typed/lazy-ref"
 import { Context, Effect, ExecutionStrategy, Exit, Fiber, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
@@ -115,12 +114,12 @@ export class Reffuse<R> {
         const [value, setValue] = React.useState(initialValue)
 
         React.useEffect(() => {
-            const closeInitialScope = Scope.close(initialScope, Exit.void).pipe(
+            const closeInitialScopeIfNeeded = Scope.close(initialScope, Exit.void).pipe(
                 Effect.andThen(Effect.sync(() => { initialScopeClosed.current = true })),
                 Effect.when(() => !initialScopeClosed.current),
             )
 
-            const [scope, value] = closeInitialScope.pipe(
+            const [scope, value] = closeInitialScopeIfNeeded.pipe(
                 Effect.andThen(Scope.make(options?.finalizerExecutionStrategy).pipe(
                     Effect.flatMap(scope => effect.pipe(
                         Effect.provideService(Scope.Scope, scope),
@@ -332,14 +331,6 @@ export class Reffuse<R> {
         )
     }
 
-    useRefFromEffect<A, E>(effect: Effect.Effect<A, E, R>): SubscriptionRef.SubscriptionRef<A> {
-        return this.useMemo(
-            effect.pipe(Effect.flatMap(SubscriptionRef.make)),
-            [],
-            { doNotReExecuteOnRuntimeOrContextChange: false }, // Do not recreate the ref when the context changes
-        )
-    }
-
     /**
      * Binds the state of a `SubscriptionRef` to the state of the React component.
      *
@@ -373,24 +364,24 @@ export class Reffuse<R> {
      *
      * Note that the rules of React's immutable state still apply: updating a ref with the same value will not trigger a re-render.
      */
-    useLazyRefState<A, E>(ref: LazyRef.LazyRef<A, E, R>): [A, React.Dispatch<React.SetStateAction<A>>] {
-        const runSync = this.useRunSync()
+    // useLazyRefState<A, E>(ref: LazyRef.LazyRef<A, E, R>): [A, React.Dispatch<React.SetStateAction<A>>] {
+    //     const runSync = this.useRunSync()
 
-        const initialState = React.useMemo(() => runSync(ref), [])
-        const [reactStateValue, setReactStateValue] = React.useState(initialState)
+    //     const initialState = React.useMemo(() => runSync(ref), [])
+    //     const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
-        this.useFork(Stream.runForEach(ref.changes, v => Effect.sync(() =>
-            setReactStateValue(v)
-        )), [ref])
+    //     this.useFork(Stream.runForEach(ref.changes, v => Effect.sync(() =>
+    //         setReactStateValue(v)
+    //     )), [ref])
 
-        const setValue = React.useCallback((setStateAction: React.SetStateAction<A>) =>
-            runSync(LazyRef.update(ref, prevState =>
-                SetStateAction.value(setStateAction, prevState)
-            )),
-        [ref])
+    //     const setValue = React.useCallback((setStateAction: React.SetStateAction<A>) =>
+    //         runSync(LazyRef.update(ref, prevState =>
+    //             SetStateAction.value(setStateAction, prevState)
+    //         )),
+    //     [ref])
 
-        return [reactStateValue, setValue]
-    }
+    //     return [reactStateValue, setValue]
+    // }
 
 }
 

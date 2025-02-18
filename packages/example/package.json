@@ -16,27 +16,30 @@
     "@tanstack/router-devtools": "^1.105.0",
     "@tanstack/router-plugin": "^1.105.0",
     "@thilawyn/thilaschema": "^0.1.4",
-    "@types/react": "^19.0.9",
-    "@types/react-dom": "^19.0.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
-    "effect": "^3.13.1",
     "eslint": "^9.20.1",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "reffuse": "workspace:*",
-    "typescript-eslint": "^8.24.0",
+    "typescript-eslint": "^8.24.1",
     "vite": "^6.1.0"
   },
   "dependencies": {
-    "@effect/platform": "^0.77.1",
-    "@effect/platform-browser": "^0.56.1",
+    "@effect/platform": "~0.77.1",
+    "@effect/platform-browser": "~0.56.1",
     "@radix-ui/themes": "^3.2.0",
     "@typed/id": "^0.17.1",
     "@typed/lazy-ref": "^0.3.3",
+    "effect": "~3.13.1",
     "lucide-react": "^0.475.0",
-    "mobx": "^6.13.6"
+    "mobx": "^6.13.6",
+    "reffuse": "workspace:*"
+  },
+  "overrides": {
+    "effect": "~3.13.1"
   }
 }

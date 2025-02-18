@@ -1,6 +1,6 @@
 import { Todo } from "@/domain"
 import { Box, Button, Card, Flex, TextArea } from "@radix-ui/themes"
-import { Effect, Option } from "effect"
+import { Effect, Option, SubscriptionRef } from "effect"
 import { R } from "../reffuse"
 import { TodosState } from "../services"
 
@@ -17,7 +17,7 @@ export function VNewTodo() {
         }, true))
     )
 
-    const todoRef = R.useRefFromEffect(createEmptyTodo)
+    const todoRef = R.useMemo(createEmptyTodo.pipe(Effect.flatMap(SubscriptionRef.make)))
     const [todo, setTodo] = R.useRefState(todoRef)
 
 
