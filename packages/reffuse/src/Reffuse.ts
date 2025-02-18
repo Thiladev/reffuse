@@ -1,4 +1,4 @@
-import { Context, Effect, ExecutionStrategy, Exit, Fiber, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { Context, Effect, ExecutionStrategy, Exit, Fiber, Pipeable, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -383,6 +383,13 @@ export class Reffuse<R> {
     //     return [reactStateValue, setValue]
     // }
 
+}
+
+
+export interface Reffuse<R> extends Pipeable.Pipeable {}
+
+Reffuse.prototype.pipe = function pipe() {
+    return Pipeable.pipeArguments(this, arguments)
 }
 
 
