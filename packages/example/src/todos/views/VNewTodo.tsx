@@ -5,17 +5,18 @@ import { R } from "../reffuse"
 import { TodosState } from "../services"
 
 
+const createEmptyTodo = Todo.generateUniqueID.pipe(
+    Effect.map(id => Todo.Todo.make({
+        id,
+        content: "",
+        completedAt: Option.none(),
+    }, true))
+)
+
+
 export function VNewTodo() {
 
     const runSync = R.useRunSync()
-
-    const createEmptyTodo = Todo.generateUniqueID.pipe(
-        Effect.map(id => Todo.Todo.make({
-            id,
-            content: "",
-            completedAt: Option.none(),
-        }, true))
-    )
 
     const todoRef = R.useMemo(createEmptyTodo.pipe(Effect.flatMap(SubscriptionRef.make)))
     const [todo, setTodo] = R.useRefState(todoRef)
