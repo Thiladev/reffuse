@@ -338,7 +338,7 @@ export class Reffuse<R> {
         return this.useMemo(
             SubscriptionRef.make(value),
             [],
-            { doNotReExecuteOnRuntimeOrContextChange: false }, // Do not recreate the ref when the context changes
+            { doNotReExecuteOnRuntimeOrContextChange: true }, // Do not recreate the ref when the context changes
         )
     }
 
