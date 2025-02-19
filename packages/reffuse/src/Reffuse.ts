@@ -384,17 +384,17 @@ export interface ScopeOptions {
 }
 
 
-// export const make = <T extends Array<unknown>>(
-//     ...contexts: [...{ [K in keyof T]: ReffuseContext.ReffuseContext<T[K]> }]
-// ): Reffuse<T[number]> =>
-//     new Reffuse(contexts)
+export const make = <T extends Array<unknown>>(
+    ...contexts: [...{ [K in keyof T]: ReffuseContext.ReffuseContext<T[K]> }]
+): Reffuse<T[number]> =>
+    new Reffuse(contexts)
 
-export const make = (): Reffuse<never> => new Reffuse([])
+// export const make = (): Reffuse<never> => new Reffuse([])
 
-export const withContexts = <R2 extends Array<unknown>>(
-    ...contexts: [...{ [K in keyof R2]: ReffuseContext.ReffuseContext<R2[K]> }]
-) =>
-    <T extends Reffuse<R1>, R1>(self: T & Reffuse<R1>): (
-        Reffuse<R1 | R2[number]> & Exclude<T, Reffuse<R1>>
-    ) =>
-        new Reffuse([...self.contexts, ...contexts as any]) as any
+// export const withContexts = <R2 extends Array<unknown>>(
+//     ...contexts: [...{ [K in keyof R2]: ReffuseContext.ReffuseContext<R2[K]> }]
+// ) =>
+//     <T extends Reffuse<R1>, R1>(self: T & Reffuse<R1>): (
+//         Reffuse<R1 | R2[number]> & Exclude<T, Reffuse<R1>>
+//     ) =>
+//         new Reffuse([...self.contexts, ...contexts as any]) as any
