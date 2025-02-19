@@ -270,15 +270,13 @@ export class Reffuse<R> {
         const runFork = this.useRunFork()
 
         return React.useEffect(() => {
-            const scope = runSync(Scope.make(options?.finalizerExecutionStrategy))
-            const fiber = runFork(Effect.provideService(effect, Scope.Scope, scope), options)
+            const scope = runSync(options?.scope
+                ? Scope.fork(options.scope, options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
+                : Scope.make(options?.finalizerExecutionStrategy)
+            )
+            runFork(Effect.provideService(effect, Scope.Scope, scope), { ...options, scope })
 
-            return () => {
-                Fiber.interrupt(fiber).pipe(
-                    Effect.andThen(Scope.close(scope, Exit.void)),
-                    runFork,
-                )
-            }
+            return () => { runFork(Scope.close(scope, Exit.void)) }
         }, [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],
             ...(deps ?? []),
@@ -322,15 +320,17 @@ export class Reffuse<R> {
                 }),
 
                 // TODO: use scope from RunForkOptions?
-                effect => runFork(effect, options),
+                effect => runFork(effect, { ...options, scope }),
             )
 
             return () => {
-                Fiber.interrupt(fiber).pipe(
-                    Effect.andThen(Scope.close(scope, Exit.void)),
-                    Effect.andThen(Effect.sync(() => { reject() })), // TODO: Relevant?
-                    runFork,
-                )
+                // Fiber.interrupt(fiber).pipe(
+                //     Effect.andThen(Scope.close(scope, Exit.void)),
+                //     // \/ TODO: should interrupted promises reject?
+                //     // Effect.andThen(Effect.sync(() => { reject() })),
+                //     runFork,
+                // )
+                runFork(Scope.close(scope, Exit.void))
             }
         }, [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],

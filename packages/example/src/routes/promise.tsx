@@ -2,7 +2,7 @@ import { R } from "@/reffuse"
 import { HttpClient } from "@effect/platform"
 import { Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { Effect, Schema } from "effect"
+import { Console, Effect, Schema } from "effect"
 import { Suspense, use } from "react"
 
 
@@ -15,7 +15,8 @@ const Result = Schema.Tuple(Schema.String)
 type Result = typeof Result.Type
 
 function RouteComponent() {
-    const promise = R.usePromiseScoped(HttpClient.HttpClient.pipe(
+    const promise = R.usePromiseScoped(Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
+        Effect.andThen(HttpClient.HttpClient),
         Effect.flatMap(client => client.get("https://www.uuidtools.com/api/generate/v4")),
         HttpClient.withTracerPropagation(false),
         Effect.flatMap(res => res.json),
