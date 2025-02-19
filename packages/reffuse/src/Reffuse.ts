@@ -5,7 +5,6 @@ import * as ReffuseRuntime from "./ReffuseRuntime.js"
 import * as SetStateAction from "./SetStateAction.js"
 
 
-// MAYBE: make it an Effect and match the R parameter?
 export class Reffuse<R> {
 
     constructor(
