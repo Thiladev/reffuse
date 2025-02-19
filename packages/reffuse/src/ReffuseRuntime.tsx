@@ -1,5 +1,5 @@
 import { Runtime } from "effect"
-import React from "react"
+import * as React from "react"
 
 
 export const Context = React.createContext<Runtime.Runtime<never>>(null!)

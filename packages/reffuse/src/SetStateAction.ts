@@ -1,5 +1,5 @@
 import { Function } from "effect"
-import type React from "react"
+import type * as React from "react"
 
 
 export const value: {

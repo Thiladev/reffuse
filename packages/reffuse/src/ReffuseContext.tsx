@@ -1,5 +1,5 @@
 import { Array, Context, Effect, Layer, Runtime } from "effect"
-import React from "react"
+import * as React from "react"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
 

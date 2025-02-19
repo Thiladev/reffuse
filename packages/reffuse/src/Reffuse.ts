@@ -1,5 +1,5 @@
 import { Context, Effect, ExecutionStrategy, Exit, Fiber, Pipeable, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
-import React from "react"
+import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 import * as SetStateAction from "./SetStateAction.js"
