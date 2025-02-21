@@ -1,10 +1,28 @@
-import type { Effect } from "effect"
-import * as ReffuseContext from "./ReffuseContext.js"
 import * as Reffuse from "./Reffuse.js"
-import type { Simplify } from "effect/Types"
+import type { Merge, StaticType } from "./types.js"
 
 
-const make = <T extends object>(extension: T) =>
-    <R extends typeof Reffuse.Reffuse>(base: R) => {
+const make = <Ext extends object>(extension: Ext) =>
+    <
+        BaseClass extends typeof Reffuse.Reffuse<R>,
+        R,
+    >(
+        base: BaseClass & typeof Reffuse.Reffuse<R>
+    ): (
+        { new(): Merge<InstanceType<BaseClass>, Ext> } &
+        StaticType<BaseClass>
+    ) => {
         const class_ = class extends base {}
+        return class_
     }
+
+
+const cls = make({
+    prout<R>(this: Reffuse.Reffuse<R>) {}
+})(Reffuse.Reffuse)
+
+class Cls extends cls {}
+
+const cls2 = make({
+    aya() {}
+})(cls)
