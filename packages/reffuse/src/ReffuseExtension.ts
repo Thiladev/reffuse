@@ -4,7 +4,7 @@ import * as ReffuseHelpers from "./ReffuseHelpers.js"
 import type { Merge, StaticType } from "./types.js"
 
 
-class Reffuse extends ReffuseHelpers.ReffuseHelpers<void> {}
+class Reffuse extends ReffuseHelpers.ReffuseHelpers<never> {}
 
 class MyService extends Effect.Service<MyService>()("MyService", {
     succeed: {}
@@ -39,7 +39,7 @@ export const withContexts = <R2 extends Array<unknown>>(
         {
             new(): Merge<
                 InstanceType<BaseClass>,
-                { readonly contexts: readonly ReffuseContext.ReffuseContext<R1 | R2[number]>[] }
+                ReffuseHelpers.ReffuseHelpers<R1 | R2[number]>
             >
         } &
         StaticType<BaseClass>
