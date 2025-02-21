@@ -1,19 +1,10 @@
 import type { Effect } from "effect"
 import * as ReffuseContext from "./ReffuseContext.js"
+import * as Reffuse from "./Reffuse.js"
+import type { Simplify } from "effect/Types"
 
 
-interface ReffuseTest<R> {
-    readonly contexts: readonly ReffuseContext.ReffuseContext<R>[]
-
-    useEffect<A, E>(effect: Effect.Effect<A, E, R>): void
-}
-
-const ReffuseTestProto = {
-    useEffect<A, E, R>(this: ReffuseTest<R>, effect: Effect.Effect<A, E>) {}
-}
-
-const make = (): ReffuseTest<never> => {
-    const self = Object.create(ReffuseTestProto)
-    self.contexts = []
-    return self
-}
+const make = <T extends object>(extension: T) =>
+    <R extends typeof Reffuse.Reffuse>(base: R) => {
+        const class_ = class extends base {}
+    }
