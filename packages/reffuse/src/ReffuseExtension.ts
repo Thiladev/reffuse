@@ -43,13 +43,11 @@ export const withContexts = <R2 extends Array<unknown>>(
             >
         } &
         StaticType<BaseClass>
-    ) => {
-        const instance = new self()
-
-        return class extends self {
+    ) => new self().pipe(
+        instance => class extends self {
             readonly contexts = [...instance.contexts, ...contexts] as const
         } as any
-    }
+    )
 
 
 const withMyContext = withContexts(MyContext)
