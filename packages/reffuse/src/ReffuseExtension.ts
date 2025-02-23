@@ -34,7 +34,7 @@ export const withContexts = <R2 extends Array<unknown>>(
         BaseClass extends typeof ReffuseHelpers.ReffuseHelpers<R1>,
         R1
     >(
-        self: BaseClass & typeof ReffuseHelpers.ReffuseHelpers<R1>
+        self: BaseClass & { new(): ReffuseHelpers.ReffuseHelpers<R1> }
     ): (
         {
             new(): Merge<
