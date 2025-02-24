@@ -39,9 +39,7 @@ export const withContexts = <R2 extends Array<unknown>>(
         {
             new(): Merge<
                 InstanceType<BaseClass>,
-                ReffuseHelpers.ReffuseHelpers<R1 | R2[number]> & {
-                    prototype: ReffuseHelpers.ReffuseHelpers<R1 | R2[number]>
-                }
+                ReffuseHelpers.ReffuseHelpers<R1 | R2[number]>
             >
         } &
         StaticType<BaseClass>
