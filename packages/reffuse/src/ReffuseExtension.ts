@@ -24,7 +24,8 @@ const make = <Ext extends object>(extension: Ext) =>
         StaticType<BaseClass>
     ) => {
         const class_ = class extends self {}
-        return class_
+        class_.prototype = { ...class_.prototype, ...extension } as any
+        return class_ as any
     }
 
 export const withContexts = <R2 extends Array<unknown>>(
@@ -55,10 +56,14 @@ const withMyContext = withContexts(MyContext)
 const clsWithMyContext = withMyContext(Reffuse)
 class ReffuseWithMyContext extends clsWithMyContext {}
 
-const t = new ReffuseWithMyContext()
 
-const cls1 = make({
+const withProut = make({
     prout<R>(this: ReffuseHelpers.ReffuseHelpers<R>) {}
-})(Reffuse)
+})
 
-class Cls1 extends cls1 {}
+class MyReffuse extends Reffuse.pipe(
+    withProut,
+    withContexts(MyContext),
+) {}
+
+new MyReffuse().useFork()
