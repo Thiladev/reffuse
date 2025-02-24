@@ -41,6 +41,15 @@
         "vite": "^6.1.0",
       },
     },
+    "packages/extension-lazyref": {
+      "name": "@reffuse/extension-lazyref",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/react": "^19.0.10",
+        "effect": "~3.13.1",
+        "react": "^19.0.0",
+      },
+    },
     "packages/reffuse": {
       "name": "reffuse",
       "version": "0.1.1",
@@ -313,6 +322,8 @@
     "@radix-ui/themes": ["@radix-ui/themes@3.2.0", "", { "dependencies": { "@radix-ui/colors": "^3.0.0", "classnames": "^2.3.2", "radix-ui": "^1.1.2", "react-remove-scroll-bar": "^2.3.8" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-cG/47tfHN9FW1ZoAigd3oUeJaIm591vGtQ97PrhfwS22IJgWhE5h6D0w2m+NVbKRVo8qIWCG+hiWN04MlLoW4A=="],
 
     "@reffuse/example": ["@reffuse/example@workspace:packages/example"],
+
+    "@reffuse/extension-lazyref": ["@reffuse/extension-lazyref@workspace:packages/extension-lazyref"],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.34.8", "", { "os": "android", "cpu": "arm" }, "sha512-q217OSE8DTp8AFHuNHXo0Y86e1wtlfVrXiAlwkIvGRQv9zbc6mE3sjIVfwI8sYUyNxwOg0j/Vm1RKM04JcWLJw=="],
 
