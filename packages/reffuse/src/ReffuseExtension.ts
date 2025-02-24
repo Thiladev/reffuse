@@ -4,7 +4,7 @@ import * as ReffuseHelpers from "./ReffuseHelpers.js"
 import type { Merge, StaticType } from "./types.js"
 
 
-class Reffuse extends ReffuseHelpers.ReffuseHelpers<never> {}
+class Reffuse extends ReffuseHelpers.make([]) {}
 
 class MyService extends Effect.Service<MyService>()("MyService", {
     succeed: {}
@@ -15,15 +15,15 @@ const MyContext = ReffuseContext.make<MyService>()
 
 const make = <Ext extends object>(extension: Ext) =>
     <
-        BaseClass extends typeof Reffuse,
-        R,
+        BaseClass extends ReffuseHelpers.ReffuseHelpersClass<R>,
+        R
     >(
-        base: BaseClass & typeof Reffuse
+        self: BaseClass & ReffuseHelpers.ReffuseHelpersClass<R>
     ): (
         { new(): Merge<InstanceType<BaseClass>, Ext> } &
         StaticType<BaseClass>
     ) => {
-        const class_ = class extends base {}
+        const class_ = class extends self {}
         return class_
     }
 
@@ -31,10 +31,10 @@ export const withContexts = <R2 extends Array<unknown>>(
     ...contexts: [...{ [K in keyof R2]: ReffuseContext.ReffuseContext<R2[K]> }]
 ) =>
     <
-        BaseClass extends typeof ReffuseHelpers.ReffuseHelpers<R1>,
+        BaseClass extends ReffuseHelpers.ReffuseHelpersClass<R1>,
         R1
     >(
-        self: BaseClass & { new(): ReffuseHelpers.ReffuseHelpers<R1> }
+        self: BaseClass & ReffuseHelpers.ReffuseHelpersClass<R1>
     ): (
         {
             new(): Merge<
@@ -42,12 +42,13 @@ export const withContexts = <R2 extends Array<unknown>>(
                 ReffuseHelpers.ReffuseHelpers<R1 | R2[number]>
             >
         } &
-        StaticType<BaseClass>
-    ) => new self().pipe(
-        instance => class extends self {
-            readonly contexts = [...instance.contexts, ...contexts] as any
-        } as any
-    )
+        Merge<
+            StaticType<BaseClass>,
+            StaticType<ReffuseHelpers.ReffuseHelpersClass<R1 | R2[number]>>
+        >
+    ) => class extends self {
+        readonly contexts = [...self.contexts, ...contexts]
+    } as any
 
 
 const withMyContext = withContexts(MyContext)
@@ -56,13 +57,8 @@ class ReffuseWithMyContext extends clsWithMyContext {}
 
 const t = new ReffuseWithMyContext()
 
-
 const cls1 = make({
     prout<R>(this: ReffuseHelpers.ReffuseHelpers<R>) {}
 })(Reffuse)
 
 class Cls1 extends cls1 {}
-
-const cls2 = make({
-    aya() {}
-})(cls)

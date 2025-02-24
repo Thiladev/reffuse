@@ -5,7 +5,17 @@ import * as ReffuseRuntime from "./ReffuseRuntime.js"
 import * as SetStateAction from "./SetStateAction.js"
 
 
-export class ReffuseHelpers<R> {
+export interface RenderOptions {
+    /** Prevents re-executing the effect when the Effect runtime or context changes. Defaults to `false`. */
+    readonly doNotReExecuteOnRuntimeOrContextChange?: boolean
+}
+
+export interface ScopeOptions {
+    readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
+}
+
+
+export abstract class ReffuseHelpers<R> {
 
     declare ["constructor"]: ReffuseHelpersClass<R>
 
@@ -373,16 +383,15 @@ ReffuseHelpers.prototype.pipe = function pipe() {
 
 export interface ReffuseHelpersClass<R> extends Pipeable.Pipeable {
     new(): ReffuseHelpers<R>
-    prototype: ReffuseHelpers<R>
     readonly contexts: readonly ReffuseContext.ReffuseContext<R>[]
 }
 
-
-export interface RenderOptions {
-    /** Prevents re-executing the effect when the Effect runtime or context changes. Defaults to `false`. */
-    readonly doNotReExecuteOnRuntimeOrContextChange?: boolean
+(ReffuseHelpers as ReffuseHelpersClass<any>).pipe = function pipe() {
+    return Pipeable.pipeArguments(this, arguments)
 }
 
-export interface ScopeOptions {
-    readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
-}
+
+export const make = <R = never>(contexts: readonly ReffuseContext.ReffuseContext<R>[]): ReffuseHelpersClass<R> =>
+    class extends (ReffuseHelpers<R> as ReffuseHelpersClass<R>) {
+        static readonly contexts = contexts
+    }
