@@ -39,13 +39,15 @@ export const withContexts = <R2 extends Array<unknown>>(
         {
             new(): Merge<
                 InstanceType<BaseClass>,
-                ReffuseHelpers.ReffuseHelpers<R1 | R2[number]>
+                ReffuseHelpers.ReffuseHelpers<R1 | R2[number]> & {
+                    prototype: ReffuseHelpers.ReffuseHelpers<R1 | R2[number]>
+                }
             >
         } &
         StaticType<BaseClass>
     ) => new self().pipe(
         instance => class extends self {
-            readonly contexts = [...instance.contexts, ...contexts] as const
+            readonly contexts = [...instance.contexts, ...contexts] as any
         } as any
     )
 
