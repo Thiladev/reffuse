@@ -25,5 +25,5 @@ export const withContexts = <R2 extends Array<unknown>>(
             StaticType<ReffuseHelpers.ReffuseHelpersClass<R1 | R2[number]>>
         >
     ) => class extends self {
-        readonly contexts = [...self.contexts, ...contexts]
+        static readonly contexts = [...self.contexts, ...contexts]
     } as any
