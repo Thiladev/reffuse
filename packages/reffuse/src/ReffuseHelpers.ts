@@ -16,16 +16,15 @@ export interface ScopeOptions {
 
 
 export abstract class ReffuseHelpers<R> {
-
     declare ["constructor"]: ReffuseHelpersClass<R>
 
 
-    useContext(): Context.Context<R> {
+    useContext<R>(this: ReffuseHelpers<R>): Context.Context<R> {
         return ReffuseContext.useMergeAll(...this.constructor.contexts)
     }
 
 
-    useRunSync() {
+    useRunSync<R>(this: ReffuseHelpers<R>) {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
@@ -37,7 +36,7 @@ export abstract class ReffuseHelpers<R> {
         ), [runtime, context])
     }
 
-    useRunPromise() {
+    useRunPromise<R>(this: ReffuseHelpers<R>) {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
@@ -50,7 +49,7 @@ export abstract class ReffuseHelpers<R> {
         ), [runtime, context])
     }
 
-    useRunFork() {
+    useRunFork<R>(this: ReffuseHelpers<R>) {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
@@ -63,7 +62,7 @@ export abstract class ReffuseHelpers<R> {
         ), [runtime, context])
     }
 
-    useRunCallback() {
+    useRunCallback<R>(this: ReffuseHelpers<R>) {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
@@ -86,7 +85,8 @@ export abstract class ReffuseHelpers<R> {
      * Changes to the Reffuse runtime or context will recompute the value in addition to the deps.
      * You can disable this behavior by setting `doNotReExecuteOnRuntimeOrContextChange` to `true` in `options`.
      */
-    useMemo<A, E>(
+    useMemo<A, E, R>(
+        this: ReffuseHelpers<R>,
         effect: Effect.Effect<A, E, R>,
         deps?: React.DependencyList,
         options?: RenderOptions,
@@ -99,7 +99,8 @@ export abstract class ReffuseHelpers<R> {
         ])
     }
 
-    useMemoScoped<A, E>(
+    useMemoScoped<A, E, R>(
+        this: ReffuseHelpers<R>,
         effect: Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
@@ -174,7 +175,8 @@ export abstract class ReffuseHelpers<R> {
      * })
      * ```
      */
-    useEffect<A, E>(
+    useEffect<A, E, R>(
+        this: ReffuseHelpers<R>,
         effect: Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
@@ -221,7 +223,8 @@ export abstract class ReffuseHelpers<R> {
      * })
      * ```
      */
-    useLayoutEffect<A, E>(
+    useLayoutEffect<A, E, R>(
+        this: ReffuseHelpers<R>,
         effect: Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
@@ -268,7 +271,8 @@ export abstract class ReffuseHelpers<R> {
      * const [time] = useRefState(timeRef)
      * ```
      */
-    useFork<A, E>(
+    useFork<A, E, R>(
+        this: ReffuseHelpers<R>,
         effect: Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: Runtime.RunForkOptions & RenderOptions & ScopeOptions,
@@ -290,7 +294,8 @@ export abstract class ReffuseHelpers<R> {
         ])
     }
 
-    usePromise<A, E>(
+    usePromise<A, E, R>(
+        this: ReffuseHelpers<R>,
         effect: Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: { readonly signal?: AbortSignal } & Runtime.RunForkOptions & RenderOptions & ScopeOptions,
@@ -337,7 +342,10 @@ export abstract class ReffuseHelpers<R> {
     }
 
 
-    useRef<A>(value: A): SubscriptionRef.SubscriptionRef<A> {
+    useRef<A, R>(
+        this: ReffuseHelpers<R>,
+        value: A,
+    ): SubscriptionRef.SubscriptionRef<A> {
         return this.useMemo(
             SubscriptionRef.make(value),
             [],
@@ -352,7 +360,10 @@ export abstract class ReffuseHelpers<R> {
      *
      * Note that the rules of React's immutable state still apply: updating a ref with the same value will not trigger a re-render.
      */
-    useRefState<A>(ref: SubscriptionRef.SubscriptionRef<A>): [A, React.Dispatch<React.SetStateAction<A>>] {
+    useRefState<A, R>(
+        this: ReffuseHelpers<R>,
+        ref: SubscriptionRef.SubscriptionRef<A>,
+    ): [A, React.Dispatch<React.SetStateAction<A>>] {
         const runSync = this.useRunSync()
 
         const initialState = React.useMemo(() => runSync(ref), [])
@@ -370,7 +381,6 @@ export abstract class ReffuseHelpers<R> {
 
         return [reactStateValue, setValue]
     }
-
 }
 
 
@@ -391,7 +401,7 @@ export interface ReffuseHelpersClass<R> extends Pipeable.Pipeable {
 }
 
 
-export const make = <R = never>(contexts: readonly ReffuseContext.ReffuseContext<R>[]): ReffuseHelpersClass<R> =>
-    class extends (ReffuseHelpers<R> as ReffuseHelpersClass<R>) {
-        static readonly contexts = contexts
+export const make = (): ReffuseHelpersClass<never> =>
+    class extends (ReffuseHelpers<never> as ReffuseHelpersClass<never>) {
+        static readonly contexts = []
     }
