@@ -1,4 +1,4 @@
-import * as ReffuseContext from "./ReffuseContext.js"
+import type * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseHelpers from "./ReffuseHelpers.js"
 import type { Merge, StaticType } from "./types.js"
 

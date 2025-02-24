@@ -1,4 +1,4 @@
-import * as ReffuseHelpers from "./ReffuseHelpers.js"
+import type * as ReffuseHelpers from "./ReffuseHelpers.js"
 import type { Merge, StaticType } from "./types.js"
 
 
