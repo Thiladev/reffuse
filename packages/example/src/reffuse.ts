@@ -10,4 +10,8 @@ export const GlobalContext = ReffuseContext.make<
     | HttpClient.HttpClient
 >()
 
-export const R = Reffuse.make(GlobalContext)
+export class GlobalReffuse extends Reffuse.Reffuse.pipe(
+    Reffuse.withContexts(GlobalContext)
+) {}
+
+export const R = new GlobalReffuse()
