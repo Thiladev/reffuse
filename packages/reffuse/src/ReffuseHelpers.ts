@@ -73,7 +73,6 @@ export abstract class ReffuseHelpers<R> {
         ), [runtime, context])
     }
 
-
     /**
      * Reffuse equivalent to `React.useMemo`.
      *
@@ -339,6 +338,33 @@ export abstract class ReffuseHelpers<R> {
         return value
     }
 
+    useCallbackSync<Args extends unknown[], A, E, R>(
+        this: ReffuseHelpers<R>,
+        callback: (...args: Args) => Effect.Effect<A, E, R>,
+        deps?: React.DependencyList,
+        options?: RenderOptions,
+    ): (...args: Args) => A {
+        const runSync = this.useRunSync()
+
+        return React.useCallback((...args) => runSync(callback(...args)), [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
+            ...(deps ?? []),
+        ])
+    }
+
+    useCallbackPromise<Args extends unknown[], A, E, R>(
+        this: ReffuseHelpers<R>,
+        callback: (...args: Args) => Effect.Effect<A, E, R>,
+        deps?: React.DependencyList,
+        options?: { readonly signal?: AbortSignal } & RenderOptions,
+    ): (...args: Args) => Promise<A> {
+        const runPromise = this.useRunPromise()
+
+        return React.useCallback((...args) => runPromise(callback(...args), options), [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runPromise],
+            ...(deps ?? []),
+        ])
+    }
 
     useRef<A, R>(
         this: ReffuseHelpers<R>,
