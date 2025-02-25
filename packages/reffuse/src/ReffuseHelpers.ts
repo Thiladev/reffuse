@@ -160,7 +160,7 @@ export abstract class ReffuseHelpers<R> {
      *
      * ### Example
      * ```
-     * useEffect(Effect.addFinalizer(() => Console.log("Component unmounted")).pipe(
+     * useEffect(() => Effect.addFinalizer(() => Console.log("Component unmounted")).pipe(
      *     Effect.flatMap(() => Console.log("Component mounted"))
      * ))
      * ```
@@ -170,7 +170,7 @@ export abstract class ReffuseHelpers<R> {
      * React.useEffect(() => {
      *     console.log("Component mounted")
      *     return () => { console.log("Component unmounted") }
-     * })
+     * }, [])
      * ```
      */
     useEffect<A, E, R>(
@@ -208,7 +208,7 @@ export abstract class ReffuseHelpers<R> {
      *
      * ### Example
      * ```
-     * useLayoutEffect(Effect.addFinalizer(() => Console.log("Component unmounted")).pipe(
+     * useLayoutEffect(() => Effect.addFinalizer(() => Console.log("Component unmounted")).pipe(
      *     Effect.flatMap(() => Console.log("Component mounted"))
      * ))
      * ```
@@ -218,7 +218,7 @@ export abstract class ReffuseHelpers<R> {
      * React.useLayoutEffect(() => {
      *     console.log("Component mounted")
      *     return () => { console.log("Component unmounted") }
-     * })
+     * }, [])
      * ```
      */
     useLayoutEffect<A, E, R>(
@@ -257,7 +257,7 @@ export abstract class ReffuseHelpers<R> {
      * ```
      * const timeRef = useRefFromEffect(DateTime.now)
      *
-     * useFork(Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
+     * useFork(() => Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
      *     Effect.map(() => Stream.repeatEffectWithSchedule(
      *         DateTime.now,
      *         Schedule.intersect(Schedule.forever, Schedule.spaced("1 second")),
