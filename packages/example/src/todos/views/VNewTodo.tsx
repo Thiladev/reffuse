@@ -18,7 +18,7 @@ export function VNewTodo() {
 
     const runSync = R.useRunSync()
 
-    const todoRef = R.useMemo(() => createEmptyTodo.pipe(Effect.flatMap(SubscriptionRef.make)))
+    const todoRef = R.useMemo(() => createEmptyTodo.pipe(Effect.flatMap(SubscriptionRef.make)), [])
     const [todo, setTodo] = R.useRefState(todoRef)
 
 

@@ -13,9 +13,9 @@ export function VTodos() {
         Effect.flatMap(state =>
             Stream.runForEach(state.todos.changes, () => state.saveToLocalStorage)
         )
-    ))
+    ), [])
 
-    const todosRef = R.useMemo(() => TodosState.TodosState.pipe(Effect.map(state => state.todos)))
+    const todosRef = R.useMemo(() => TodosState.TodosState.pipe(Effect.map(state => state.todos)), [])
     const [todos] = R.useRefState(todosRef)
 
 

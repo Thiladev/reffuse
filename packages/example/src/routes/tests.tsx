@@ -18,11 +18,11 @@ function RouteComponent() {
     R.useFork(() => Effect.addFinalizer(() => Console.log("cleanup")).pipe(
         Effect.andThen(Console.log("ouient")),
         Effect.delay("1 second"),
-    ))
+    ), [])
 
     const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {
         yield* Effect.log(value)
-    }))
+    }), [])
 
 
     return (

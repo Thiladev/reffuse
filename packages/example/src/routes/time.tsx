@@ -15,7 +15,7 @@ export const Route = createFileRoute("/time")({
 
 function Time() {
 
-    const timeRef = R.useMemo(() => DateTime.now.pipe(Effect.flatMap(SubscriptionRef.make)))
+    const timeRef = R.useMemo(() => DateTime.now.pipe(Effect.flatMap(SubscriptionRef.make)), [])
 
     R.useFork(() => Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
         Effect.andThen(Stream.runForEach(timeEverySecond, v => Ref.set(timeRef, v)))

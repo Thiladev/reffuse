@@ -20,7 +20,7 @@ function RouteComponent() {
         HttpClient.withTracerPropagation(false),
         Effect.flatMap(res => res.json),
         Effect.flatMap(Schema.decodeUnknown(Result)),
-    ))
+    ), [])
 
     return (
         <Suspense fallback={<Text>Loading...</Text>}>

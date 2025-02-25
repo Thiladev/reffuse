@@ -85,21 +85,21 @@ export abstract class ReffuseHelpers<R> {
     useMemo<A, E, R>(
         this: ReffuseHelpers<R>,
         effect: () => Effect.Effect<A, E, R>,
-        deps?: React.DependencyList,
+        deps: React.DependencyList,
         options?: RenderOptions,
     ): A {
         const runSync = this.useRunSync()
 
         return React.useMemo(() => runSync(effect()), [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
-            ...(deps ?? []),
+            ...deps,
         ])
     }
 
     useMemoScoped<A, E, R>(
         this: ReffuseHelpers<R>,
         effect: () => Effect.Effect<A, E, R | Scope.Scope>,
-        deps?: React.DependencyList,
+        deps: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
     ): A {
         const runSync = this.useRunSync()
@@ -140,7 +140,7 @@ export abstract class ReffuseHelpers<R> {
             return () => { runSync(Scope.close(scope, Exit.void)) }
         }, [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
-            ...(deps ?? []),
+            ...deps,
         ])
 
         return value
@@ -187,9 +187,9 @@ export abstract class ReffuseHelpers<R> {
             )
 
             return () => { runSync(Scope.close(scope, Exit.void)) }
-        }, [
+        }, deps && [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
-            ...(deps ?? []),
+            ...deps,
         ])
     }
 
@@ -235,9 +235,9 @@ export abstract class ReffuseHelpers<R> {
             )
 
             return () => { runSync(Scope.close(scope, Exit.void)) }
-        }, [
+        }, deps && [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
-            ...(deps ?? []),
+            ...deps,
         ])
     }
 
@@ -285,9 +285,9 @@ export abstract class ReffuseHelpers<R> {
             runFork(Effect.provideService(effect(), Scope.Scope, scope), { ...options, scope })
 
             return () => { runFork(Scope.close(scope, Exit.void)) }
-        }, [
-            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],
-            ...(deps ?? []),
+        }, deps && [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
+            ...deps,
         ])
     }
 
@@ -330,9 +330,9 @@ export abstract class ReffuseHelpers<R> {
 
                 cleanup()
             }
-        }, [
-            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],
-            ...(deps ?? []),
+        }, deps && [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
+            ...deps,
         ])
 
         return value
@@ -341,28 +341,28 @@ export abstract class ReffuseHelpers<R> {
     useCallbackSync<Args extends unknown[], A, E, R>(
         this: ReffuseHelpers<R>,
         callback: (...args: Args) => Effect.Effect<A, E, R>,
-        deps?: React.DependencyList,
+        deps: React.DependencyList,
         options?: RenderOptions,
     ): (...args: Args) => A {
         const runSync = this.useRunSync()
 
         return React.useCallback((...args) => runSync(callback(...args)), [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
-            ...(deps ?? []),
+            ...deps,
         ])
     }
 
     useCallbackPromise<Args extends unknown[], A, E, R>(
         this: ReffuseHelpers<R>,
         callback: (...args: Args) => Effect.Effect<A, E, R>,
-        deps?: React.DependencyList,
+        deps: React.DependencyList,
         options?: { readonly signal?: AbortSignal } & RenderOptions,
     ): (...args: Args) => Promise<A> {
         const runPromise = this.useRunPromise()
 
         return React.useCallback((...args) => runPromise(callback(...args), options), [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runPromise],
-            ...(deps ?? []),
+            ...deps,
         ])
     }
 

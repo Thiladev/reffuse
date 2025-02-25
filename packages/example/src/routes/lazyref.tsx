@@ -10,7 +10,7 @@ export const Route = createFileRoute("/lazyref")({
 })
 
 function RouteComponent() {
-    const promise = R.usePromise(() => LazyRef.of(0))
+    const promise = R.usePromise(() => LazyRef.of(0), [])
 
     return (
         <Suspense fallback={<Text>Loading...</Text>}>
