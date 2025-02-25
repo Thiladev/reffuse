@@ -1,10 +1,13 @@
 {
+  "name": "@reffuse/monorepo",
+  "packageManager": "bun@1.2.2",
   "private": true,
   "workspaces": [
     "./packages/*"
   ],
   "scripts": {
-    "lint:tsc": "bun run --filter '*' lint:tsc",
+    "build": "turbo build --filter=!@reffuse/example",
+    "lint:tsc": "turbo lint:tsc",
     "clean:cache": "rm -f tsconfig.tsbuildinfo",
     "clean:dist": "rm -rf dist",
     "clean:node": "rm -rf node_modules"
@@ -12,6 +15,7 @@
   "devDependencies": {
     "npm-check-updates": "^17.1.14",
     "npm-sort": "^0.0.4",
+    "turbo": "^2.4.4",
     "typescript": "^5.7.3"
   }
 }
