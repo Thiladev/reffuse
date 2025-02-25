@@ -1,4 +1,5 @@
 import { R } from "@/reffuse"
+import { Button } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { Console, Effect } from "effect"
 
@@ -19,6 +20,12 @@ function RouteComponent() {
         Effect.delay("1 second"),
     ))
 
+    const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {
+        yield* Effect.log(value)
+    }))
 
-    return <div>Hello "/tests"!</div>
+
+    return (
+        <Button onClick={() => logValue("test")}>Log value</Button>
+    )
 }
