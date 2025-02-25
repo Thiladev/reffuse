@@ -47,6 +47,9 @@
     "packages/extension-lazyref": {
       "name": "@reffuse/extension-lazyref",
       "version": "0.1.0",
+      "devDependencies": {
+        "reffuse": "workspace:*",
+      },
       "peerDependencies": {
         "@typed/lazy-ref": "^0.3.3",
         "@types/react": "^19.0.0",
