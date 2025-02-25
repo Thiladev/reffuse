@@ -3,7 +3,6 @@ import * as React from "react"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
 
-// TODO: merge this with the Provider, just like React 19 contexts
 export class ReffuseContext<R> {
 
     readonly Context = React.createContext<Context.Context<R>>(null!)
@@ -11,7 +10,7 @@ export class ReffuseContext<R> {
 
     constructor() {
         // TODO: scope the layer creation
-        this.Provider = (props) => {
+        this.Provider = props => {
             const runtime = ReffuseRuntime.useRuntime()
 
             const value = React.useMemo(() => Effect.context<R>().pipe(

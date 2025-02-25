@@ -1,10 +1,10 @@
 import * as LazyRef from "@typed/lazy-ref"
 import { Effect, Stream } from "effect"
 import * as React from "react"
-import { ReffuseExtension, ReffuseHelpers, SetStateAction } from "reffuse"
+import { ReffuseExtension, type ReffuseHelpers, SetStateAction } from "reffuse"
 
 
-export const withLazyRef = ReffuseExtension.make(() => ({
+export const LazyRefExtension = ReffuseExtension.make(() => ({
     useLazyRefState<A, E, R>(
         this: ReffuseHelpers.ReffuseHelpers<R>,
         ref: LazyRef.LazyRef<A, E, R>,
