@@ -45,6 +45,7 @@
       "name": "@reffuse/extension-lazyref",
       "version": "0.1.0",
       "peerDependencies": {
+        "@typed/lazy-ref": "^0.3.3",
         "@types/react": "^19.0.0",
         "effect": "^3.13.0",
         "react": "^19.0.0",
