@@ -7,10 +7,10 @@
       "outputs": ["./dist/**"]
     },
     "pack": {
-      "dependsOn": ["^pack"]
+      "dependsOn": ["pack"]
     },
     "publish": {
-      "dependsOn": ["^publish"]
+      "dependsOn": ["publish"]
     },
     "dev": {
       "persistent": true,
