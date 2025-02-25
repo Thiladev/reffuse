@@ -28,9 +28,9 @@
     "clean:dist": "rm -rf dist",
     "clean:node": "rm -rf node_modules"
   },
-  "devDependencies": {
-    "@types/react": "^19.0.10",
-    "effect": "~3.13.1",
+  "peerDependencies": {
+    "@types/react": "^19.0.0",
+    "effect": "^3.13.0",
     "react": "^19.0.0"
   }
 }
