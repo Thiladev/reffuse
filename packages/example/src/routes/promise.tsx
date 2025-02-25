@@ -15,7 +15,7 @@ const Result = Schema.Tuple(Schema.String)
 type Result = typeof Result.Type
 
 function RouteComponent() {
-    const promise = R.usePromise(Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
+    const promise = R.usePromise(() => Effect.addFinalizer(() => Console.log("Cleanup")).pipe(
         Effect.andThen(HttpClient.get("https://www.uuidtools.com/api/generate/v4")),
         HttpClient.withTracerPropagation(false),
         Effect.flatMap(res => res.json),

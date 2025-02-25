@@ -14,7 +14,7 @@ function RouteComponent() {
     // ), [])
     // console.log(value)
 
-    R.useFork(Effect.addFinalizer(() => Console.log("cleanup")).pipe(
+    R.useFork(() => Effect.addFinalizer(() => Console.log("cleanup")).pipe(
         Effect.andThen(Console.log("ouient")),
         Effect.delay("1 second"),
     ))

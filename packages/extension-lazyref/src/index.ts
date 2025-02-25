@@ -14,7 +14,7 @@ export const LazyRefExtension = ReffuseExtension.make(() => ({
         const initialState = React.useMemo(() => runSync(ref), [])
         const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
-        this.useFork(Stream.runForEach(ref.changes, v => Effect.sync(() =>
+        this.useFork(() => Stream.runForEach(ref.changes, v => Effect.sync(() =>
             setReactStateValue(v)
         )), [ref])
 

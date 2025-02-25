@@ -24,52 +24,50 @@ export abstract class ReffuseHelpers<R> {
     }
 
 
-    useRunSync<R>(this: ReffuseHelpers<R>) {
+    useRunSync<R>(this: ReffuseHelpers<R>): <A, E>(effect: Effect.Effect<A, E, R>) => A {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
-        return React.useCallback(<A, E>(
-            effect: Effect.Effect<A, E, R>
-        ): A => effect.pipe(
+        return React.useCallback(effect => effect.pipe(
             Effect.provide(context),
             Runtime.runSync(runtime),
         ), [runtime, context])
     }
 
-    useRunPromise<R>(this: ReffuseHelpers<R>) {
+    useRunPromise<R>(this: ReffuseHelpers<R>): <A, E>(
+        effect: Effect.Effect<A, E, R>,
+        options?: { readonly signal?: AbortSignal },
+    ) => Promise<A> {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
-        return React.useCallback(<A, E>(
-            effect: Effect.Effect<A, E, R>,
-            options?: { readonly signal?: AbortSignal },
-        ): Promise<A> => effect.pipe(
+        return React.useCallback((effect, options) => effect.pipe(
             Effect.provide(context),
             effect => Runtime.runPromise(runtime)(effect, options),
         ), [runtime, context])
     }
 
-    useRunFork<R>(this: ReffuseHelpers<R>) {
+    useRunFork<R>(this: ReffuseHelpers<R>): <A, E>(
+        effect: Effect.Effect<A, E, R>,
+        options?: Runtime.RunForkOptions,
+    ) => Fiber.RuntimeFiber<A, E> {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
-        return React.useCallback(<A, E>(
-            effect: Effect.Effect<A, E, R>,
-            options?: Runtime.RunForkOptions,
-        ): Fiber.RuntimeFiber<A, E> => effect.pipe(
+        return React.useCallback((effect, options) => effect.pipe(
             Effect.provide(context),
             effect => Runtime.runFork(runtime)(effect, options),
         ), [runtime, context])
     }
 
-    useRunCallback<R>(this: ReffuseHelpers<R>) {
+    useRunCallback<R>(this: ReffuseHelpers<R>): <A, E>(
+        effect: Effect.Effect<A, E, R>,
+        options?: Runtime.RunCallbackOptions<A, E>,
+    ) => Runtime.Cancel<A, E> {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
-        return React.useCallback(<A, E>(
-            effect: Effect.Effect<A, E, R>,
-            options?: Runtime.RunCallbackOptions<A, E>,
-        ): Runtime.Cancel<A, E> => effect.pipe(
+        return React.useCallback((effect, options) => effect.pipe(
             Effect.provide(context),
             effect => Runtime.runCallback(runtime)(effect, options),
         ), [runtime, context])
@@ -87,13 +85,13 @@ export abstract class ReffuseHelpers<R> {
      */
     useMemo<A, E, R>(
         this: ReffuseHelpers<R>,
-        effect: Effect.Effect<A, E, R>,
+        effect: () => Effect.Effect<A, E, R>,
         deps?: React.DependencyList,
         options?: RenderOptions,
     ): A {
         const runSync = this.useRunSync()
 
-        return React.useMemo(() => runSync(effect), [
+        return React.useMemo(() => runSync(effect()), [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
             ...(deps ?? []),
         ])
@@ -101,7 +99,7 @@ export abstract class ReffuseHelpers<R> {
 
     useMemoScoped<A, E, R>(
         this: ReffuseHelpers<R>,
-        effect: Effect.Effect<A, E, R | Scope.Scope>,
+        effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
     ): A {
@@ -109,7 +107,7 @@ export abstract class ReffuseHelpers<R> {
 
         // Calculate an initial version of the value so that it can be accessed during the first render
         const [initialScope, initialValue] = React.useMemo(() => Scope.make(options?.finalizerExecutionStrategy).pipe(
-            Effect.flatMap(scope => effect.pipe(
+            Effect.flatMap(scope => effect().pipe(
                 Effect.provideService(Scope.Scope, scope),
                 Effect.map(value => [scope, value] as const),
             )),
@@ -130,7 +128,7 @@ export abstract class ReffuseHelpers<R> {
 
             const [scope, value] = closeInitialScopeIfNeeded.pipe(
                 Effect.andThen(Scope.make(options?.finalizerExecutionStrategy).pipe(
-                    Effect.flatMap(scope => effect.pipe(
+                    Effect.flatMap(scope => effect().pipe(
                         Effect.provideService(Scope.Scope, scope),
                         Effect.map(value => [scope, value] as const),
                     ))
@@ -177,15 +175,15 @@ export abstract class ReffuseHelpers<R> {
      */
     useEffect<A, E, R>(
         this: ReffuseHelpers<R>,
-        effect: Effect.Effect<A, E, R | Scope.Scope>,
+        effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
     ): void {
         const runSync = this.useRunSync()
 
-        return React.useEffect(() => {
+        React.useEffect(() => {
             const scope = Scope.make(options?.finalizerExecutionStrategy).pipe(
-                Effect.tap(scope => Effect.provideService(effect, Scope.Scope, scope)),
+                Effect.tap(scope => Effect.provideService(effect(), Scope.Scope, scope)),
                 runSync,
             )
 
@@ -225,7 +223,7 @@ export abstract class ReffuseHelpers<R> {
      */
     useLayoutEffect<A, E, R>(
         this: ReffuseHelpers<R>,
-        effect: Effect.Effect<A, E, R | Scope.Scope>,
+        effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
     ): void {
@@ -233,7 +231,7 @@ export abstract class ReffuseHelpers<R> {
 
         return React.useLayoutEffect(() => {
             const scope = Scope.make(options?.finalizerExecutionStrategy).pipe(
-                Effect.tap(scope => Effect.provideService(effect, Scope.Scope, scope)),
+                Effect.tap(scope => Effect.provideService(effect(), Scope.Scope, scope)),
                 runSync,
             )
 
@@ -273,7 +271,7 @@ export abstract class ReffuseHelpers<R> {
      */
     useFork<A, E, R>(
         this: ReffuseHelpers<R>,
-        effect: Effect.Effect<A, E, R | Scope.Scope>,
+        effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: Runtime.RunForkOptions & RenderOptions & ScopeOptions,
     ): void {
@@ -285,7 +283,7 @@ export abstract class ReffuseHelpers<R> {
                 ? Scope.fork(options.scope, options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
                 : Scope.make(options?.finalizerExecutionStrategy)
             )
-            runFork(Effect.provideService(effect, Scope.Scope, scope), { ...options, scope })
+            runFork(Effect.provideService(effect(), Scope.Scope, scope), { ...options, scope })
 
             return () => { runFork(Scope.close(scope, Exit.void)) }
         }, [
@@ -296,7 +294,7 @@ export abstract class ReffuseHelpers<R> {
 
     usePromise<A, E, R>(
         this: ReffuseHelpers<R>,
-        effect: Effect.Effect<A, E, R | Scope.Scope>,
+        effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: { readonly signal?: AbortSignal } & Runtime.RunForkOptions & RenderOptions & ScopeOptions,
     ): Promise<A> {
@@ -318,7 +316,7 @@ export abstract class ReffuseHelpers<R> {
             if (options?.signal)
                 options.signal.addEventListener("abort", cleanup)
 
-            effect.pipe(
+            effect().pipe(
                 Effect.provideService(Scope.Scope, scope),
                 Effect.match({
                     onSuccess: resolve,
@@ -347,7 +345,7 @@ export abstract class ReffuseHelpers<R> {
         value: A,
     ): SubscriptionRef.SubscriptionRef<A> {
         return this.useMemo(
-            SubscriptionRef.make(value),
+            () => SubscriptionRef.make(value),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true }, // Do not recreate the ref when the context changes
         )
@@ -369,7 +367,7 @@ export abstract class ReffuseHelpers<R> {
         const initialState = React.useMemo(() => runSync(ref), [])
         const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
-        this.useFork(Stream.runForEach(ref.changes, v => Effect.sync(() =>
+        this.useFork(() => Stream.runForEach(ref.changes, v => Effect.sync(() =>
             setReactStateValue(v)
         )), [ref])
 
