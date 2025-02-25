@@ -37,7 +37,7 @@ export function VNewTodo() {
                         <Button
                             onClick={() => TodosState.TodosState.pipe(
                                 Effect.flatMap(state => state.prepend(todo)),
-                                Effect.flatMap(() => createEmptyTodo),
+                                Effect.andThen(createEmptyTodo),
                                 Effect.map(setTodo),
                                 runSync,
                             )}
