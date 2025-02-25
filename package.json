@@ -8,6 +8,8 @@
   "scripts": {
     "build": "turbo build --filter=!@reffuse/example",
     "lint:tsc": "turbo lint:tsc",
+    "pack": "turbo pack --filter=!@reffuse/example",
+    "publish": "turbo publish --filter=!@reffuse/example",
     "clean:cache": "rm -f tsconfig.tsbuildinfo",
     "clean:dist": "rm -rf dist",
     "clean:node": "rm -rf node_modules"

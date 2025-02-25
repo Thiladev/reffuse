@@ -24,6 +24,8 @@
   "scripts": {
     "build": "tsc",
     "lint:tsc": "tsc --noEmit",
+    "pack": "npm pack",
+    "publish": "npm publish --access public",
     "clean:cache": "rm -f tsconfig.tsbuildinfo",
     "clean:dist": "rm -rf dist",
     "clean:node": "rm -rf node_modules"
