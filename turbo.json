@@ -6,12 +6,8 @@
       "inputs": ["./src/**"],
       "outputs": ["./dist/**"]
     },
-    "pack": {
-      "dependsOn": ["pack"]
-    },
-    "publish": {
-      "dependsOn": ["publish"]
-    },
+    "pack": {},
+    "publish": {},
     "dev": {
       "persistent": true,
       "cache": false
