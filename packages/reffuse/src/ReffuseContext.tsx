@@ -4,29 +4,9 @@ import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
 
 export class ReffuseContext<R> {
-
     readonly Context = React.createContext<Context.Context<R>>(null!)
-    readonly Provider: ReffuseContextReactProvider<R>
-
-    constructor() {
-        // TODO: scope the layer creation
-        this.Provider = props => {
-            const runtime = ReffuseRuntime.useRuntime()
-
-            const value = React.useMemo(() => Effect.context<R>().pipe(
-                Effect.provide(props.layer),
-                Runtime.runSync(runtime),
-            ), [props.layer, runtime])
-
-            return (
-                <this.Context
-                    {...props}
-                    value={value}
-                />
-            )
-        }
-        this.Provider.displayName = "ReffuseContextReactProvider"
-    }
+    readonly Provider = makeProvider(this.Context)
+    readonly AsyncProvider = makeAsyncProvider(this.Context)
 
 
     useContext(): Context.Context<R> {
@@ -37,15 +17,73 @@ export class ReffuseContext<R> {
         const context = this.useContext()
         return React.useMemo(() => Layer.effectContext(Effect.succeed(context)), [context])
     }
-
 }
 
-export type ReffuseContextReactProvider<R> = React.FC<{
+export type R<T> = T extends ReffuseContext<infer R> ? R : never
+
+
+export type ReactProvider<R> = React.FC<{
     readonly layer: Layer.Layer<R, unknown>
     readonly children?: React.ReactNode
 }>
 
-export type R<T> = T extends ReffuseContext<infer R> ? R : never
+function makeProvider<R>(Context: React.Context<Context.Context<R>>): ReactProvider<R> {
+    return function ReffuseContextReactProvider(props) {
+        const runtime = ReffuseRuntime.useRuntime()
+
+        const value = React.useMemo(() => Effect.context<R>().pipe(
+            Effect.provide(props.layer),
+            Runtime.runSync(runtime),
+        ), [props.layer, runtime])
+
+        return (
+            <Context
+                {...props}
+                value={value}
+            />
+        )
+    }
+}
+
+export type AsyncReactProvider<R> = React.FC<{
+    readonly layer: Layer.Layer<R, unknown>
+    readonly fallback?: React.ReactNode
+    readonly children?: React.ReactNode
+}>
+
+function makeAsyncProvider<R>(Context: React.Context<Context.Context<R>>): AsyncReactProvider<R> {
+    function Inner({ promise, children }: {
+        readonly promise: Promise<Context.Context<R>>
+        readonly children?: React.ReactNode
+    }) {
+        const value = React.use(promise)
+
+        return (
+            <Context
+                value={value}
+                children={children}
+            />
+        )
+    }
+
+    return function ReffuseContextAsyncReactProvider(props) {
+        const runtime = ReffuseRuntime.useRuntime()
+
+        const promise = React.useMemo(() => Effect.context<R>().pipe(
+            Effect.provide(props.layer),
+            Runtime.runPromise(runtime),
+        ), [props.layer, runtime])
+
+        return (
+            <React.Suspense fallback={props.fallback}>
+                <Inner
+                    {...props}
+                    promise={promise}
+                />
+            </React.Suspense>
+        )
+    }
+}
 
 
 export function make<R = never>() {
