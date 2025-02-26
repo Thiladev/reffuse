@@ -4,5 +4,5 @@ Reffuse is a [Effect-TS](https://effect.website/) integration for React 19+ with
 
 This monorepo contains:
 - [The `reffuse` library](packages/reffuse)
-- [`@reffuse/extension-lazyref`](packages/extension-lazyref)
+- [`@reffuse/extension-lazyref`, a LazyRef integration for Reffuse](packages/extension-lazyref)
 - [An example project](packges/example)
