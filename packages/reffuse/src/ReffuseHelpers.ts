@@ -228,7 +228,7 @@ export abstract class ReffuseHelpers<R> {
     ): void {
         const runSync = this.useRunSync()
 
-        return React.useLayoutEffect(() => {
+        React.useLayoutEffect(() => {
             const scope = Scope.make(options?.finalizerExecutionStrategy).pipe(
                 Effect.tap(scope => Effect.provideService(effect(), Scope.Scope, scope)),
                 runSync,
@@ -277,7 +277,7 @@ export abstract class ReffuseHelpers<R> {
         const runSync = this.useRunSync()
         const runFork = this.useRunFork()
 
-        return React.useEffect(() => {
+        React.useEffect(() => {
             const scope = runSync(options?.scope
                 ? Scope.fork(options.scope, options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
                 : Scope.make(options?.finalizerExecutionStrategy)
