@@ -1,6 +1,6 @@
 {
-  "name": "reffuse",
-  "version": "0.1.2",
+  "name": "@reffuse/extension-lazyref",
+  "version": "0.1.0",
   "type": "module",
   "files": [
     "./README.md",
@@ -30,9 +30,14 @@
     "clean:dist": "rm -rf dist",
     "clean:node": "rm -rf node_modules"
   },
+  "devDependencies": {
+    "reffuse": "workspace:*"
+  },
   "peerDependencies": {
+    "@typed/lazy-ref": "^0.3.3",
     "@types/react": "^19.0.0",
     "effect": "^3.13.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "reffuse": "^0.1.2"
   }
 }

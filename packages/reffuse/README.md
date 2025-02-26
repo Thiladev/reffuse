@@ -6,7 +6,6 @@ This library is in early development. While it is (almost) feature complete and 
 
 Documentation is currently being written. In the meantime, you can take a look at the `packages/example` directory.
 
-## Dependencies
-(needs to be manually installed)
-- `effect`
-- `react` 19+
+## Peer dependencies
+- `effect` 3.13+
+- `react` & `@types/react` 19+

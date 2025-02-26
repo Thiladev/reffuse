@@ -12,5 +12,5 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Lint TypeScript
-        run: bun run lint:tsc
+      - name: Build
+        run: bun run build

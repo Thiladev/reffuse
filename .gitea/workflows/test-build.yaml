@@ -18,10 +18,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Build
-        run: |
-          cd packages/reffuse
-          bun run build
+        run: bun run build
       - name: Pack
-        run: |
-          cd packages/reffuse
-          npm pack --dry-run
+        run: bun run pack

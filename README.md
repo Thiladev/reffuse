@@ -1,12 +1,8 @@
-# Reffuse
+# Reffuse Monorepo
 
-[Effect-TS](https://effect.website/) integration for React 19+ with the aim of integrating the Effect context system within React's component hierarchy, while avoiding touching React's internals.
+Reffuse is a [Effect-TS](https://effect.website/) integration for React 19+ with the aim of integrating the Effect context system within React's component hierarchy, while avoiding touching React's internals.
 
-This library is in early development. While it is (almost) feature complete and mostly usable, expect bugs and quirks. Things are still being ironed out, so ideas and criticisms are more than welcome.
-
-Documentation is currently being written. In the meantime, you can take a look at the `packages/example` directory.
-
-## Dependencies
-(needs to be manually installed)
-- `effect`
-- `react` 19+
+This monorepo contains:
+- [The `reffuse` library](packages/reffuse)
+- [`@reffuse/extension-lazyref`, a LazyRef integration for Reffuse](packages/extension-lazyref)
+- [An example project](packges/example)
