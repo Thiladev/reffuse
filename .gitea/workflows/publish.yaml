@@ -21,11 +21,13 @@ jobs:
         uses: JS-DevTools/npm-publish@v3
         with:
           package: packages/reffuse
+          access: public
           token: ${{ secrets.NPM_TOKEN }}
           registry: https://registry.npmjs.org
       - name: Publish @reffuse/extension-lazyref
         uses: JS-DevTools/npm-publish@v3
         with:
           package: packages/extension-lazyref
+          access: public
           token: ${{ secrets.NPM_TOKEN }}
           registry: https://registry.npmjs.org
