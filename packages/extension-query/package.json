@@ -33,6 +33,7 @@
     "reffuse": "workspace:*"
   },
   "peerDependencies": {
+    "@typed/async-data": "^0.13.1",
     "@types/react": "^19.0.0",
     "effect": "^3.13.0",
     "react": "^19.0.0",

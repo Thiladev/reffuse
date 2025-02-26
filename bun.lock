@@ -58,9 +58,23 @@
         "reffuse": "^0.1.1",
       },
     },
+    "packages/extension-query": {
+      "name": "@reffuse/extension-query",
+      "version": "0.1.0",
+      "devDependencies": {
+        "reffuse": "workspace:*",
+      },
+      "peerDependencies": {
+        "@typed/async-data": "^0.13.1",
+        "@types/react": "^19.0.0",
+        "effect": "^3.13.0",
+        "react": "^19.0.0",
+        "reffuse": "^0.1.2",
+      },
+    },
     "packages/reffuse": {
       "name": "reffuse",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "peerDependencies": {
         "@types/react": "^19.0.0",
         "effect": "^3.13.0",
@@ -333,6 +347,8 @@
 
     "@reffuse/extension-lazyref": ["@reffuse/extension-lazyref@workspace:packages/extension-lazyref"],
 
+    "@reffuse/extension-query": ["@reffuse/extension-query@workspace:packages/extension-query"],
+
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.34.8", "", { "os": "android", "cpu": "arm" }, "sha512-q217OSE8DTp8AFHuNHXo0Y86e1wtlfVrXiAlwkIvGRQv9zbc6mE3sjIVfwI8sYUyNxwOg0j/Vm1RKM04JcWLJw=="],
 
     "@rollup/rollup-android-arm64": ["@rollup/rollup-android-arm64@4.34.8", "", { "os": "android", "cpu": "arm64" }, "sha512-Gigjz7mNWaOL9wCggvoK3jEIUUbGul656opstjaUSGC3eT0BM7PofdAJaBfPFWWkXNVAXbaQtC99OCg4sJv70Q=="],
@@ -394,6 +410,8 @@
     "@tanstack/virtual-file-routes": ["@tanstack/virtual-file-routes@1.99.0", "", {}, "sha512-XvX8bfdo4CYiCW+ItVdBfCorh3PwQFqYqd7ll+XKWiWOJpqUGIG7VlziVavARZpUySiY2VBlHadiUYS7jhgjRg=="],
 
     "@thilawyn/thilaschema": ["@thilawyn/thilaschema@0.1.4", "https://git.valverde.cloud/api/packages/Thilawyn/npm/%40thilawyn%2Fthilaschema/-/0.1.4/thilaschema-0.1.4.tgz", { "dependencies": { "remeda": "^2.17.0", "type-fest": "^4.26.1" } }, "sha512-o+lFjnRrD8N7kJtToKl+OYvVnOwaCGr1X9yMSX/8Y1n4KopOOGFSA9xqmx+MpMe3okp2Hq3Xu1aGHzFsZWxc2A=="],
+
+    "@typed/async-data": ["@typed/async-data@0.13.1", "", { "dependencies": { "@typed/lazy-ref": "^0.3.2", "effect": "^3.11.9" } }, "sha512-rKv3HQtoHeGJwZpEaTL0FAEKfqHcMr/x3GtgkE01p2tJiKjq1eVaPZYpweZEEF/zUutox7DQ14oH85x+ZpPA/Q=="],
 
     "@typed/id": ["@typed/id@0.17.1", "", { "dependencies": { "effect": "^3.11.9" } }, "sha512-+nypUUw6PJWePD1aF1CHY4995hDF3VA9c8EBtp1M+pTnyLBZQIkgKbOKamimnl4U+ZV5I3qC+3q1Y4hpmxT+zw=="],
 

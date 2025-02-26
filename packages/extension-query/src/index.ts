@@ -1,29 +1,35 @@
-import * as LazyRef from "@typed/lazy-ref"
-import { Effect, Stream } from "effect"
+import * as AsyncData from "@typed/async-data"
+import { Effect } from "effect"
 import * as React from "react"
-import { ReffuseExtension, type ReffuseHelpers, SetStateAction } from "reffuse"
+import { useState } from "react"
+import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 
 
-export const LazyRefExtension = ReffuseExtension.make(() => ({
-    useLazyRefState<A, E, R>(
+export interface UseQueryProps<A, E, R> {
+    effect(): Effect.Effect<A, E, R>
+    readonly deps?: React.DependencyList
+}
+
+export interface UseQueryResult<A, E> {
+    readonly state: AsyncData.AsyncData<A, E>
+}
+
+
+export const QueryExtension = ReffuseExtension.make(() => ({
+    useQuery<A, E, R>(
         this: ReffuseHelpers.ReffuseHelpers<R>,
-        ref: LazyRef.LazyRef<A, E, R>,
-    ): [A, React.Dispatch<React.SetStateAction<A>>] {
-        const runSync = this.useRunSync()
+        props: UseQueryProps<A, E, R>,
+    ): UseQueryResult<A, E> {
+        const [state, setState] = useState(AsyncData.noData<A, E>())
 
-        const initialState = React.useMemo(() => runSync(ref), [])
-        const [reactStateValue, setReactStateValue] = React.useState(initialState)
+        this.useFork(() => Effect.sync(() => setState(AsyncData.loading())).pipe(
+            Effect.andThen(props.effect()),
+            Effect.matchCause({
+                onSuccess: v => setState(AsyncData.success(v)),
+                onFailure: c => setState(AsyncData.failure(c)),
+            }),
+        ), props.deps)
 
-        this.useFork(() => Stream.runForEach(ref.changes, v => Effect.sync(() =>
-            setReactStateValue(v)
-        )), [ref])
-
-        const setValue = React.useCallback((setStateAction: React.SetStateAction<A>) =>
-            runSync(LazyRef.update(ref, prevState =>
-                SetStateAction.value(setStateAction, prevState)
-            )),
-        [ref])
-
-        return [reactStateValue, setValue]
-    },
+        return { state }
+    }
 }))
