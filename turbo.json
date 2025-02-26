@@ -7,6 +7,8 @@
       "outputs": ["./dist/**"]
     },
     "pack": {},
-    "publish": {}
+    "publish": {
+      "passThroughEnv": ["NODE_AUTH_TOKEN"]
+    }
   }
 }
