@@ -11,18 +11,21 @@ jobs:
     steps:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
       - name: Clone repo
         uses: actions/checkout@v4
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Build
         run: bun run build
-      - name: Publish
-        run: bun run publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish reffuse
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          package: packages/reffuse
+          token: ${{ secrets.NPM_TOKEN }}
+          registry: https://registry.npmjs.org
+      - name: Publish @reffuse/extension-lazyref
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          package: packages/extension-lazyref
+          token: ${{ secrets.NPM_TOKEN }}
+          registry: https://registry.npmjs.org
