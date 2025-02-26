@@ -8,7 +8,7 @@
     },
     "pack": {},
     "publish": {
-      "env": ["NODE_AUTH_TOKEN"]
+      "passThroughEnv": ["NODE_AUTH_TOKEN"]
     }
   }
 }
