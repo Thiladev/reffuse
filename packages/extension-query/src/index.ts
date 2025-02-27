@@ -6,7 +6,7 @@ import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 
 
 export interface UseQueryProps<A, E, R> {
-    effect(): Effect.Effect<A, E, R | Scope.Scope>
+    effect: () => Effect.Effect<A, E, R | Scope.Scope>
     readonly deps?: React.DependencyList
 }
 
