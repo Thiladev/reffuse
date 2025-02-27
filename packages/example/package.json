@@ -33,6 +33,7 @@
     "@effect/platform-browser": "^0.56.2",
     "@radix-ui/themes": "^3.2.0",
     "@reffuse/extension-lazyref": "workspace:*",
+    "@reffuse/extension-query": "workspace:*",
     "@typed/id": "^0.17.1",
     "@typed/lazy-ref": "^0.3.3",
     "effect": "^3.13.2",

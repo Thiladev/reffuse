@@ -1,12 +1,12 @@
 import * as AsyncData from "@typed/async-data"
-import { Effect } from "effect"
+import { Effect, Scope } from "effect"
 import * as React from "react"
 import { useState } from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 
 
 export interface UseQueryProps<A, E, R> {
-    effect(): Effect.Effect<A, E, R>
+    effect(): Effect.Effect<A, E, R | Scope.Scope>
     readonly deps?: React.DependencyList
 }
 

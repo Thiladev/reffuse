@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as TimeImport } from './routes/time'
 import { Route as TestsImport } from './routes/tests'
+import { Route as QueryImport } from './routes/query'
 import { Route as PromiseImport } from './routes/promise'
 import { Route as LazyrefImport } from './routes/lazyref'
 import { Route as CountImport } from './routes/count'
@@ -30,6 +31,12 @@ const TimeRoute = TimeImport.update({
 const TestsRoute = TestsImport.update({
   id: '/tests',
   path: '/tests',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const QueryRoute = QueryImport.update({
+  id: '/query',
+  path: '/query',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -102,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PromiseImport
       parentRoute: typeof rootRoute
     }
+    '/query': {
+      id: '/query'
+      path: '/query'
+      fullPath: '/query'
+      preLoaderRoute: typeof QueryImport
+      parentRoute: typeof rootRoute
+    }
     '/tests': {
       id: '/tests'
       path: '/tests'
@@ -127,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/count': typeof CountRoute
   '/lazyref': typeof LazyrefRoute
   '/promise': typeof PromiseRoute
+  '/query': typeof QueryRoute
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
 }
@@ -137,6 +152,7 @@ export interface FileRoutesByTo {
   '/count': typeof CountRoute
   '/lazyref': typeof LazyrefRoute
   '/promise': typeof PromiseRoute
+  '/query': typeof QueryRoute
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
 }
@@ -148,6 +164,7 @@ export interface FileRoutesById {
   '/count': typeof CountRoute
   '/lazyref': typeof LazyrefRoute
   '/promise': typeof PromiseRoute
+  '/query': typeof QueryRoute
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
 }
@@ -160,10 +177,19 @@ export interface FileRouteTypes {
     | '/count'
     | '/lazyref'
     | '/promise'
+    | '/query'
     | '/tests'
     | '/time'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/blank' | '/count' | '/lazyref' | '/promise' | '/tests' | '/time'
+  to:
+    | '/'
+    | '/blank'
+    | '/count'
+    | '/lazyref'
+    | '/promise'
+    | '/query'
+    | '/tests'
+    | '/time'
   id:
     | '__root__'
     | '/'
@@ -171,6 +197,7 @@ export interface FileRouteTypes {
     | '/count'
     | '/lazyref'
     | '/promise'
+    | '/query'
     | '/tests'
     | '/time'
   fileRoutesById: FileRoutesById
@@ -182,6 +209,7 @@ export interface RootRouteChildren {
   CountRoute: typeof CountRoute
   LazyrefRoute: typeof LazyrefRoute
   PromiseRoute: typeof PromiseRoute
+  QueryRoute: typeof QueryRoute
   TestsRoute: typeof TestsRoute
   TimeRoute: typeof TimeRoute
 }
@@ -192,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   CountRoute: CountRoute,
   LazyrefRoute: LazyrefRoute,
   PromiseRoute: PromiseRoute,
+  QueryRoute: QueryRoute,
   TestsRoute: TestsRoute,
   TimeRoute: TimeRoute,
 }
@@ -211,6 +240,7 @@ export const routeTree = rootRoute
         "/count",
         "/lazyref",
         "/promise",
+        "/query",
         "/tests",
         "/time"
       ]
@@ -229,6 +259,9 @@ export const routeTree = rootRoute
     },
     "/promise": {
       "filePath": "promise.tsx"
+    },
+    "/query": {
+      "filePath": "query.tsx"
     },
     "/tests": {
       "filePath": "tests.tsx"
