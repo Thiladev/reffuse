@@ -1,12 +1,11 @@
 import * as AsyncData from "@typed/async-data"
-import { Effect, Fiber, Option, Ref } from "effect"
+import { Effect, Fiber, Option, Ref, Scope } from "effect"
 import * as React from "react"
-import { useState } from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 
 
 export interface UseQueryProps<A, E, R> {
-    effect: () => Effect.Effect<A, E, R>
+    effect: () => Effect.Effect<A, E, R | Scope.Scope>
     readonly deps: React.DependencyList
 }
 
@@ -22,7 +21,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         props: UseQueryProps<A, E, R>,
     ): UseQueryResult<A, E, R> {
         const fiberRef = this.useRef(Option.none<Fiber.Fiber<void, never>>())
-        const [state, setState] = useState(AsyncData.noData<A, E>())
+        const stateRef = this.useRef(AsyncData.noData<A, E>())
 
         const interruptRunningQuery = React.useMemo(() => fiberRef.pipe(
             Effect.flatMap(Option.match({
@@ -32,32 +31,35 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         ), [])
 
         const runQuery = React.useMemo(() => props.effect().pipe(
-            Effect.matchCause({
-                onSuccess: v => setState(AsyncData.success(v)),
-                onFailure: c => setState(AsyncData.failure(c)),
+            Effect.matchCauseEffect({
+                onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
+                onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
             })
         ), props.deps)
 
         const refresh = React.useMemo(() => interruptRunningQuery.pipe(
-            Effect.andThen(Effect.sync(() => setState(prev =>
+            Effect.andThen(Ref.update(stateRef, prev =>
                 AsyncData.isSuccess(prev) || AsyncData.isFailure(prev)
                     ? AsyncData.refreshing(prev)
                     : AsyncData.loading()
-            ))),
+            )),
             Effect.andThen(runQuery),
+            Effect.scoped,
             Effect.forkDaemon,
 
             Effect.flatMap(fiber => Ref.set(fiberRef, Option.some(fiber))),
         ), [runQuery])
 
         this.useEffect(() => interruptRunningQuery.pipe(
-            Effect.andThen(Effect.sync(() => setState(AsyncData.loading()))),
+            Effect.andThen(Ref.set(stateRef, AsyncData.loading())),
             Effect.andThen(runQuery),
+            Effect.scoped,
             Effect.forkDaemon,
 
             Effect.flatMap(fiber => Ref.set(fiberRef, Option.some(fiber))),
         ), [runQuery])
 
+        const [state] = this.useRefState(stateRef)
         return { state, refresh }
     }
 }))
