@@ -16,7 +16,7 @@ const Result = Schema.Tuple(Schema.String)
 function RouteComponent() {
     const runSync = R.useRunSync()
 
-    const { state, refresh } = R.useQuery({
+    const { state, triggerRefresh } = R.useQuery({
         effect: () => HttpClient.get("https://www.uuidtools.com/api/generate/v4").pipe(
             HttpClient.withTracerPropagation(false),
             Effect.flatMap(res => res.json),
@@ -26,11 +26,14 @@ function RouteComponent() {
         deps: [],
     })
 
+    const [queryState] = R.useRefState(state)
+
+
     return (
         <Container>
             <Flex direction="column" align="center" gap="2">
                 <Text>
-                    {AsyncData.match(state, {
+                    {AsyncData.match(queryState, {
                         NoData: () => "No data yet",
                         Loading: () => "Loading...",
                         Success: (value, { isRefreshing, isOptimistic }) =>
@@ -40,7 +43,7 @@ function RouteComponent() {
                     })}
                 </Text>
 
-                <Button onClick={() => runSync(refresh)}>Refresh</Button>
+                <Button onClick={() => runSync(triggerRefresh)}>Refresh</Button>
             </Flex>
         </Container>
     )

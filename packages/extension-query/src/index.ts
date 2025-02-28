@@ -1,5 +1,5 @@
 import * as AsyncData from "@typed/async-data"
-import { Effect, Fiber, Option, Ref, Scope } from "effect"
+import { Effect, Fiber, Option, Ref, Scope, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 
@@ -9,9 +9,9 @@ export interface UseQueryProps<A, E, R> {
     readonly deps: React.DependencyList
 }
 
-export interface UseQueryResult<A, E, R> {
-    readonly state: AsyncData.AsyncData<A, E>
-    readonly refresh: Effect.Effect<void, never, R>
+export interface UseQueryResult<A, E> {
+    readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
+    readonly triggerRefresh: Effect.Effect<void>
 }
 
 
@@ -19,7 +19,9 @@ export const QueryExtension = ReffuseExtension.make(() => ({
     useQuery<A, E, R>(
         this: ReffuseHelpers.ReffuseHelpers<R>,
         props: UseQueryProps<A, E, R>,
-    ): UseQueryResult<A, E, R> {
+    ): UseQueryResult<A, E> {
+        const context = this.useContext()
+
         const fiberRef = this.useRef(Option.none<Fiber.Fiber<void, never>>())
         const stateRef = this.useRef(AsyncData.noData<A, E>())
 
@@ -28,27 +30,28 @@ export const QueryExtension = ReffuseExtension.make(() => ({
                 onSome: Fiber.interrupt,
                 onNone: () => Effect.void,
             }))
-        ), [])
+        ), [fiberRef])
 
         const runQuery = React.useMemo(() => props.effect().pipe(
             Effect.matchCauseEffect({
                 onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
                 onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
             })
-        ), props.deps)
+        ), [...props.deps, stateRef])
 
-        const refresh = React.useMemo(() => interruptRunningQuery.pipe(
+        const triggerRefresh = React.useMemo(() => interruptRunningQuery.pipe(
             Effect.andThen(Ref.update(stateRef, prev =>
                 AsyncData.isSuccess(prev) || AsyncData.isFailure(prev)
                     ? AsyncData.refreshing(prev)
                     : AsyncData.loading()
             )),
             Effect.andThen(runQuery),
+            Effect.provide(context),
             Effect.scoped,
             Effect.forkDaemon,
 
             Effect.flatMap(fiber => Ref.set(fiberRef, Option.some(fiber))),
-        ), [runQuery])
+        ), [interruptRunningQuery, stateRef, runQuery, context, fiberRef])
 
         this.useEffect(() => interruptRunningQuery.pipe(
             Effect.andThen(Ref.set(stateRef, AsyncData.loading())),
@@ -57,9 +60,8 @@ export const QueryExtension = ReffuseExtension.make(() => ({
             Effect.forkDaemon,
 
             Effect.flatMap(fiber => Ref.set(fiberRef, Option.some(fiber))),
-        ), [runQuery])
+        ), [stateRef, runQuery, fiberRef])
 
-        const [state] = this.useRefState(stateRef)
-        return { state, refresh }
+        return React.useMemo(() => ({ state: stateRef, triggerRefresh }), [stateRef, triggerRefresh])
     }
 }))
