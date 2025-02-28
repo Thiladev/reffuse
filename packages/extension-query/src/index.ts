@@ -64,7 +64,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
             Effect.forkDaemon,
 
             Effect.flatMap(fiber => Ref.set(fiberRef, Option.some(fiber))),
-        ), [stateRef, fiberRef])
+        ), [...props.deps, stateRef, fiberRef])
 
         return React.useMemo(() => ({ state: stateRef, triggerRefresh }), [stateRef, triggerRefresh])
     }
