@@ -1,4 +1,4 @@
-import { Effect, Fiber, Option, type Ref, type SubscriptionRef } from "effect"
+import { Effect, Fiber, Option, SubscriptionRef, type Ref } from "effect"
 import * as AsyncData from "@typed/async-data"
 
 
@@ -7,33 +7,29 @@ export interface QueryRunner<A, E, R> {
     readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.Fiber<void>>>
 
     readonly interrupt: Effect.Effect<void>
-    readonly fetch: Effect.Effect<void>
-    readonly refetch: Effect.Effect<void>
+    fetch(effect: Effect.Effect<A, E, R>): Effect.Effect<void>
+    // refetch(effect: Effect.Effect<A, E, R>): Effect.Effect<void>
 }
 
+export const make = Effect.fnUntraced(function*<A, E, R>(): Effect.Effect<QueryRunner<A, E, R>> {
+    const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, E>())
+    const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.Fiber<void>>())
 
-export class Query<A, E, R> {
-    constructor(
-        private readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>,
-        private readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.Fiber<void>>>,
-    ) {}
+    const interrupt = fiberRef.pipe(
+        Effect.flatMap(Option.match({
+            onSome: Fiber.interrupt,
+            onNone: () => Effect.void,
+        }))
+    )
 
-    private run(effect: Effect.Effect<A, E, R>) {
+    const fetch = Effect.fnUntraced(function*(effect: Effect.Effect<A, E, R>) {
 
-    }
-
-    // interrupt(): Effect.Effect<void> {
-    //     return this.fiberRef.pipe(
-    //         Effect.flatMap(Option.match({
-    //             onSome: Fiber.interrupt,
-    //             onNone: () => Effect.void,
-    //         }))
-    //     )
-    // }
-
-
-
-    fetch = Effect.gen(this, function*() {
-        yield* this.interrupt()
     })
-}
+
+    return {
+        stateRef,
+        fiberRef,
+        interrupt,
+        fetch,
+    }
+})
