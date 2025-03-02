@@ -16,12 +16,13 @@ const Result = Schema.Tuple(Schema.String)
 function RouteComponent() {
     const runSync = R.useRunSync()
 
-    const { state, triggerRefresh } = R.useQuery({
+    const { state, refresh } = R.useQuery({
         effect: () => HttpClient.get("https://www.uuidtools.com/api/generate/v4").pipe(
             HttpClient.withTracerPropagation(false),
             Effect.flatMap(res => res.json),
             Effect.flatMap(Schema.decodeUnknown(Result)),
             Effect.delay("500 millis"),
+            Effect.scoped,
         ),
         deps: [],
     })
@@ -43,7 +44,7 @@ function RouteComponent() {
                     })}
                 </Text>
 
-                <Button onClick={() => runSync(triggerRefresh)}>Refresh</Button>
+                <Button onClick={() => runSync(refresh)}>Refresh</Button>
             </Flex>
         </Container>
     )
