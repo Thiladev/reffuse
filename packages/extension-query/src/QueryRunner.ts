@@ -39,6 +39,7 @@ export const make = <A, E, R>(
             onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
             onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
         }),
+        Effect.andThen(Ref.set(fiberRef, Option.none())),
         Effect.provide(context),
         Effect.forkDaemon,
 
@@ -58,6 +59,7 @@ export const make = <A, E, R>(
             onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
             onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
         }),
+        Effect.andThen(Ref.set(fiberRef, Option.none())),
         Effect.provide(context),
         Effect.forkDaemon,
 
