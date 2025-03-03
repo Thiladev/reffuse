@@ -1,5 +1,5 @@
 import * as AsyncData from "@typed/async-data"
-import { Effect, Fiber, flow, identity, Option, Ref, SubscriptionRef } from "effect"
+import { Effect, Fiber, identity, Option, Ref, SubscriptionRef } from "effect"
 
 
 export interface QueryRunner<A, E, R> {
@@ -24,9 +24,17 @@ export const make = <A, E, R>(
 
     const interrupt = fiberRef.pipe(
         Effect.flatMap(Option.match({
-            onSome: flow(
-                Fiber.interrupt,
-                Effect.andThen(Ref.set(fiberRef, Option.none())),
+            onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
+                Effect.andThen(Fiber.interrupt(fiber))
+            ),
+            onNone: () => Effect.void,
+        }))
+    )
+
+    const forkInterrupt = fiberRef.pipe(
+        Effect.flatMap(Option.match({
+            onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
+                Effect.andThen(Fiber.interruptFork(fiber))
             ),
             onNone: () => Effect.void,
         }))

@@ -26,11 +26,11 @@ declare module "@tanstack/react-router" {
 
 
 createRoot(document.getElementById("root")!).render(
-    <StrictMode>
+    // <StrictMode>
         <ReffuseRuntime.Provider>
             <GlobalContext.Provider layer={layer}>
                 <RouterProvider router={router} />
             </GlobalContext.Provider>
         </ReffuseRuntime.Provider>
-    </StrictMode>
+    // </StrictMode>
 )

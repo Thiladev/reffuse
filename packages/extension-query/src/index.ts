@@ -25,7 +25,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
 
         this.useFork(() => Stream.runForEach(runner.fiberRef.changes, Console.log), [])
 
-        this.useFork(() => Effect.addFinalizer(() => runner.interrupt).pipe(
+        this.useEffect(() => Effect.addFinalizer(() => Effect.void).pipe(
             Effect.andThen(Ref.set(runner.queryRef, props.effect())),
             Effect.andThen(runner.forkFetch),
         ), [runner, ...props.deps])
