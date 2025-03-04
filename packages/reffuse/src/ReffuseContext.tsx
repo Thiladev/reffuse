@@ -97,15 +97,15 @@ export function useMergeAll<T extends Array<unknown>>(
     return React.useMemo(() => Context.mergeAll(...values), values)
 }
 
-export function useMergeAllLayers<T extends Array.NonEmptyArray<unknown>>(
+export function useMergeAllLayers<T extends Array<unknown>>(
     ...contexts: [...{ [K in keyof T]: ReffuseContext<T[K]> }]
 ): Layer.Layer<T[number]> {
-    const values = Array.map(
-        contexts as Array.NonEmptyArray<ReffuseContext<T[number]>>,
-        v => React.use(v.Context),
-    )
+    const values = contexts.map(v => React.use(v.Context))
 
-    return React.useMemo(() => Layer.mergeAll(
-        ...Array.map(values, context => Layer.effectContext(Effect.succeed(context)))
-    ), values)
+    return React.useMemo(() => Array.isNonEmptyArray(values)
+        ? Layer.mergeAll(
+            ...Array.map(values, context => Layer.effectContext(Effect.succeed(context)))
+        )
+        : Layer.empty as Layer.Layer<T[number]>,
+    values)
 }
