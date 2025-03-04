@@ -1,5 +1,6 @@
+import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
-import { Effect, Fiber, identity, Option, Ref, SubscriptionRef } from "effect"
+import { Effect, Fiber, identity, Option, Ref, Stream, SubscriptionRef } from "effect"
 
 
 export interface QueryRunner<A, E, R> {
@@ -10,6 +11,8 @@ export interface QueryRunner<A, E, R> {
     readonly forkInterrupt: Effect.Effect<Fiber.RuntimeFiber<void>>
     readonly forkFetch: Effect.Effect<Fiber.RuntimeFiber<void>>
     readonly forkRefresh: Effect.Effect<Fiber.RuntimeFiber<void>>
+
+    readonly refreshOnWindowFocus: Effect.Effect<void>
 }
 
 
@@ -91,6 +94,11 @@ export const make = <A, E, R>(
         Effect.forkDaemon,
     )
 
+    const refreshOnWindowFocus = Stream.runForEach(
+        BrowserStream.fromEventListenerWindow("focus"),
+        () => forkRefresh,
+    )
+
     return {
         queryRef,
         stateRef,
@@ -99,5 +107,7 @@ export const make = <A, E, R>(
         forkInterrupt,
         forkFetch,
         forkRefresh,
+
+        refreshOnWindowFocus,
     }
 })
