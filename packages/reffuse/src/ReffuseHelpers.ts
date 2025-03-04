@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, Pipeable, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, Layer, Pipeable, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -21,6 +21,10 @@ export abstract class ReffuseHelpers<R> {
 
     useContext<R>(this: ReffuseHelpers<R>): Context.Context<R> {
         return ReffuseContext.useMergeAll(...this.constructor.contexts)
+    }
+
+    useLayer<R>(this: ReffuseHelpers<R>): Layer.Layer<R> {
+        return ReffuseContext.useMergeAllLayers(...this.constructor.contexts)
     }
 
 
