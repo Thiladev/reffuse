@@ -13,12 +13,16 @@ export interface QueryRunner<A, E, R> {
 }
 
 
+export interface MakeProps<A, E, R> {
+    readonly query: Effect.Effect<A, E, R>
+}
+
 export const make = <A, E, R>(
-    query: Effect.Effect<A, E, R>
+    props: MakeProps<A, E, R>
 ): Effect.Effect<QueryRunner<A, E, R>, never, R> => Effect.gen(function*() {
     const context = yield* Effect.context<R>()
 
-    const queryRef = yield* SubscriptionRef.make(query)
+    const queryRef = yield* SubscriptionRef.make(props.query)
     const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, E>())
     const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.RuntimeFiber<void>>())
 

@@ -17,7 +17,7 @@ function RouteComponent() {
     const runSync = R.useRunSync()
 
     const { state, refresh } = R.useQuery({
-        effect: () => Console.log("Querying...").pipe(
+        query: () => Console.log("Querying...").pipe(
             Effect.andThen(Effect.sleep("500 millis")),
             Effect.andThen(HttpClient.get("https://www.uuidtools.com/api/generate/v4")),
             HttpClient.withTracerPropagation(false),
@@ -25,7 +25,7 @@ function RouteComponent() {
             Effect.flatMap(Schema.decodeUnknown(Result)),
             Effect.scoped,
         ),
-        deps: [],
+        key: [],
     })
 
     const [queryState] = R.useRefState(state)
