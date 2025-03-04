@@ -3,7 +3,7 @@ import { HttpClient } from "@effect/platform"
 import { Button, Container, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import * as AsyncData from "@typed/async-data"
-import { Effect, Schema } from "effect"
+import { Console, Effect, Schema } from "effect"
 
 
 export const Route = createFileRoute("/query")({
@@ -17,11 +17,12 @@ function RouteComponent() {
     const runSync = R.useRunSync()
 
     const { state, refresh } = R.useQuery({
-        effect: () => HttpClient.get("https://www.uuidtools.com/api/generate/v4").pipe(
+        effect: () => Console.log("Querying...").pipe(
+            Effect.andThen(Effect.sleep("500 millis")),
+            Effect.andThen(HttpClient.get("https://www.uuidtools.com/api/generate/v4")),
             HttpClient.withTracerPropagation(false),
             Effect.flatMap(res => res.json),
             Effect.flatMap(Schema.decodeUnknown(Result)),
-            Effect.delay("500 millis"),
             Effect.scoped,
         ),
         deps: [],

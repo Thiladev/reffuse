@@ -20,6 +20,7 @@ function Root() {
                     <Link to="/count">Count</Link>
                     <Link to="/tests">Tests</Link>
                     <Link to="/promise">Promise</Link>
+                    <Link to="/query">Query</Link>
                     <Link to="/blank">Blank</Link>
                 </Flex>
             </Container>
