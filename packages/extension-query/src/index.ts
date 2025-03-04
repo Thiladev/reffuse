@@ -1,5 +1,5 @@
 import * as AsyncData from "@typed/async-data"
-import { Console, Effect, Ref, Stream, SubscriptionRef } from "effect"
+import { Effect, Fiber, Ref, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
@@ -12,7 +12,7 @@ export interface UseQueryProps<A, E, R> {
 
 export interface UseQueryResult<A, E> {
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-    readonly refresh: Effect.Effect<void>
+    readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void>>
 }
 
 
@@ -23,16 +23,14 @@ export const QueryExtension = ReffuseExtension.make(() => ({
     ): UseQueryResult<A, E> {
         const runner = this.useMemo(() => QueryRunner.make(props.effect()), [])
 
-        this.useFork(() => Stream.runForEach(runner.fiberRef.changes, Console.log), [])
-
-        this.useEffect(() => Effect.addFinalizer(() => Effect.void).pipe(
+        this.useEffect(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
             Effect.andThen(Ref.set(runner.queryRef, props.effect())),
             Effect.andThen(runner.forkFetch),
         ), [runner, ...props.deps])
 
         return React.useMemo(() => ({
             state: runner.stateRef,
-            refresh: runner.forkRefetch,
+            refresh: runner.forkRefresh,
         }), [runner])
     }
 }))
