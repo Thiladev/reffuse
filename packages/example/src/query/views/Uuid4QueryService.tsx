@@ -7,15 +7,15 @@ import { Uuid4Query } from "../services"
 export function Uuid4QueryService() {
     const runSync = R.useRunSync()
 
-    const { state, refresh } = R.useMemo(() => Uuid4Query.Uuid4Query, [])
-    const [queryState] = R.useRefState(state)
+    const query = R.useMemo(() => Uuid4Query.Uuid4Query, [])
+    const [state] = R.useRefState(query.state)
 
 
     return (
         <Container>
             <Flex direction="column" align="center" gap="2">
                 <Text>
-                    {AsyncData.match(queryState, {
+                    {AsyncData.match(state, {
                         NoData: () => "No data yet",
                         Loading: () => "Loading...",
                         Success: (value, { isRefreshing, isOptimistic }) =>
@@ -25,7 +25,7 @@ export function Uuid4QueryService() {
                     })}
                 </Text>
 
-                <Button onClick={() => runSync(refresh)}>Refresh</Button>
+                <Button onClick={() => runSync(query.refresh)}>Refresh</Button>
             </Flex>
         </Container>
     )
