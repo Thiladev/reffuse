@@ -1,6 +1,6 @@
 import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
-import { Console, Effect, Fiber, Ref, Stream, SubscriptionRef } from "effect"
+import { Effect, Fiber, Ref, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
@@ -31,8 +31,8 @@ export const QueryExtension = ReffuseExtension.make(() => ({
 
         this.useFork(() => Stream.runForEach(
             BrowserStream.fromEventListenerWindow("focus"),
-            () => Console.log("focus!"),
-        ), [])
+            () => runner.forkRefresh,
+        ), [runner])
 
         return React.useMemo(() => ({
             state: runner.stateRef,
