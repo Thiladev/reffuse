@@ -28,16 +28,6 @@ function RouteComponent() {
             Effect.flatMap(Schema.decodeUnknown(Result)),
             Effect.scoped,
         ),
-        // query: () => Console.log(`Creating ${ count } IDs...`).pipe(
-        //     Effect.andThen(Effect.sleep("500 millis")),
-        //     Effect.andThen(pipe(
-        //         Array.range(1, count),
-        //         Array.map(() => makeUuid4),
-        //         Effect.all,
-        //     )),
-        //     Effect.flatMap(Schema.decode(Result)),
-        //     Effect.provide(GetRandomValues.CryptoRandom),
-        // ),
         key: ["uuid4", count],
     })
 
