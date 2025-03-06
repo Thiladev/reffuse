@@ -53,7 +53,8 @@ export const make = <A, E, R>(
     const forkFetch = interrupt.pipe(
         Effect.andThen(
             Ref.set(stateRef, AsyncData.loading()).pipe(
-                Effect.andThen(queryRef.pipe(Effect.flatMap(identity))),
+                Effect.andThen(queryRef),
+                Effect.flatMap(identity),
                 Effect.matchCauseEffect({
                     onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
                     onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
@@ -83,7 +84,8 @@ export const make = <A, E, R>(
                     return AsyncData.refreshing(previous.previous)
                 return AsyncData.loading()
             }).pipe(
-                Effect.andThen(queryRef.pipe(Effect.flatMap(identity))),
+                Effect.andThen(queryRef),
+                Effect.flatMap(identity),
                 Effect.matchCauseEffect({
                     onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
                     onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
