@@ -1,5 +1,5 @@
 import * as AsyncData from "@typed/async-data"
-import { Effect, Fiber, Ref, SubscriptionRef } from "effect"
+import { Effect, ExecutionStrategy, Fiber, Ref, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
@@ -27,14 +27,10 @@ export const QueryExtension = ReffuseExtension.make(() => ({
             query: props.query()
         }), [])
 
-        React.useEffect(() => {
-            Ref.set(runner.queryRef, props.query()).pipe(
-                Effect.andThen(runner.forkFetch),
-                runSync,
-            )
-
-            return () => { runSync(runner.forkInterrupt) }
-        }, [runner, ...props.key])
+        this.useEffect(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
+            Effect.andThen(Ref.set(runner.queryRef, props.query())),
+            Effect.andThen(runner.forkFetch),
+        ), [runner, ...props.key], { finalizerExecutionStrategy: ExecutionStrategy.parallel })
 
         this.useFork(() => runner.refreshOnWindowFocus, [runner])
 
