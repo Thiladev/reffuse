@@ -21,14 +21,20 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         this: ReffuseHelpers.ReffuseHelpers<R>,
         props: UseQueryProps<A, E, R>,
     ): UseQueryResult<A, E> {
+        const runSync = this.useRunSync()
+
         const runner = this.useMemo(() => QueryRunner.make({
             query: props.query()
         }), [])
 
-        this.useEffect(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
-            Effect.andThen(Ref.set(runner.queryRef, props.query())),
-            Effect.andThen(runner.forkFetch),
-        ), [runner, ...props.key])
+        React.useEffect(() => {
+            Ref.set(runner.queryRef, props.query()).pipe(
+                Effect.andThen(runner.forkFetch),
+                runSync,
+            )
+
+            return () => { runSync(runner.forkInterrupt) }
+        }, [runner, ...props.key])
 
         this.useFork(() => runner.refreshOnWindowFocus, [runner])
 

@@ -31,17 +31,28 @@ export const make = <A, E, R>(
 
     const interrupt = fiberRef.pipe(
         Effect.flatMap(Option.match({
-            onSome: Fiber.interrupt,
+            onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
+                Effect.andThen(Fiber.interrupt(fiber))
+            ),
             onNone: () => Effect.void,
         }))
     )
 
-    const forkInterrupt = Effect.forkDaemon(interrupt)
+    const forkInterrupt = fiberRef.pipe(
+        Effect.flatMap(Option.match({
+            onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
+                Effect.andThen(Fiber.interrupt(fiber).pipe(
+                    Effect.asVoid,
+                    Effect.forkDaemon,
+                ))
+            ),
+            onNone: () => Effect.forkDaemon(Effect.void),
+        }))
+    )
 
     const forkFetch = interrupt.pipe(
         Effect.andThen(
-            Effect.addFinalizer(() => Ref.set(fiberRef, Option.none())).pipe(
-                Effect.andThen(Ref.set(stateRef, AsyncData.loading())),
+            Ref.set(stateRef, AsyncData.loading()).pipe(
                 Effect.andThen(queryRef.pipe(Effect.flatMap(identity))),
                 Effect.matchCauseEffect({
                     onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
@@ -49,14 +60,14 @@ export const make = <A, E, R>(
                 }),
 
                 Effect.provide(context),
-                Effect.scoped,
                 Effect.fork,
             )
         ),
 
         Effect.flatMap(fiber =>
             Ref.set(fiberRef, Option.some(fiber)).pipe(
-                Effect.andThen(Fiber.join(fiber))
+                Effect.andThen(Fiber.join(fiber)),
+                Effect.andThen(Ref.set(fiberRef, Option.none())),
             )
         ),
 
@@ -65,14 +76,13 @@ export const make = <A, E, R>(
 
     const forkRefresh = interrupt.pipe(
         Effect.andThen(
-            Effect.addFinalizer(() => Ref.set(fiberRef, Option.none())).pipe(
-                Effect.andThen(Ref.update(stateRef, previous => {
-                    if (AsyncData.isSuccess(previous) || AsyncData.isFailure(previous))
-                        return AsyncData.refreshing(previous)
-                    if (AsyncData.isRefreshing(previous))
-                        return AsyncData.refreshing(previous.previous)
-                    return AsyncData.loading()
-                })),
+            Ref.update(stateRef, previous => {
+                if (AsyncData.isSuccess(previous) || AsyncData.isFailure(previous))
+                    return AsyncData.refreshing(previous)
+                if (AsyncData.isRefreshing(previous))
+                    return AsyncData.refreshing(previous.previous)
+                return AsyncData.loading()
+            }).pipe(
                 Effect.andThen(queryRef.pipe(Effect.flatMap(identity))),
                 Effect.matchCauseEffect({
                     onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
@@ -80,14 +90,14 @@ export const make = <A, E, R>(
                 }),
 
                 Effect.provide(context),
-                Effect.scoped,
                 Effect.fork,
             )
         ),
 
         Effect.flatMap(fiber =>
             Ref.set(fiberRef, Option.some(fiber)).pipe(
-                Effect.andThen(Fiber.join(fiber))
+                Effect.andThen(Fiber.join(fiber)),
+                Effect.andThen(Ref.set(fiberRef, Option.none())),
             )
         ),
 
