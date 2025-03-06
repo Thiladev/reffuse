@@ -1,18 +1,22 @@
 import * as AsyncData from "@typed/async-data"
-import { Effect, ExecutionStrategy, Fiber, Ref, SubscriptionRef } from "effect"
+import { Context, Effect, ExecutionStrategy, Fiber, Layer, Ref, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
+import * as QueryService from "./QueryService.js"
 
 
 export interface UseQueryProps<A, E, R> {
-    readonly query: () => Effect.Effect<A, E, R>
     readonly key: React.DependencyList
+    readonly query: () => Effect.Effect<A, E, R>
 }
 
 export interface UseQueryResult<A, E> {
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void>>
+    readonly layer: <Self, Id extends string>(
+        tag: Context.TagClass<Self, Id, QueryService.QueryService<A, E>>
+    ) => Layer.Layer<Self>
 }
 
 
@@ -35,6 +39,11 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         return React.useMemo(() => ({
             state: runner.stateRef,
             refresh: runner.forkRefresh,
+
+            layer: tag => Layer.succeed(tag, {
+                state: runner.stateRef,
+                refresh: runner.forkRefresh,
+            }),
         }), [runner])
     }
 }))

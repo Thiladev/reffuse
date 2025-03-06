@@ -13,12 +13,12 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as TimeImport } from './routes/time'
 import { Route as TestsImport } from './routes/tests'
-import { Route as QueryImport } from './routes/query'
 import { Route as PromiseImport } from './routes/promise'
 import { Route as LazyrefImport } from './routes/lazyref'
 import { Route as CountImport } from './routes/count'
 import { Route as BlankImport } from './routes/blank'
 import { Route as IndexImport } from './routes/index'
+import { Route as QueryUsequeryImport } from './routes/query/usequery'
 import { Route as QueryServiceImport } from './routes/query/service'
 
 // Create/Update Routes
@@ -32,12 +32,6 @@ const TimeRoute = TimeImport.update({
 const TestsRoute = TestsImport.update({
   id: '/tests',
   path: '/tests',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const QueryRoute = QueryImport.update({
-  id: '/query',
-  path: '/query',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -71,10 +65,16 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const QueryUsequeryRoute = QueryUsequeryImport.update({
+  id: '/query/usequery',
+  path: '/query/usequery',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const QueryServiceRoute = QueryServiceImport.update({
-  id: '/service',
-  path: '/service',
-  getParentRoute: () => QueryRoute,
+  id: '/query/service',
+  path: '/query/service',
+  getParentRoute: () => rootRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -116,13 +116,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PromiseImport
       parentRoute: typeof rootRoute
     }
-    '/query': {
-      id: '/query'
-      path: '/query'
-      fullPath: '/query'
-      preLoaderRoute: typeof QueryImport
-      parentRoute: typeof rootRoute
-    }
     '/tests': {
       id: '/tests'
       path: '/tests'
@@ -139,25 +132,22 @@ declare module '@tanstack/react-router' {
     }
     '/query/service': {
       id: '/query/service'
-      path: '/service'
+      path: '/query/service'
       fullPath: '/query/service'
       preLoaderRoute: typeof QueryServiceImport
-      parentRoute: typeof QueryImport
+      parentRoute: typeof rootRoute
+    }
+    '/query/usequery': {
+      id: '/query/usequery'
+      path: '/query/usequery'
+      fullPath: '/query/usequery'
+      preLoaderRoute: typeof QueryUsequeryImport
+      parentRoute: typeof rootRoute
     }
   }
 }
 
 // Create and export the route tree
-
-interface QueryRouteChildren {
-  QueryServiceRoute: typeof QueryServiceRoute
-}
-
-const QueryRouteChildren: QueryRouteChildren = {
-  QueryServiceRoute: QueryServiceRoute,
-}
-
-const QueryRouteWithChildren = QueryRoute._addFileChildren(QueryRouteChildren)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,10 +155,10 @@ export interface FileRoutesByFullPath {
   '/count': typeof CountRoute
   '/lazyref': typeof LazyrefRoute
   '/promise': typeof PromiseRoute
-  '/query': typeof QueryRouteWithChildren
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
   '/query/service': typeof QueryServiceRoute
+  '/query/usequery': typeof QueryUsequeryRoute
 }
 
 export interface FileRoutesByTo {
@@ -177,10 +167,10 @@ export interface FileRoutesByTo {
   '/count': typeof CountRoute
   '/lazyref': typeof LazyrefRoute
   '/promise': typeof PromiseRoute
-  '/query': typeof QueryRouteWithChildren
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
   '/query/service': typeof QueryServiceRoute
+  '/query/usequery': typeof QueryUsequeryRoute
 }
 
 export interface FileRoutesById {
@@ -190,10 +180,10 @@ export interface FileRoutesById {
   '/count': typeof CountRoute
   '/lazyref': typeof LazyrefRoute
   '/promise': typeof PromiseRoute
-  '/query': typeof QueryRouteWithChildren
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
   '/query/service': typeof QueryServiceRoute
+  '/query/usequery': typeof QueryUsequeryRoute
 }
 
 export interface FileRouteTypes {
@@ -204,10 +194,10 @@ export interface FileRouteTypes {
     | '/count'
     | '/lazyref'
     | '/promise'
-    | '/query'
     | '/tests'
     | '/time'
     | '/query/service'
+    | '/query/usequery'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -215,10 +205,10 @@ export interface FileRouteTypes {
     | '/count'
     | '/lazyref'
     | '/promise'
-    | '/query'
     | '/tests'
     | '/time'
     | '/query/service'
+    | '/query/usequery'
   id:
     | '__root__'
     | '/'
@@ -226,10 +216,10 @@ export interface FileRouteTypes {
     | '/count'
     | '/lazyref'
     | '/promise'
-    | '/query'
     | '/tests'
     | '/time'
     | '/query/service'
+    | '/query/usequery'
   fileRoutesById: FileRoutesById
 }
 
@@ -239,9 +229,10 @@ export interface RootRouteChildren {
   CountRoute: typeof CountRoute
   LazyrefRoute: typeof LazyrefRoute
   PromiseRoute: typeof PromiseRoute
-  QueryRoute: typeof QueryRouteWithChildren
   TestsRoute: typeof TestsRoute
   TimeRoute: typeof TimeRoute
+  QueryServiceRoute: typeof QueryServiceRoute
+  QueryUsequeryRoute: typeof QueryUsequeryRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -250,9 +241,10 @@ const rootRouteChildren: RootRouteChildren = {
   CountRoute: CountRoute,
   LazyrefRoute: LazyrefRoute,
   PromiseRoute: PromiseRoute,
-  QueryRoute: QueryRouteWithChildren,
   TestsRoute: TestsRoute,
   TimeRoute: TimeRoute,
+  QueryServiceRoute: QueryServiceRoute,
+  QueryUsequeryRoute: QueryUsequeryRoute,
 }
 
 export const routeTree = rootRoute
@@ -270,9 +262,10 @@ export const routeTree = rootRoute
         "/count",
         "/lazyref",
         "/promise",
-        "/query",
         "/tests",
-        "/time"
+        "/time",
+        "/query/service",
+        "/query/usequery"
       ]
     },
     "/": {
@@ -290,12 +283,6 @@ export const routeTree = rootRoute
     "/promise": {
       "filePath": "promise.tsx"
     },
-    "/query": {
-      "filePath": "query.tsx",
-      "children": [
-        "/query/service"
-      ]
-    },
     "/tests": {
       "filePath": "tests.tsx"
     },
@@ -303,8 +290,10 @@ export const routeTree = rootRoute
       "filePath": "time.tsx"
     },
     "/query/service": {
-      "filePath": "query/service.tsx",
-      "parent": "/query"
+      "filePath": "query/service.tsx"
+    },
+    "/query/usequery": {
+      "filePath": "query/usequery.tsx"
     }
   }
 }

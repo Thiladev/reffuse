@@ -7,7 +7,7 @@ import { Array, Console, Effect, flow, Option, Schema } from "effect"
 import { useState } from "react"
 
 
-export const Route = createFileRoute("/query")({
+export const Route = createFileRoute("/query/usequery")({
     component: RouteComponent
 })
 
@@ -20,6 +20,7 @@ function RouteComponent() {
     const [count, setCount] = useState(1)
 
     const query = R.useQuery({
+        key: ["uuid4", count],
         query: () => Console.log(`Querying ${ count } IDs...`).pipe(
             Effect.andThen(Effect.sleep("500 millis")),
             Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
@@ -28,7 +29,6 @@ function RouteComponent() {
             Effect.flatMap(Schema.decodeUnknown(Result)),
             Effect.scoped,
         ),
-        key: ["uuid4", count],
     })
 
     const [state] = R.useRefState(query.state)

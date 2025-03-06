@@ -3,7 +3,7 @@ import { QueryService } from "@reffuse/extension-query"
 import { Console, Effect, ParseResult, Schema } from "effect"
 
 
-export const Result = Schema.Tuple(Schema.String)
+export const Result = Schema.Array(Schema.String)
 
 export class Uuid4Query extends QueryService.Tag("Uuid4Query")<Uuid4Query,
     typeof Result.Type,
