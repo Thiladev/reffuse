@@ -21,8 +21,6 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         this: ReffuseHelpers.ReffuseHelpers<R>,
         props: UseQueryProps<A, E, R>,
     ): UseQueryResult<A, E> {
-        const runSync = this.useRunSync()
-
         const runner = this.useMemo(() => QueryRunner.make({
             query: props.query()
         }), [])
