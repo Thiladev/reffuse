@@ -1,5 +1,5 @@
 import * as AsyncData from "@typed/async-data"
-import { Context, Effect, ExecutionStrategy, Fiber, Layer, Ref, SubscriptionRef } from "effect"
+import { Array, Context, Effect, ExecutionStrategy, Fiber, Layer, Ref, Schema, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
@@ -7,8 +7,9 @@ import * as QueryService from "./QueryService.js"
 
 
 export interface UseQueryProps<A, E, R> {
-    readonly key: React.DependencyList
+    readonly key: Stream.Stream<readonly unknown[]> | readonly unknown[]
     readonly query: () => Effect.Effect<A, E, R>
+    readonly refreshOnWindowFocus?: boolean
 }
 
 export interface UseQueryResult<A, E> {
@@ -29,12 +30,26 @@ export const QueryExtension = ReffuseExtension.make(() => ({
             query: props.query()
         }), [])
 
-        this.useEffect(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
-            Effect.andThen(Ref.set(runner.queryRef, props.query())),
-            Effect.andThen(runner.forkFetch),
-        ), [runner, ...props.key], { finalizerExecutionStrategy: ExecutionStrategy.parallel })
+        const key = React.useMemo(() =>
+            (Array.isArray as (self: unknown) => self is readonly unknown[])(props.key)
+                ? props.key
+                : props.key,
+        [props.key])
 
-        this.useFork(() => runner.refreshOnWindowFocus, [runner])
+        this.useEffect(
+            () => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
+                Effect.andThen(Ref.set(runner.queryRef, props.query())),
+                Effect.andThen(runner.forkFetch),
+            ),
+
+            [runner, ...(Array.isArray(props.key) ? props.key : [])],
+            { finalizerExecutionStrategy: ExecutionStrategy.parallel },
+        )
+
+        this.useFork(() => (props.refreshOnWindowFocus ?? true)
+            ? runner.refreshOnWindowFocus
+            : Effect.void,
+        [props.refreshOnWindowFocus, runner])
 
         return React.useMemo(() => ({
             state: runner.stateRef,
