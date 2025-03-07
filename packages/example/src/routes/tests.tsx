@@ -1,7 +1,9 @@
 import { R } from "@/reffuse"
-import { Button } from "@radix-ui/themes"
+import { Button, Flex } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { Console, Effect } from "effect"
+import { GetRandomValues, makeUuid4 } from "@typed/id"
+import { Console, Effect, Stream } from "effect"
+import { useState } from "react"
 
 
 export const Route = createFileRoute("/tests")({
@@ -20,12 +22,25 @@ function RouteComponent() {
         Effect.delay("1 second"),
     ), [])
 
+    const [reactValue, setReactValue] = useState("initial")
+    const reactValueStream = R.useStreamFromValues([reactValue])
+    R.useFork(() => Stream.runForEach(reactValueStream, Console.log), [reactValueStream])
+
+
     const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {
         yield* Effect.log(value)
     }), [])
 
+    const generateUuid = R.useCallbackSync(() => makeUuid4.pipe(
+        Effect.provide(GetRandomValues.CryptoRandom),
+        Effect.map(setReactValue),
+    ), [])
+
 
     return (
-        <Button onClick={() => logValue("test")}>Log value</Button>
+        <Flex direction="row" justify="center" align="center" gap="2">
+            <Button onClick={() => logValue("test")}>Log value</Button>
+            <Button onClick={() => generateUuid()}>Generate UUID</Button>
+        </Flex>
     )
 }

@@ -21,7 +21,7 @@ function RouteComponent() {
     // ), [context])
 
     const query = R.useQuery({
-        key: ["uuid4", 10],
+        key: R.useStreamFromValues(["uuid4", 10]),
         query: () => Console.log(`Querying 10 IDs...`).pipe(
             Effect.andThen(Effect.sleep("500 millis")),
             Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/10`)),

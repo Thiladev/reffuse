@@ -3,7 +3,8 @@ import * as AsyncData from "@typed/async-data"
 import { Effect, Fiber, identity, Option, Ref, Stream, SubscriptionRef } from "effect"
 
 
-export interface QueryRunner<A, E, R> {
+export interface QueryRunner<K extends readonly unknown[], A, E, R> {
+    readonly key: Stream.Stream<K>
     readonly queryRef: SubscriptionRef.SubscriptionRef<Effect.Effect<A, E, R>>
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.RuntimeFiber<void>>>
@@ -16,13 +17,14 @@ export interface QueryRunner<A, E, R> {
 }
 
 
-export interface MakeProps<A, E, R> {
+export interface MakeProps<K extends readonly unknown[], A, E, R> {
+    readonly key: Stream.Stream<K>
     readonly query: Effect.Effect<A, E, R>
 }
 
-export const make = <A, E, R>(
-    props: MakeProps<A, E, R>
-): Effect.Effect<QueryRunner<A, E, R>, never, R> => Effect.gen(function*() {
+export const make = <K extends readonly unknown[], A, E, R>(
+    props: MakeProps<K, A, E, R>
+): Effect.Effect<QueryRunner<K, A, E, R>, never, R> => Effect.gen(function*() {
     const context = yield* Effect.context<R>()
 
     const queryRef = yield* SubscriptionRef.make(props.query)
@@ -112,6 +114,7 @@ export const make = <A, E, R>(
     )
 
     return {
+        key: props.key,
         queryRef,
         stateRef,
         fiberRef,

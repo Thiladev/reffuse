@@ -1,6 +1,5 @@
 import * as AsyncData from "@typed/async-data"
-import { Context, Effect, Fiber, Layer, SubscriptionRef } from "effect"
-import * as QueryRunner from "./QueryRunner.js"
+import { Effect, Fiber, SubscriptionRef } from "effect"
 
 
 export interface QueryService<A, E> {
@@ -13,20 +12,20 @@ export const Tag = <const Id extends string>(id: Id) => <
 >() => Effect.Tag(id)<Self, QueryService<A, E>>()
 
 
-export interface LayerProps<A, E, R> {
-    readonly query: Effect.Effect<A, E, R>
-}
+// export interface LayerProps<A, E, R> {
+//     readonly query: Effect.Effect<A, E, R>
+// }
 
-export const layer = <Self, Id extends string, A, E, R>(
-    tag: Context.TagClass<Self, Id, QueryService<A, E>>,
-    props: LayerProps<A, E, R>,
-): Layer.Layer<Self, never, R> => Layer.effect(tag, Effect.gen(function*() {
-    const runner = yield* QueryRunner.make({
-        query: props.query
-    })
+// export const layer = <Self, Id extends string, A, E, R>(
+//     tag: Context.TagClass<Self, Id, QueryService<A, E>>,
+//     props: LayerProps<A, E, R>,
+// ): Layer.Layer<Self, never, R> => Layer.effect(tag, Effect.gen(function*() {
+//     const runner = yield* QueryRunner.make({
+//         query: props.query
+//     })
 
-    return {
-        state: runner.stateRef,
-        refresh: runner.forkRefresh,
-    }
-}))
+//     return {
+//         state: runner.stateRef,
+//         refresh: runner.forkRefresh,
+//     }
+// }))

@@ -1,13 +1,13 @@
 import * as AsyncData from "@typed/async-data"
-import { Array, Context, Effect, ExecutionStrategy, Fiber, Layer, Ref, Schema, Stream, SubscriptionRef } from "effect"
+import { Context, Effect, Fiber, Layer, Ref, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
 import * as QueryService from "./QueryService.js"
 
 
-export interface UseQueryProps<A, E, R> {
-    readonly key: Stream.Stream<readonly unknown[]> | readonly unknown[]
+export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
+    readonly key: Stream.Stream<K>
     readonly query: () => Effect.Effect<A, E, R>
     readonly refreshOnWindowFocus?: boolean
 }
@@ -22,29 +22,22 @@ export interface UseQueryResult<A, E> {
 
 
 export const QueryExtension = ReffuseExtension.make(() => ({
-    useQuery<A, E, R>(
+    useQuery<K extends readonly unknown[], A, E, R>(
         this: ReffuseHelpers.ReffuseHelpers<R>,
-        props: UseQueryProps<A, E, R>,
+        props: UseQueryProps<K, A, E, R>,
     ): UseQueryResult<A, E> {
         const runner = this.useMemo(() => QueryRunner.make({
-            query: props.query()
-        }), [])
+            key: props.key,
+            query: props.query(),
+        }), [props.key])
 
-        const key = React.useMemo(() =>
-            (Array.isArray as (self: unknown) => self is readonly unknown[])(props.key)
-                ? props.key
-                : props.key,
-        [props.key])
-
-        this.useEffect(
-            () => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
-                Effect.andThen(Ref.set(runner.queryRef, props.query())),
-                Effect.andThen(runner.forkFetch),
-            ),
-
-            [runner, ...(Array.isArray(props.key) ? props.key : [])],
-            { finalizerExecutionStrategy: ExecutionStrategy.parallel },
-        )
+        this.useFork(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
+            Effect.andThen(Stream.runForEach(runner.key, () =>
+                Ref.set(runner.queryRef, props.query()).pipe(
+                    Effect.andThen(runner.forkFetch)
+                )
+            ))
+        ), [runner])
 
         this.useFork(() => (props.refreshOnWindowFocus ?? true)
             ? runner.refreshOnWindowFocus

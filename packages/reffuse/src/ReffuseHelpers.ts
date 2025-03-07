@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, Layer, Pipeable, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, Layer, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -406,6 +406,19 @@ export abstract class ReffuseHelpers<R> {
         [ref])
 
         return [reactStateValue, setValue]
+    }
+
+    useStreamFromValues<const A extends React.DependencyList, R>(
+        this: ReffuseHelpers<R>,
+        values: A,
+    ): Stream.Stream<A> {
+        const [queue, stream] = this.useMemo(() => Queue.unbounded<A>().pipe(
+            Effect.map(queue => [queue, Stream.fromQueue(queue)] as const)
+        ), [])
+
+        this.useEffect(() => Queue.offer(queue, values), values)
+
+        return stream
     }
 }
 
