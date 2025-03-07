@@ -8,7 +8,7 @@ import * as QueryService from "./QueryService.js"
 
 export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
     readonly key: Stream.Stream<K>
-    readonly query: () => Effect.Effect<A, E, R>
+    readonly query: (key: K) => Effect.Effect<A, E, R>
     readonly refreshOnWindowFocus?: boolean
 }
 

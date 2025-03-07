@@ -5,10 +5,12 @@ import { Effect, Fiber, identity, Option, Ref, Stream, SubscriptionRef } from "e
 
 export interface QueryRunner<K extends readonly unknown[], A, E, R> {
     readonly key: Stream.Stream<K>
-    readonly queryRef: SubscriptionRef.SubscriptionRef<Effect.Effect<A, E, R>>
+    readonly query: (key: K) => Effect.Effect<A, E, R>
+
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.RuntimeFiber<void>>>
 
+    readonly interrupt: Effect.Effect<void>
     readonly forkInterrupt: Effect.Effect<Fiber.RuntimeFiber<void>>
     readonly forkFetch: Effect.Effect<Fiber.RuntimeFiber<void>>
     readonly forkRefresh: Effect.Effect<Fiber.RuntimeFiber<void>>
@@ -19,7 +21,7 @@ export interface QueryRunner<K extends readonly unknown[], A, E, R> {
 
 export interface MakeProps<K extends readonly unknown[], A, E, R> {
     readonly key: Stream.Stream<K>
-    readonly query: Effect.Effect<A, E, R>
+    readonly query: (key: K) => Effect.Effect<A, E, R>
 }
 
 export const make = <K extends readonly unknown[], A, E, R>(
@@ -27,7 +29,6 @@ export const make = <K extends readonly unknown[], A, E, R>(
 ): Effect.Effect<QueryRunner<K, A, E, R>, never, R> => Effect.gen(function*() {
     const context = yield* Effect.context<R>()
 
-    const queryRef = yield* SubscriptionRef.make(props.query)
     const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, E>())
     const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.RuntimeFiber<void>>())
 
@@ -86,8 +87,8 @@ export const make = <K extends readonly unknown[], A, E, R>(
                     return AsyncData.refreshing(previous.previous)
                 return AsyncData.loading()
             }).pipe(
-                Effect.andThen(queryRef),
-                Effect.flatMap(identity),
+
+                Effect.andThen(props.query()),
                 Effect.matchCauseEffect({
                     onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
                     onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
@@ -115,7 +116,8 @@ export const make = <K extends readonly unknown[], A, E, R>(
 
     return {
         key: props.key,
-        queryRef,
+        query: props.query,
+
         stateRef,
         fiberRef,
 
