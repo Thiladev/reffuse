@@ -25,10 +25,11 @@ export interface MakeProps<K extends readonly unknown[], A, E, R> {
 }
 
 export const make = <K extends readonly unknown[], A, E, R>(
-    props: MakeProps<K, A, E, R>
+    { key, query }: MakeProps<K, A, E, R>
 ): Effect.Effect<QueryRunner<K, A, E, R>, never, R> => Effect.gen(function*() {
     const context = yield* Effect.context<R>()
 
+    const currentKeyRef = yield* SubscriptionRef.make(Option.none<K>())
     const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, E>())
     const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.RuntimeFiber<void>>())
 
