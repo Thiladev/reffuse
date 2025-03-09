@@ -13,13 +13,6 @@ export const Route = createFileRoute("/query/service")({
 })
 
 function RouteComponent() {
-    // const context = R.useLayer()
-
-    // const layer = useMemo(() => Layer.empty.pipe(
-    //     Layer.provideMerge(Uuid4Query.Uuid4QueryLive),
-    //     Layer.provide(context),
-    // ), [context])
-
     const query = R.useQuery({
         key: R.useStreamFromValues(["uuid4", 10]),
         query: ([, count]) => Console.log(`Querying ${ count } IDs...`).pipe(
