@@ -1,9 +1,9 @@
-import * as AsyncData from "@typed/async-data"
-import { type Cause, Context, Effect, Fiber, Layer, Stream, SubscriptionRef } from "effect"
+import type * as AsyncData from "@typed/async-data"
+import { type Cause, type Context, Effect, type Fiber, Layer, type Stream, type SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
-import * as QueryService from "./QueryService.js"
+import type * as QueryService from "./QueryService.js"
 
 
 export interface UseQueryProps<K extends readonly unknown[], A, E, R> {

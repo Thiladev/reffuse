@@ -1,5 +1,5 @@
-import * as AsyncData from "@typed/async-data"
-import { type Cause, Effect, Fiber, SubscriptionRef } from "effect"
+import type * as AsyncData from "@typed/async-data"
+import { type Cause, Effect, type Fiber, type SubscriptionRef } from "effect"
 
 
 export interface QueryService<A, E> {
