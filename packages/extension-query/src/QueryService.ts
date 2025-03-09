@@ -1,10 +1,10 @@
 import * as AsyncData from "@typed/async-data"
-import { Effect, Fiber, SubscriptionRef } from "effect"
+import { type Cause, Effect, Fiber, SubscriptionRef } from "effect"
 
 
 export interface QueryService<A, E> {
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-    readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void>>
+    readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
 }
 
 export const Tag = <const Id extends string>(id: Id) => <

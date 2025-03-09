@@ -1,5 +1,5 @@
 import * as AsyncData from "@typed/async-data"
-import { Context, Effect, Fiber, Layer, Ref, Stream, SubscriptionRef } from "effect"
+import { type Cause, Context, Effect, Fiber, Layer, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
@@ -14,7 +14,7 @@ export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
 
 export interface UseQueryResult<A, E> {
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-    readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void>>
+    readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
     readonly layer: <Self, Id extends string>(
         tag: Context.TagClass<Self, Id, QueryService.QueryService<A, E>>
     ) => Layer.Layer<Self>
@@ -28,16 +28,18 @@ export const QueryExtension = ReffuseExtension.make(() => ({
     ): UseQueryResult<A, E> {
         const runner = this.useMemo(() => QueryRunner.make({
             key: props.key,
-            query: props.query(),
+            query: props.query,
         }), [props.key])
 
-        this.useFork(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
-            Effect.andThen(Stream.runForEach(runner.key, () =>
-                Ref.set(runner.queryRef, props.query()).pipe(
-                    Effect.andThen(runner.forkFetch)
-                )
-            ))
-        ), [runner])
+        // this.useFork(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
+        //     Effect.andThen(Stream.runForEach(runner.key, () =>
+        //         Ref.set(runner.queryRef, props.query()).pipe(
+        //             Effect.andThen(runner.forkFetch)
+        //         )
+        //     ))
+        // ), [runner])
+
+        this.useFork(() => runner.fetchOnKeyChange, [runner])
 
         this.useFork(() => (props.refreshOnWindowFocus ?? true)
             ? runner.refreshOnWindowFocus

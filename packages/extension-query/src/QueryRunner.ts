@@ -1,6 +1,6 @@
 import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
-import { Effect, Fiber, identity, Option, Ref, Stream, SubscriptionRef } from "effect"
+import { type Cause, Effect, Fiber, identity, Option, Ref, Scope, Stream, SubscriptionRef } from "effect"
 
 
 export interface QueryRunner<K extends readonly unknown[], A, E, R> {
@@ -8,13 +8,13 @@ export interface QueryRunner<K extends readonly unknown[], A, E, R> {
     readonly query: (key: K) => Effect.Effect<A, E, R>
 
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-    readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.RuntimeFiber<void>>>
+    readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>>
 
-    readonly interrupt: Effect.Effect<void>
-    readonly forkInterrupt: Effect.Effect<Fiber.RuntimeFiber<void>>
-    readonly forkFetch: Effect.Effect<Fiber.RuntimeFiber<void>>
-    readonly forkRefresh: Effect.Effect<Fiber.RuntimeFiber<void>>
+    readonly forkInterrupt: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
+    readonly forkFetch: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
+    readonly forkRefresh: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
 
+    readonly fetchOnKeyChange: Effect.Effect<void, Cause.NoSuchElementException, Scope.Scope>
     readonly refreshOnWindowFocus: Effect.Effect<void>
 }
 
@@ -29,9 +29,9 @@ export const make = <K extends readonly unknown[], A, E, R>(
 ): Effect.Effect<QueryRunner<K, A, E, R>, never, R> => Effect.gen(function*() {
     const context = yield* Effect.context<R>()
 
-    const currentKeyRef = yield* SubscriptionRef.make(Option.none<K>())
+    const latestKeyRef = yield* SubscriptionRef.make(Option.none<K>())
     const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, E>())
-    const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.RuntimeFiber<void>>())
+    const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>())
 
     const interrupt = fiberRef.pipe(
         Effect.flatMap(Option.match({
@@ -57,12 +57,14 @@ export const make = <K extends readonly unknown[], A, E, R>(
     const forkFetch = interrupt.pipe(
         Effect.andThen(
             Ref.set(stateRef, AsyncData.loading()).pipe(
-                Effect.andThen(queryRef),
+                Effect.andThen(latestKeyRef),
                 Effect.flatMap(identity),
-                Effect.matchCauseEffect({
-                    onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
-                    onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
-                }),
+                Effect.flatMap(key => query(key).pipe(
+                    Effect.matchCauseEffect({
+                        onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
+                        onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
+                    })
+                )),
 
                 Effect.provide(context),
                 Effect.fork,
@@ -88,12 +90,14 @@ export const make = <K extends readonly unknown[], A, E, R>(
                     return AsyncData.refreshing(previous.previous)
                 return AsyncData.loading()
             }).pipe(
-
-                Effect.andThen(props.query()),
-                Effect.matchCauseEffect({
-                    onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
-                    onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
-                }),
+                Effect.andThen(latestKeyRef),
+                Effect.flatMap(identity),
+                Effect.flatMap(key => query(key).pipe(
+                    Effect.matchCauseEffect({
+                        onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
+                        onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
+                    })
+                )),
 
                 Effect.provide(context),
                 Effect.fork,
@@ -110,14 +114,22 @@ export const make = <K extends readonly unknown[], A, E, R>(
         Effect.forkDaemon,
     )
 
+    const fetchOnKeyChange = Effect.addFinalizer(() => interrupt).pipe(
+        Effect.andThen(Stream.runForEach(key, latestKey =>
+            Ref.set(latestKeyRef, Option.some(latestKey)).pipe(
+                Effect.andThen(forkFetch)
+            )
+        ))
+    )
+
     const refreshOnWindowFocus = Stream.runForEach(
         BrowserStream.fromEventListenerWindow("focus"),
         () => forkRefresh,
     )
 
     return {
-        key: props.key,
-        query: props.query,
+        key,
+        query,
 
         stateRef,
         fiberRef,
@@ -126,6 +138,7 @@ export const make = <K extends readonly unknown[], A, E, R>(
         forkFetch,
         forkRefresh,
 
+        fetchOnKeyChange,
         refreshOnWindowFocus,
     }
 })
