@@ -31,14 +31,6 @@ export const QueryExtension = ReffuseExtension.make(() => ({
             query: props.query,
         }), [props.key])
 
-        // this.useFork(() => Effect.addFinalizer(() => runner.forkInterrupt).pipe(
-        //     Effect.andThen(Stream.runForEach(runner.key, () =>
-        //         Ref.set(runner.queryRef, props.query()).pipe(
-        //             Effect.andThen(runner.forkFetch)
-        //         )
-        //     ))
-        // ), [runner])
-
         this.useFork(() => runner.fetchOnKeyChange, [runner])
 
         this.useFork(() => (props.refreshOnWindowFocus ?? true)

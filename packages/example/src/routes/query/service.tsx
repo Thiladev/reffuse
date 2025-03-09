@@ -22,9 +22,9 @@ function RouteComponent() {
 
     const query = R.useQuery({
         key: R.useStreamFromValues(["uuid4", 10]),
-        query: () => Console.log(`Querying 10 IDs...`).pipe(
+        query: ([, count]) => Console.log(`Querying ${ count } IDs...`).pipe(
             Effect.andThen(Effect.sleep("500 millis")),
-            Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/10`)),
+            Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
             HttpClient.withTracerPropagation(false),
             Effect.flatMap(res => res.json),
             Effect.flatMap(Schema.decodeUnknown(Uuid4Query.Result)),
