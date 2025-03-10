@@ -14,7 +14,7 @@ export const Route = createFileRoute("/query/service")({
 
 function RouteComponent() {
     const query = R.useQuery({
-        key: R.useStreamFromValues(["uuid4", 10]),
+        key: R.useStreamFromValues(["uuid4", 10 as number]),
         query: ([, count]) => Console.log(`Querying ${ count } IDs...`).pipe(
             Effect.andThen(Effect.sleep("500 millis")),
             Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),

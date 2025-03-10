@@ -12,11 +12,13 @@ export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
     readonly refreshOnWindowFocus?: boolean
 }
 
-export interface UseQueryResult<A, E> {
+export interface UseQueryResult<K extends readonly unknown[], A, E> {
+    readonly keyStream: Stream.Stream<K>
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
+
     readonly layer: <Self, Id extends string>(
-        tag: Context.TagClass<Self, Id, QueryService.QueryService<A, E>>
+        tag: Context.TagClass<Self, Id, QueryService.QueryService<K, A, E>>
     ) => Layer.Layer<Self>
 }
 
@@ -25,7 +27,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
     useQuery<K extends readonly unknown[], A, E, R>(
         this: ReffuseHelpers.ReffuseHelpers<R>,
         props: UseQueryProps<K, A, E, R>,
-    ): UseQueryResult<A, E> {
+    ): UseQueryResult<K, A, E> {
         const runner = this.useMemo(() => QueryRunner.make({
             key: props.key,
             query: props.query,
@@ -39,10 +41,12 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         [props.refreshOnWindowFocus, runner])
 
         return React.useMemo(() => ({
+            keyStream: props.key,
             state: runner.stateRef,
             refresh: runner.forkRefresh,
 
             layer: tag => Layer.succeed(tag, {
+                keyStream: props.key,
                 state: runner.stateRef,
                 refresh: runner.forkRefresh,
             }),
