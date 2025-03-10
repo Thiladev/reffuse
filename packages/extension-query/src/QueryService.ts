@@ -1,9 +1,9 @@
 import type * as AsyncData from "@typed/async-data"
-import { type Cause, Effect, type Fiber, type Stream, type SubscriptionRef } from "effect"
+import { type Cause, Effect, type Fiber, type Option, type SubscriptionRef } from "effect"
 
 
 export interface QueryService<K extends readonly unknown[], A, E> {
-    readonly keyStream: Stream.Stream<K>
+    readonly latestKey: SubscriptionRef.SubscriptionRef<Option.Option<K>>
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
 }

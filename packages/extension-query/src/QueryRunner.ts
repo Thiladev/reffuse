@@ -4,9 +4,9 @@ import { type Cause, Effect, Fiber, identity, Option, Ref, type Scope, Stream, S
 
 
 export interface QueryRunner<K extends readonly unknown[], A, E, R> {
-    readonly key: Stream.Stream<K>
     readonly query: (key: K) => Effect.Effect<A, E, R>
 
+    readonly latestKeyRef: SubscriptionRef.SubscriptionRef<Option.Option<K>>
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>>
 
@@ -128,9 +128,9 @@ export const make = <K extends readonly unknown[], A, E, R>(
     )
 
     return {
-        key,
         query,
 
+        latestKeyRef,
         stateRef,
         fiberRef,
 

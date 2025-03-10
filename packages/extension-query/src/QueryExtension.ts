@@ -1,5 +1,5 @@
 import type * as AsyncData from "@typed/async-data"
-import { type Cause, type Context, Effect, type Fiber, Layer, type Stream, type SubscriptionRef } from "effect"
+import { type Cause, type Context, Effect, type Fiber, Layer, type Option, type Stream, type SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as QueryRunner from "./QueryRunner.js"
@@ -13,7 +13,7 @@ export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
 }
 
 export interface UseQueryResult<K extends readonly unknown[], A, E> {
-    readonly keyStream: Stream.Stream<K>
+    readonly latestKey: SubscriptionRef.SubscriptionRef<Option.Option<K>>
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
 
@@ -41,12 +41,12 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         [props.refreshOnWindowFocus, runner])
 
         return React.useMemo(() => ({
-            keyStream: props.key,
+            latestKey: runner.latestKeyRef,
             state: runner.stateRef,
             refresh: runner.forkRefresh,
 
             layer: tag => Layer.succeed(tag, {
-                keyStream: props.key,
+                latestKey: runner.latestKeyRef,
                 state: runner.stateRef,
                 refresh: runner.forkRefresh,
             }),
