@@ -6,11 +6,11 @@ import * as QueryRunner from "./QueryRunner.js"
 import type * as QueryService from "./QueryService.js"
 
 
-export interface QueryExtension<GlobalE> {
+export interface QueryExtension<HandlerE> {
     useQuery<K extends readonly unknown[], A, E, R>(
         this: ReffuseHelpers.ReffuseHelpers<R>,
         props: UseQueryProps<K, A, E, R>,
-    ): UseQueryResult<K, A, Exclude<E, GlobalE>>
+    ): UseQueryResult<K, A, Exclude<E, HandlerE>>
 }
 
 export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
