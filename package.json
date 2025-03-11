@@ -15,6 +15,7 @@
     "clean:node": "rm -rf node_modules"
   },
   "devDependencies": {
+    "code-narrator": "^1.0.17",
     "npm-check-updates": "^17.1.14",
     "npm-sort": "^0.0.4",
     "turbo": "^2.4.4",
