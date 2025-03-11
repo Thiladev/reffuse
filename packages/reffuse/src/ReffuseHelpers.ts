@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, Pipeable, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -21,6 +21,10 @@ export abstract class ReffuseHelpers<R> {
 
     useContext<R>(this: ReffuseHelpers<R>): Context.Context<R> {
         return ReffuseContext.useMergeAll(...this.constructor.contexts)
+    }
+
+    useLayer<R>(this: ReffuseHelpers<R>): Layer.Layer<R> {
+        return ReffuseContext.useMergeAllLayers(...this.constructor.contexts)
     }
 
 
@@ -388,22 +392,33 @@ export abstract class ReffuseHelpers<R> {
         this: ReffuseHelpers<R>,
         ref: SubscriptionRef.SubscriptionRef<A>,
     ): [A, React.Dispatch<React.SetStateAction<A>>] {
-        const runSync = this.useRunSync()
-
-        const initialState = React.useMemo(() => runSync(ref), [])
+        const initialState = this.useMemo(() => ref, [], { doNotReExecuteOnRuntimeOrContextChange: true })
         const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
         this.useFork(() => Stream.runForEach(ref.changes, v => Effect.sync(() =>
             setReactStateValue(v)
         )), [ref])
 
-        const setValue = React.useCallback((setStateAction: React.SetStateAction<A>) =>
-            runSync(Ref.update(ref, prevState =>
+        const setValue = this.useCallbackSync((setStateAction: React.SetStateAction<A>) =>
+            Ref.update(ref, prevState =>
                 SetStateAction.value(setStateAction, prevState)
-            )),
+            ),
         [ref])
 
         return [reactStateValue, setValue]
+    }
+
+    useStreamFromValues<const A extends React.DependencyList, R>(
+        this: ReffuseHelpers<R>,
+        values: A,
+    ): Stream.Stream<A> {
+        const [queue, stream] = this.useMemo(() => Queue.unbounded<A>().pipe(
+            Effect.map(queue => [queue, Stream.fromQueue(queue)] as const)
+        ), [])
+
+        this.useEffect(() => Queue.offer(queue, values), values)
+
+        return stream
     }
 }
 

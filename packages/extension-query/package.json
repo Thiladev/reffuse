@@ -1,5 +1,5 @@
 {
-  "name": "@reffuse/extension-lazyref",
+  "name": "@reffuse/extension-query",
   "version": "0.1.0",
   "type": "module",
   "files": [
@@ -33,7 +33,9 @@
     "reffuse": "workspace:*"
   },
   "peerDependencies": {
-    "@typed/lazy-ref": "^0.3.0",
+    "@effect/platform": "^0.77.0",
+    "@effect/platform-browser": "^0.56.0",
+    "@typed/async-data": "^0.13.0",
     "@types/react": "^19.0.0",
     "effect": "^3.13.0",
     "react": "^19.0.0",

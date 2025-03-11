@@ -6,9 +6,6 @@
       "inputs": ["./src/**"],
       "outputs": ["./dist/**"]
     },
-    "pack": {},
-    "publish": {
-      "passThroughEnv": ["NODE_AUTH_TOKEN"]
-    }
+    "pack": {}
   }
 }
