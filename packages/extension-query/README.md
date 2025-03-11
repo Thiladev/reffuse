@@ -1,9 +1,10 @@
-# LazyRef extension for Reffuse
+# Reffuse Query
 
-Extension to integrate `@typed/lazy-ref` with Reffuse.
+TanStack Query style hooks for Reffuse.
 
 ## Peer dependencies
-- `@typed/lazy-ref`
-- `reffuse` 0.1.2+
+- `reffuse` 0.1.3+
 - `effect` 3.13+
+- `@effect/platform` & `@effect/platform-browser`
 - `react` & `@types/react` 19+
+- `@typed/async-data`
