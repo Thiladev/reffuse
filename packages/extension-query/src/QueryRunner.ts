@@ -54,22 +54,23 @@ export const make = <K extends readonly unknown[], A, E, R>(
         }))
     )
 
-    const forkFetch = interrupt.pipe(
-        Effect.andThen(
-            Ref.set(stateRef, AsyncData.loading()).pipe(
-                Effect.andThen(latestKeyRef),
-                Effect.flatMap(identity),
-                Effect.flatMap(key => query(key).pipe(
-                    Effect.matchCauseEffect({
-                        onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
-                        onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
-                    })
-                )),
+    const run = latestKeyRef.pipe(
+        Effect.flatMap(identity),
+        Effect.flatMap(key => query(key).pipe(
+            Effect.matchCauseEffect({
+                onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
+                onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
+            })
+        )),
 
-                Effect.provide(context),
-                Effect.fork,
-            )
-        ),
+        Effect.provide(context),
+    )
+
+    const forkFetch = interrupt.pipe(
+        Effect.andThen(Ref.set(stateRef, AsyncData.loading()).pipe(
+            Effect.andThen(run),
+            Effect.fork,
+        )),
 
         Effect.flatMap(fiber =>
             Ref.set(fiberRef, Option.some(fiber)).pipe(
@@ -82,27 +83,16 @@ export const make = <K extends readonly unknown[], A, E, R>(
     )
 
     const forkRefresh = interrupt.pipe(
-        Effect.andThen(
-            Ref.update(stateRef, previous => {
-                if (AsyncData.isSuccess(previous) || AsyncData.isFailure(previous))
-                    return AsyncData.refreshing(previous)
-                if (AsyncData.isRefreshing(previous))
-                    return AsyncData.refreshing(previous.previous)
-                return AsyncData.loading()
-            }).pipe(
-                Effect.andThen(latestKeyRef),
-                Effect.flatMap(identity),
-                Effect.flatMap(key => query(key).pipe(
-                    Effect.matchCauseEffect({
-                        onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
-                        onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
-                    })
-                )),
-
-                Effect.provide(context),
-                Effect.fork,
-            )
-        ),
+        Effect.andThen(Ref.update(stateRef, previous => {
+            if (AsyncData.isSuccess(previous) || AsyncData.isFailure(previous))
+                return AsyncData.refreshing(previous)
+            if (AsyncData.isRefreshing(previous))
+                return AsyncData.refreshing(previous.previous)
+            return AsyncData.loading()
+        }).pipe(
+            Effect.andThen(run),
+            Effect.fork,
+        )),
 
         Effect.flatMap(fiber =>
             Ref.set(fiberRef, Option.some(fiber)).pipe(
