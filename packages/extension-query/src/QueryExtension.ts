@@ -2,16 +2,10 @@ import type * as AsyncData from "@typed/async-data"
 import { type Cause, type Context, Effect, type Fiber, Layer, type Option, type Stream, type SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
+import type * as QueryClient from "./QueryClient.js"
 import * as QueryRunner from "./QueryRunner.js"
 import type * as QueryService from "./QueryService.js"
 
-
-export interface QueryExtension<HandlerE> {
-    useQuery<K extends readonly unknown[], A, E, R>(
-        this: ReffuseHelpers.ReffuseHelpers<R>,
-        props: UseQueryProps<K, A, E, R>,
-    ): UseQueryResult<K, A, Exclude<E, HandlerE>>
-}
 
 export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
     readonly key: Stream.Stream<K>
@@ -31,10 +25,10 @@ export interface UseQueryResult<K extends readonly unknown[], A, E> {
 
 
 export const QueryExtension = ReffuseExtension.make(() => ({
-    useQuery<K extends readonly unknown[], A, E, R>(
-        this: ReffuseHelpers.ReffuseHelpers<R>,
+    useQuery<EH, K extends readonly unknown[], A, E, HandledE, R>(
+        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.QueryClient<EH, HandledE>>,
         props: UseQueryProps<K, A, E, R>,
-    ): UseQueryResult<K, A, E> {
+    ): UseQueryResult<K, A, Exclude<E, HandledE>> {
         const runner = this.useMemo(() => QueryRunner.make({
             key: props.key,
             query: props.query,
