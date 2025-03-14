@@ -25,10 +25,18 @@ export interface UseQueryResult<K extends readonly unknown[], A, E> {
 
 
 export const QueryExtension = ReffuseExtension.make(() => ({
-    useQuery<EH, K extends readonly unknown[], A, E, HandledE, R>(
+    useQuery<
+        EH,
+        QK extends readonly unknown[],
+        QA,
+        QE,
+        HandledE,
+        QR extends R,
+        R,
+    >(
         this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.QueryClient<EH, HandledE> | EH>,
-        props: UseQueryProps<K, A, E, R>,
-    ): UseQueryResult<K, A, Exclude<E, HandledE>> {
+        props: UseQueryProps<QK, QA, QE, QR>,
+    ): UseQueryResult<QK, QA, Exclude<QE, HandledE>> {
         const runner = this.useMemo(() => QueryRunner.make({
             QueryClient: QueryClient.makeTag<EH, HandledE>(),
             key: props.key,
