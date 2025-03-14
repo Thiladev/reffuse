@@ -1,10 +1,11 @@
 import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
-import { type Cause, Effect, Fiber, identity, Option, Ref, type Scope, Stream, SubscriptionRef } from "effect"
+import { type Cause, type Context, Effect, Fiber, identity, Option, Ref, type Scope, Stream, SubscriptionRef } from "effect"
+import type * as QueryClient from "./QueryClient.js"
 
 
 export interface QueryRunner<K extends readonly unknown[], A, E, R> {
-    readonly query: (key: K) => Effect.Effect<A, E, R>
+    readonly context: Context.Context<R>
 
     readonly latestKeyRef: SubscriptionRef.SubscriptionRef<Option.Option<K>>
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
@@ -19,18 +20,27 @@ export interface QueryRunner<K extends readonly unknown[], A, E, R> {
 }
 
 
-export interface MakeProps<K extends readonly unknown[], A, E, R> {
+export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
+    readonly QueryClient: QueryClient.Tag<EH, HandledE>
     readonly key: Stream.Stream<K>
     readonly query: (key: K) => Effect.Effect<A, E, R>
 }
 
-export const make = <K extends readonly unknown[], A, E, R>(
-    { key, query }: MakeProps<K, A, E, R>
-): Effect.Effect<QueryRunner<K, A, E, R>, never, R> => Effect.gen(function*() {
-    const context = yield* Effect.context<R>()
+export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
+    {
+        QueryClient,
+        key,
+        query,
+    }: MakeProps<EH, K, A, E, HandledE, R>
+): Effect.Effect<
+    QueryRunner<K, A, Exclude<E, HandledE>, R>,
+    never,
+    R | QueryClient.QueryClient<EH, HandledE> | EH
+> => Effect.gen(function*() {
+    const context = yield* Effect.context<R | QueryClient.QueryClient<EH, HandledE> | EH>()
 
     const latestKeyRef = yield* SubscriptionRef.make(Option.none<K>())
-    const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, E>())
+    const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, Exclude<E, HandledE>>())
     const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>())
 
     const interrupt = fiberRef.pipe(
@@ -54,13 +64,17 @@ export const make = <K extends readonly unknown[], A, E, R>(
         }))
     )
 
-    const run = latestKeyRef.pipe(
-        Effect.flatMap(identity),
-        Effect.flatMap(key => query(key).pipe(
-            Effect.matchCauseEffect({
-                onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
-                onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
-            })
+    const run = QueryClient.pipe(
+        Effect.flatMap(client => client.ErrorHandler),
+        Effect.flatMap(errorHandler => latestKeyRef.pipe(
+            Effect.flatMap(identity),
+            Effect.flatMap(key => query(key).pipe(
+                errorHandler.handle,
+                Effect.matchCauseEffect({
+                    onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
+                    onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
+                }),
+            )),
         )),
 
         Effect.provide(context),
@@ -118,7 +132,7 @@ export const make = <K extends readonly unknown[], A, E, R>(
     )
 
     return {
-        query,
+        context,
 
         latestKeyRef,
         stateRef,

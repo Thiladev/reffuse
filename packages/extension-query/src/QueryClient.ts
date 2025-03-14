@@ -6,13 +6,9 @@ export interface QueryClient<EH, HandledE> {
     readonly ErrorHandler: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
 }
 
-export const makeTag = <
-    EH = never,
-    HandledE = never,
->(): Context.Tag<
-    QueryClient<EH, HandledE>,
-    QueryClient<EH, HandledE>
-> => Context.GenericTag("@reffuse/extension-query/QueryClient")
+
+export type Tag<EH, HandledE> = Context.Tag<QueryClient<EH, HandledE>, QueryClient<EH, HandledE>>
+export const makeTag = <EH = never, HandledE = never>(): Tag<EH, HandledE> => Context.GenericTag("@reffuse/extension-query/QueryClient")
 
 
 export interface LayerProps<EH, HandledE> {
