@@ -1,5 +1,6 @@
 import { FetchHttpClient } from "@effect/platform"
 import { Clipboard, Geolocation, Permissions } from "@effect/platform-browser"
+import { QueryClient } from "@reffuse/extension-query"
 import { createRouter, RouterProvider } from "@tanstack/react-router"
 import { Layer } from "effect"
 import { StrictMode } from "react"
@@ -14,6 +15,7 @@ const layer = Layer.empty.pipe(
     Layer.provideMerge(Geolocation.layer),
     Layer.provideMerge(Permissions.layer),
     Layer.provideMerge(FetchHttpClient.layer),
+    Layer.provideMerge(QueryClient.layer()),
 )
 
 const router = createRouter({ routeTree })
