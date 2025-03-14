@@ -1,20 +1,19 @@
 import { Context, Effect, Layer } from "effect"
+import * as ErrorHandler from "./ErrorHandler.js"
 
 
-interface MyService<T> {
-    readonly value: T
+export interface QueryClient<EH, HandledE> {
+    readonly ErrorHandler: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
 }
 
-const MyServiceAnyTag = Context.GenericTag<MyService<any>>("MyService")
-const MyServiceStringTag = Context.GenericTag<MyService<string>>("MyService")
 
-declare const MyServiceAnyLayer: Layer.Layer<Context.Tag.Service<typeof MyServiceAnyTag>>
-declare const MyServiceStringLayer: Layer.Layer<Context.Tag.Service<typeof MyServiceStringTag>>
+export interface LayerProps<EH, HandledE> {
+    readonly ErrorHandler?: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
+}
 
-
-const prg = Effect.gen(function*() {
-    yield* MyServiceAnyTag
-    yield* MyServiceStringTag
-}).pipe(
-    Effect.provide(MyServiceStringLayer)
-)
+export const layer = <EH = never, HandledE = never>(
+    props: LayerProps<EH, HandledE>
+): Layer.Layer<QueryClient<EH, HandledE>> =>
+    Layer.effect(Context.GenericTag<QueryClient<EH, HandledE>>("@reffuse/extension-query/QueryClient"), Effect.succeed({
+        ErrorHandler: props.ErrorHandler
+    }))
