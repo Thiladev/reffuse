@@ -15,23 +15,22 @@ export const layer = <
     EH = ErrorHandler.DefaultErrorHandler,
     HandledE = never,
 >(
-    props: LayerProps<EH, HandledE>
+    props?: LayerProps<EH, HandledE>
 ): Layer.Layer<
-    QueryClient<EH, HandledE>,
-    never,
-    typeof props.ErrorHandler extends undefined
+    | QueryClient<EH, HandledE>
+    | (EH extends ErrorHandler.DefaultErrorHandler
         ? ErrorHandler.DefaultErrorHandler
-        : never
+        : never)
 > => Layer.empty.pipe(
     Layer.provideMerge(Layer.effect(
         Context.GenericTag<QueryClient<EH, HandledE>>("@reffuse/extension-query/QueryClient"),
         Effect.succeed({
-            ErrorHandler: (props.ErrorHandler ?? ErrorHandler.DefaultErrorHandler) as Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
+            ErrorHandler: (props?.ErrorHandler ?? ErrorHandler.DefaultErrorHandler) as Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
         })),
     ),
 
-    Layer.provideMerge(props.ErrorHandler
+    Layer.provideMerge((props?.ErrorHandler
         ? Layer.empty
         : ErrorHandler.DefaultErrorHandlerLive
-    ),
+    ) as Layer.Layer<ErrorHandler.DefaultErrorHandler>),
 )
