@@ -24,3 +24,7 @@ export const layer = <Self, Id extends string, E>(
 
     return { errors, handle }
 }))
+
+
+export class DefaultErrorHandler extends Tag("@reffuse/extension-query/DefaultErrorHandler")<DefaultErrorHandler>() {}
+export const DefaultErrorHandlerLive = layer(DefaultErrorHandler)
