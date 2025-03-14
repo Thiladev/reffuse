@@ -6,6 +6,14 @@ export interface QueryClient<EH, HandledE> {
     readonly ErrorHandler: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
 }
 
+export const makeTag = <
+    EH = never,
+    HandledE = never,
+>(): Context.Tag<
+    QueryClient<EH, HandledE>,
+    QueryClient<EH, HandledE>
+> => Context.GenericTag("@reffuse/extension-query/QueryClient")
+
 
 export interface LayerProps<EH, HandledE> {
     readonly ErrorHandler?: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
@@ -22,11 +30,10 @@ export const layer = <
         ? ErrorHandler.DefaultErrorHandler
         : never)
 > => Layer.empty.pipe(
-    Layer.provideMerge(Layer.effect(
-        Context.GenericTag<QueryClient<EH, HandledE>>("@reffuse/extension-query/QueryClient"),
-        Effect.succeed({
+    Layer.provideMerge(
+        Layer.effect(makeTag<EH, HandledE>(), Effect.succeed({
             ErrorHandler: (props?.ErrorHandler ?? ErrorHandler.DefaultErrorHandler) as Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
-        })),
+        }))
     ),
 
     Layer.provideMerge((props?.ErrorHandler
