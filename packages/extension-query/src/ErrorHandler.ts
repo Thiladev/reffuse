@@ -3,7 +3,7 @@ import { type Cause, type Context, Effect, Layer, Queue, Stream } from "effect"
 
 export interface ErrorHandler<E> {
     readonly errors: Stream.Stream<Cause.Cause<E>>
-    handle<A, SelfE, R>(self: Effect.Effect<A, SelfE | E, R>): Effect.Effect<A, SelfE, R>
+    readonly handle: <A, SelfE, R>(self: Effect.Effect<A, SelfE | E, R>) => Effect.Effect<A, SelfE, R>
 }
 
 export const Tag = <const Id extends string>(id: Id) => <
