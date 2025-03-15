@@ -6,7 +6,7 @@ import { Layer } from "effect"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { ReffuseRuntime } from "reffuse"
-import { QueryErrorHandler, QueryErrorHandlerLive } from "./QueryErrorHandler"
+import { QueryErrorHandler, QueryErrorHandlerLive, VQueryErrorHandler } from "./QueryErrorHandler"
 import { GlobalContext } from "./reffuse"
 import { routeTree } from "./routeTree.gen"
 
@@ -33,6 +33,7 @@ createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <ReffuseRuntime.Provider>
             <GlobalContext.Provider layer={layer}>
+                <VQueryErrorHandler />
                 <RouterProvider router={router} />
             </GlobalContext.Provider>
         </ReffuseRuntime.Provider>

@@ -6,6 +6,9 @@ export interface ErrorHandler<E> {
     readonly handle: <A, SelfE, R>(self: Effect.Effect<A, SelfE, R>) => Effect.Effect<A, Exclude<SelfE, E>, R>
 }
 
+export type Error<T> = T extends ErrorHandler<infer E> ? E : never
+
+
 export const Tag = <const Id extends string>(id: Id) => <
     Self, E = never,
 >() => Effect.Tag(id)<Self, ErrorHandler<E>>()
