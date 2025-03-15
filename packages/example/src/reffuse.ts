@@ -1,9 +1,10 @@
-import { HttpClient, HttpClientError } from "@effect/platform"
+import { HttpClient } from "@effect/platform"
 import { Clipboard, Geolocation, Permissions } from "@effect/platform-browser"
 import { LazyRefExtension } from "@reffuse/extension-lazyref"
-import { QueryClient, QueryExtension } from "@reffuse/extension-query"
+import { QueryExtension } from "@reffuse/extension-query"
+import { Context } from "effect"
 import { Reffuse, ReffuseContext } from "reffuse"
-import { QueryErrorHandler } from "./QueryErrorHandler"
+import { AppQueryClient, AppQueryErrorHandler } from "./query"
 
 
 export const GlobalContext = ReffuseContext.make<
@@ -11,8 +12,8 @@ export const GlobalContext = ReffuseContext.make<
     | Geolocation.Geolocation
     | Permissions.Permissions
     | HttpClient.HttpClient
-    | QueryClient.QueryClient<QueryErrorHandler, HttpClientError.HttpClientError>
-    | QueryErrorHandler
+    | Context.Tag.Service<typeof AppQueryClient>
+    | AppQueryErrorHandler
 >()
 
 export class GlobalReffuse extends Reffuse.Reffuse.pipe(

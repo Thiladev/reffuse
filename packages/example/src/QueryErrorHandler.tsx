@@ -1,24 +1,17 @@
-import { HttpClientError } from "@effect/platform"
 import { AlertDialog, Button, Flex, Text } from "@radix-ui/themes"
 import { ErrorHandler } from "@reffuse/extension-query"
 import { Cause, Chunk, Context, Effect, Match, Option, Stream } from "effect"
 import { useState } from "react"
+import { AppQueryErrorHandler } from "./query"
 import { R } from "./reffuse"
-
-
-export class QueryErrorHandler extends ErrorHandler.Tag("QueryErrorHandler")<QueryErrorHandler,
-    HttpClientError.HttpClientError
->() {}
-
-export const QueryErrorHandlerLive = ErrorHandler.layer(QueryErrorHandler)
 
 
 export function VQueryErrorHandler() {
     const [failure, setFailure] = useState(Option.none<Cause.Cause<
-        ErrorHandler.Error<Context.Tag.Service<QueryErrorHandler>>
+        ErrorHandler.Error<Context.Tag.Service<AppQueryErrorHandler>>
     >>())
 
-    R.useFork(() => QueryErrorHandler.pipe(Effect.flatMap(handler =>
+    R.useFork(() => AppQueryErrorHandler.pipe(Effect.flatMap(handler =>
         Stream.runForEach(handler.errors, v => Effect.sync(() =>
             setFailure(Option.some(v))
         ))

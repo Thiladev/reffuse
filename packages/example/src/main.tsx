@@ -1,12 +1,11 @@
 import { FetchHttpClient } from "@effect/platform"
 import { Clipboard, Geolocation, Permissions } from "@effect/platform-browser"
-import { QueryClient } from "@reffuse/extension-query"
 import { createRouter, RouterProvider } from "@tanstack/react-router"
 import { Layer } from "effect"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { ReffuseRuntime } from "reffuse"
-import { QueryErrorHandler, QueryErrorHandlerLive } from "./QueryErrorHandler"
+import { AppQueryClientLive, AppQueryErrorHandlerLive } from "./query"
 import { GlobalContext } from "./reffuse"
 import { routeTree } from "./routeTree.gen"
 
@@ -16,8 +15,8 @@ const layer = Layer.empty.pipe(
     Layer.provideMerge(Geolocation.layer),
     Layer.provideMerge(Permissions.layer),
     Layer.provideMerge(FetchHttpClient.layer),
-    Layer.provideMerge(QueryClient.layer({ ErrorHandler: QueryErrorHandler })),
-    Layer.provideMerge(QueryErrorHandlerLive),
+    Layer.provideMerge(AppQueryClientLive),
+    Layer.provideMerge(AppQueryErrorHandlerLive),
 )
 
 const router = createRouter({ routeTree })
