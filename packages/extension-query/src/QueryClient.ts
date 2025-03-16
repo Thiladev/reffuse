@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect"
+import { Context, Layer } from "effect"
 import type { Mutable } from "effect/Types"
 import * as ErrorHandler from "./ErrorHandler.js"
 
@@ -38,9 +38,9 @@ export const Service = <
         const TagClass = Context.Tag(Id)() as ServiceResult<Self, EH, HandledE>
         (TagClass as Mutable<typeof TagClass>).Live = Layer.empty.pipe(
             Layer.provideMerge(
-                Layer.effect(TagClass, Effect.succeed({
+                Layer.succeed(TagClass, {
                     ErrorHandler: (props?.ErrorHandler ?? ErrorHandler.DefaultErrorHandler) as Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
-                }))
+                })
             ),
 
             Layer.provideMerge((props?.ErrorHandler
