@@ -12,7 +12,7 @@ export interface MutationRunner<K extends readonly unknown[], A, E, R> {
 
 export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
     readonly QueryClient: QueryClient.GenericTagClass<EH, HandledE>
-    readonly mutation: (...key: K) => Effect.Effect<A, E, R>
+    readonly mutation: (key: K) => Effect.Effect<A, E, R>
 }
 
 export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
@@ -31,7 +31,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
     const mutate = (...key: K) => QueryClient.pipe(
         Effect.flatMap(client => client.ErrorHandler),
         Effect.flatMap(errorHandler => Ref.set(stateRef, AsyncData.loading()).pipe(
-            Effect.andThen(mutation(...key)),
+            Effect.andThen(mutation(key)),
             errorHandler.handle,
             Effect.tapErrorCause(c => Ref.set(stateRef, AsyncData.failure(c))),
             Effect.tap(v => Ref.set(stateRef, AsyncData.success(v))),

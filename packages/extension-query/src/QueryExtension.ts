@@ -2,6 +2,7 @@ import type * as AsyncData from "@typed/async-data"
 import { type Cause, type Context, Effect, type Fiber, Layer, type Option, type Stream, type SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
+import * as MutationRunner from "./MutationRunner.js"
 import * as QueryClient from "./QueryClient.js"
 import * as QueryRunner from "./QueryRunner.js"
 import type * as QueryService from "./QueryService.js"
@@ -21,6 +22,19 @@ export interface UseQueryResult<K extends readonly unknown[], A, E> {
     readonly layer: <Self, Id extends string>(
         tag: Context.TagClass<Self, Id, QueryService.QueryService<K, A, E>>
     ) => Layer.Layer<Self>
+}
+
+
+export interface UseMutationProps<K extends readonly unknown[], A, E, R> {
+    readonly mutation: (key: K) => Effect.Effect<A, E, R>
+}
+
+export interface UseMutationResult<K extends readonly unknown[], A, E> {
+    readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
+
+    // readonly layer: <Self, Id extends string>(
+    //     tag: Context.TagClass<Self, Id, QueryService.QueryService<K, A, E>>
+    // ) => Layer.Layer<Self>
 }
 
 
@@ -61,5 +75,33 @@ export const QueryExtension = ReffuseExtension.make(() => ({
                 refresh: runner.forkRefresh,
             }),
         }), [runner])
-    }
+    },
+
+    useMutation<
+        EH,
+        QK extends readonly unknown[],
+        QA,
+        QE,
+        HandledE,
+        QR extends R,
+        R,
+    >(
+        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<EH, HandledE> | EH>,
+        props: UseMutationProps<QK, QA, QE, QR>,
+    ): UseMutationResult<QK, QA, Exclude<QE, HandledE>> {
+        const runner = this.useMemo(() => MutationRunner.make({
+            QueryClient: QueryClient.makeGenericTagClass<EH, HandledE>(),
+            mutation: props.mutation,
+        }), [])
+
+        return React.useMemo(() => ({
+            state: runner.stateRef,
+
+            // layer: tag => Layer.succeed(tag, {
+            //     latestKey: runner.latestKeyRef,
+            //     state: runner.stateRef,
+            //     refresh: runner.forkRefresh,
+            // }),
+        }), [runner])
+    },
 }))
