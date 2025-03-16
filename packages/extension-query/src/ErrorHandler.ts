@@ -1,4 +1,5 @@
-import { type Cause, type Context, Effect, Layer, Queue, Stream } from "effect"
+import { type Cause, Context, Effect, Layer, Queue, Stream } from "effect"
+import type { Mutable } from "effect/Types"
 
 
 export interface ErrorHandler<E> {
@@ -9,25 +10,28 @@ export interface ErrorHandler<E> {
 export type Error<T> = T extends ErrorHandler<infer E> ? E : never
 
 
-export const Tag = <const Id extends string>(id: Id) => <
-    Self, E = never,
->() => Effect.Tag(id)<Self, ErrorHandler<E>>()
+export interface ServiceResult<Self, Id extends string, E> extends Context.TagClass<Self, Id, ErrorHandler<E>> {
+    readonly Live: Layer.Layer<Self>
+}
 
-export const layer = <Self, Id extends string, E>(
-    tag: Context.TagClass<Self, Id, ErrorHandler<E>>
-): Layer.Layer<Self> => Layer.effect(tag, Effect.gen(function*() {
-    const queue = yield* Queue.unbounded<Cause.Cause<E>>()
-    const errors = Stream.fromQueue(queue)
+export const Service = <const Id extends string>(id: Id) => (
+    <Self, E = never>(): ServiceResult<Self, Id, E> => {
+        const TagClass = Context.Tag(id)() as ServiceResult<Self, Id, E>
+        (TagClass as Mutable<typeof TagClass>).Live = Layer.effect(TagClass, Effect.gen(function*() {
+            const queue = yield* Queue.unbounded<Cause.Cause<E>>()
+            const errors = Stream.fromQueue(queue)
 
-    const handle = <A, SelfE, R>(
-        self: Effect.Effect<A, SelfE, R>
-    ) => Effect.tapErrorCause(self, cause =>
-        Queue.offer(queue, cause as Cause.Cause<E>)
-    ) as Effect.Effect<A, Exclude<SelfE, E>, R>
+            const handle = <A, SelfE, R>(
+                self: Effect.Effect<A, SelfE, R>
+            ) => Effect.tapErrorCause(self, cause =>
+                Queue.offer(queue, cause as Cause.Cause<E>)
+            ) as Effect.Effect<A, Exclude<SelfE, E>, R>
 
-    return { errors, handle }
-}))
+            return { errors, handle }
+        }))
+        return TagClass
+    }
+)
 
 
-export class DefaultErrorHandler extends Tag("@reffuse/extension-query/DefaultErrorHandler")<DefaultErrorHandler>() {}
-export const DefaultErrorHandlerLive = layer(DefaultErrorHandler)
+export class DefaultErrorHandler extends Service("@reffuse/extension-query/DefaultErrorHandler")<DefaultErrorHandler>() {}
