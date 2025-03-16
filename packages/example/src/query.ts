@@ -7,4 +7,5 @@ export class AppQueryErrorHandler extends ErrorHandler.Tag("AppQueryErrorHandler
 >() {}
 export const AppQueryErrorHandlerLive = ErrorHandler.layer(AppQueryErrorHandler)
 
-export const [AppQueryClient, AppQueryClientLive] = QueryClient.make({ ErrorHandler: AppQueryErrorHandler })
+
+export class AppQueryClient extends QueryClient.Service({ ErrorHandler: AppQueryErrorHandler })<AppQueryClient>() {}
