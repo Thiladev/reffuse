@@ -5,7 +5,7 @@ import { Layer } from "effect"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { ReffuseRuntime } from "reffuse"
-import { AppQueryClient, AppQueryErrorHandlerLive } from "./query"
+import { AppQueryClient, AppQueryErrorHandler } from "./query"
 import { GlobalContext } from "./reffuse"
 import { routeTree } from "./routeTree.gen"
 
@@ -16,7 +16,7 @@ const layer = Layer.empty.pipe(
     Layer.provideMerge(Permissions.layer),
     Layer.provideMerge(FetchHttpClient.layer),
     Layer.provideMerge(AppQueryClient.Live),
-    Layer.provideMerge(AppQueryErrorHandlerLive),
+    Layer.provideMerge(AppQueryErrorHandler.Live),
 )
 
 const router = createRouter({ routeTree })
