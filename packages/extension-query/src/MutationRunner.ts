@@ -1,134 +1,47 @@
-// import { BrowserStream } from "@effect/platform-browser"
-// import * as AsyncData from "@typed/async-data"
-// import { type Cause, Effect, Fiber, identity, Option, Ref, type Scope, Stream, SubscriptionRef } from "effect"
+import * as AsyncData from "@typed/async-data"
+import { type Context, Effect, Ref, SubscriptionRef } from "effect"
+import type * as QueryClient from "./QueryClient.js"
 
 
-// export interface MutationRunner<K extends readonly unknown[], A, E, R> {
-//     readonly mutation: (...args: K) => Effect.Effect<A, E, R>
-
-//     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-
-//     readonly forkMutate: Effect.Effect<Fiber.RuntimeFiber<void>>
-// }
+export interface MutationRunner<K extends readonly unknown[], A, E, R> {
+    readonly context: Context.Context<R>
+    readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
+    readonly mutate: (...key: K) => Effect.Effect<A, E>
+}
 
 
-// export interface MakeProps<K extends readonly unknown[], A, E, R> {
-//     readonly mutation: (...args: K) => Effect.Effect<A, E, R>
-// }
+export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
+    readonly QueryClient: QueryClient.GenericTagClass<EH, HandledE>
+    readonly mutation: (...key: K) => Effect.Effect<A, E, R>
+}
 
-// export const make = <K extends readonly unknown[], A, E, R>(
-//     { key, query }: MakeProps<K, A, E, R>
-// ): Effect.Effect<MutationRunner<K, A, E, R>, never, R> => Effect.gen(function*() {
-//     const context = yield* Effect.context<R>()
+export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
+    {
+        QueryClient,
+        mutation,
+    }: MakeProps<EH, K, A, E, HandledE, R>
+): Effect.Effect<
+    MutationRunner<K, A, Exclude<E, HandledE>, R>,
+    never,
+    R | QueryClient.TagClassShape<EH, HandledE> | EH
+> => Effect.gen(function*() {
+    const context = yield* Effect.context<R | QueryClient.TagClassShape<EH, HandledE> | EH>()
+    const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, Exclude<E, HandledE>>())
 
-//     const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, E>())
+    const mutate = (...key: K) => QueryClient.pipe(
+        Effect.flatMap(client => client.ErrorHandler),
+        Effect.flatMap(errorHandler => mutation(...key).pipe(
+            errorHandler.handle,
+            Effect.tapErrorCause(c => Ref.set(stateRef, AsyncData.failure(c))),
+            Effect.tap(v => Ref.set(stateRef, AsyncData.success(v))),
+        )),
 
-//     const interrupt = fiberRef.pipe(
-//         Effect.flatMap(Option.match({
-//             onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
-//                 Effect.andThen(Fiber.interrupt(fiber))
-//             ),
-//             onNone: () => Effect.void,
-//         }))
-//     )
+        Effect.provide(context),
+    )
 
-//     const forkInterrupt = fiberRef.pipe(
-//         Effect.flatMap(Option.match({
-//             onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
-//                 Effect.andThen(Fiber.interrupt(fiber).pipe(
-//                     Effect.asVoid,
-//                     Effect.forkDaemon,
-//                 ))
-//             ),
-//             onNone: () => Effect.forkDaemon(Effect.void),
-//         }))
-//     )
-
-//     const forkFetch = interrupt.pipe(
-//         Effect.andThen(
-//             Ref.set(stateRef, AsyncData.loading()).pipe(
-//                 Effect.andThen(latestKeyRef),
-//                 Effect.flatMap(identity),
-//                 Effect.flatMap(key => query(key).pipe(
-//                     Effect.matchCauseEffect({
-//                         onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
-//                         onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
-//                     })
-//                 )),
-
-//                 Effect.provide(context),
-//                 Effect.fork,
-//             )
-//         ),
-
-//         Effect.flatMap(fiber =>
-//             Ref.set(fiberRef, Option.some(fiber)).pipe(
-//                 Effect.andThen(Fiber.join(fiber)),
-//                 Effect.andThen(Ref.set(fiberRef, Option.none())),
-//             )
-//         ),
-
-//         Effect.forkDaemon,
-//     )
-
-//     const forkRefresh = interrupt.pipe(
-//         Effect.andThen(
-//             Ref.update(stateRef, previous => {
-//                 if (AsyncData.isSuccess(previous) || AsyncData.isFailure(previous))
-//                     return AsyncData.refreshing(previous)
-//                 if (AsyncData.isRefreshing(previous))
-//                     return AsyncData.refreshing(previous.previous)
-//                 return AsyncData.loading()
-//             }).pipe(
-//                 Effect.andThen(latestKeyRef),
-//                 Effect.flatMap(identity),
-//                 Effect.flatMap(key => query(key).pipe(
-//                     Effect.matchCauseEffect({
-//                         onSuccess: v => Ref.set(stateRef, AsyncData.success(v)),
-//                         onFailure: c => Ref.set(stateRef, AsyncData.failure(c)),
-//                     })
-//                 )),
-
-//                 Effect.provide(context),
-//                 Effect.fork,
-//             )
-//         ),
-
-//         Effect.flatMap(fiber =>
-//             Ref.set(fiberRef, Option.some(fiber)).pipe(
-//                 Effect.andThen(Fiber.join(fiber)),
-//                 Effect.andThen(Ref.set(fiberRef, Option.none())),
-//             )
-//         ),
-
-//         Effect.forkDaemon,
-//     )
-
-//     const fetchOnKeyChange = Effect.addFinalizer(() => interrupt).pipe(
-//         Effect.andThen(Stream.runForEach(key, latestKey =>
-//             Ref.set(latestKeyRef, Option.some(latestKey)).pipe(
-//                 Effect.andThen(forkFetch)
-//             )
-//         ))
-//     )
-
-//     const refreshOnWindowFocus = Stream.runForEach(
-//         BrowserStream.fromEventListenerWindow("focus"),
-//         () => forkRefresh,
-//     )
-
-//     return {
-//         query,
-
-//         latestKeyRef,
-//         stateRef,
-//         fiberRef,
-
-//         forkInterrupt,
-//         forkFetch,
-//         forkRefresh,
-
-//         fetchOnKeyChange,
-//         refreshOnWindowFocus,
-//     }
-// })
+    return {
+        context,
+        stateRef,
+        mutate,
+    }
+})
