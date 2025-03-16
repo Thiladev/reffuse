@@ -12,7 +12,7 @@ const id = "@reffuse/extension-query/QueryClient"
 
 export type TagClassShape<EH, HandledE> = Context.TagClassShape<typeof id, QueryClient<EH, HandledE>>
 export type GenericTagClass<EH, HandledE> = Context.TagClass<TagClassShape<EH, HandledE>, typeof id, QueryClient<EH, HandledE>>
-export const makeGenericTagClass = <EH = never, HandledE = never>() => Context.GenericTag(id) as GenericTagClass<EH, HandledE>
+export const makeGenericTagClass = <EH = never, HandledE = never>(): GenericTagClass<EH, HandledE> => Context.Tag(id)()
 
 
 export interface ServiceProps<EH, HandledE> {
