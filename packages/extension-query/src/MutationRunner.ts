@@ -30,7 +30,8 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
 
     const mutate = (...key: K) => QueryClient.pipe(
         Effect.flatMap(client => client.ErrorHandler),
-        Effect.flatMap(errorHandler => mutation(...key).pipe(
+        Effect.flatMap(errorHandler => Ref.set(stateRef, AsyncData.loading()).pipe(
+            Effect.andThen(mutation(...key)),
             errorHandler.handle,
             Effect.tapErrorCause(c => Ref.set(stateRef, AsyncData.failure(c))),
             Effect.tap(v => Ref.set(stateRef, AsyncData.success(v))),
