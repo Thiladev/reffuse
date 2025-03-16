@@ -34,11 +34,11 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         QR extends R,
         R,
     >(
-        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.QueryClient<EH, HandledE> | EH>,
+        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<EH, HandledE> | EH>,
         props: UseQueryProps<QK, QA, QE, QR>,
     ): UseQueryResult<QK, QA, Exclude<QE, HandledE>> {
         const runner = this.useMemo(() => QueryRunner.make({
-            QueryClient: QueryClient.makeTag<EH, HandledE>(),
+            QueryClient: QueryClient.makeGenericTagClass<EH, HandledE>(),
             key: props.key,
             query: props.query,
         }), [props.key])

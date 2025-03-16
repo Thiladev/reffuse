@@ -21,7 +21,7 @@ export interface QueryRunner<K extends readonly unknown[], A, E, R> {
 
 
 export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
-    readonly QueryClient: QueryClient.Tag<EH, HandledE>
+    readonly QueryClient: QueryClient.GenericTagClass<EH, HandledE>
     readonly key: Stream.Stream<K>
     readonly query: (key: K) => Effect.Effect<A, E, R>
 }
@@ -35,9 +35,9 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
 ): Effect.Effect<
     QueryRunner<K, A, Exclude<E, HandledE>, R>,
     never,
-    R | QueryClient.QueryClient<EH, HandledE> | EH
+    R | QueryClient.TagClassShape<EH, HandledE> | EH
 > => Effect.gen(function*() {
-    const context = yield* Effect.context<R | QueryClient.QueryClient<EH, HandledE> | EH>()
+    const context = yield* Effect.context<R | QueryClient.TagClassShape<EH, HandledE> | EH>()
 
     const latestKeyRef = yield* SubscriptionRef.make(Option.none<K>())
     const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, Exclude<E, HandledE>>())
