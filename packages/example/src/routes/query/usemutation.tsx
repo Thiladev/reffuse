@@ -3,7 +3,7 @@ import { HttpClient } from "@effect/platform"
 import { Button, Container, Flex, Slider, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import * as AsyncData from "@typed/async-data"
-import { Array, Console, Effect, flow, Option, Schema } from "effect"
+import { Array, Console, Effect, flow, Option, Schema, Stream } from "effect"
 import { useState } from "react"
 
 
@@ -58,7 +58,12 @@ function RouteComponent() {
                     })}
                 </Text>
 
-                <Button onClick={() => runSync(mutation.forkMutate(count))}>
+                <Button onClick={() => mutation.forkMutate(count).pipe(
+                    Effect.flatMap(([, state]) => Stream.runForEach(state, Console.log)),
+                    Effect.andThen(Console.log("Mutation done.")),
+                    Effect.forkDaemon,
+                    runSync,
+                )}>
                     Get
                 </Button>
             </Flex>
