@@ -1,12 +1,14 @@
 import * as AsyncData from "@typed/async-data"
-import { type Context, Effect, Ref, SubscriptionRef } from "effect"
+import { type Context, Effect, type Fiber, Ref, SubscriptionRef } from "effect"
 import type * as QueryClient from "./QueryClient.js"
 
 
 export interface MutationRunner<K extends readonly unknown[], A, E, R> {
     readonly context: Context.Context<R>
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
+
     readonly mutate: (...key: K) => Effect.Effect<A, E>
+    readonly forkMutate: (...key: K) => Effect.Effect<Fiber.RuntimeFiber<A, E>>
 }
 
 
@@ -40,9 +42,13 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
         Effect.provide(context),
     )
 
+    const forkMutate = (...key: K) => Effect.forkDaemon(mutate(...key))
+
     return {
         context,
         stateRef,
+
         mutate,
+        forkMutate,
     }
 })

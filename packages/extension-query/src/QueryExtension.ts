@@ -3,6 +3,7 @@ import { type Cause, type Context, Effect, type Fiber, Layer, type Option, type 
 import * as React from "react"
 import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as MutationRunner from "./MutationRunner.js"
+import type * as MutationService from "./MutationService.js"
 import * as QueryClient from "./QueryClient.js"
 import * as QueryRunner from "./QueryRunner.js"
 import type * as QueryService from "./QueryService.js"
@@ -31,10 +32,12 @@ export interface UseMutationProps<K extends readonly unknown[], A, E, R> {
 
 export interface UseMutationResult<K extends readonly unknown[], A, E> {
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
+    readonly mutate: (...key: K) => Effect.Effect<A, E>
+    readonly forkMutate: (...key: K) => Effect.Effect<Fiber.RuntimeFiber<A, E>>
 
-    // readonly layer: <Self, Id extends string>(
-    //     tag: Context.TagClass<Self, Id, QueryService.QueryService<K, A, E>>
-    // ) => Layer.Layer<Self>
+    readonly layer: <Self, Id extends string>(
+        tag: Context.TagClass<Self, Id, MutationService.MutationService<K, A, E>>
+    ) => Layer.Layer<Self>
 }
 
 
@@ -96,12 +99,14 @@ export const QueryExtension = ReffuseExtension.make(() => ({
 
         return React.useMemo(() => ({
             state: runner.stateRef,
+            mutate: runner.mutate,
+            forkMutate: runner.forkMutate,
 
-            // layer: tag => Layer.succeed(tag, {
-            //     latestKey: runner.latestKeyRef,
-            //     state: runner.stateRef,
-            //     refresh: runner.forkRefresh,
-            // }),
+            layer: tag => Layer.succeed(tag, {
+                state: runner.stateRef,
+                mutate: runner.mutate,
+                forkMutate: runner.forkMutate,
+            }),
         }), [runner])
     },
 }))
