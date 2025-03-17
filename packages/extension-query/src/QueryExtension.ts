@@ -32,8 +32,11 @@ export interface UseMutationProps<K extends readonly unknown[], A, E, R> {
 
 export interface UseMutationResult<K extends readonly unknown[], A, E> {
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-    readonly mutate: (...key: K) => Effect.Effect<A, E>
-    readonly forkMutate: (...key: K) => Effect.Effect<Fiber.RuntimeFiber<A, E>>
+    readonly mutate: (...key: K) => Effect.Effect<AsyncData.Success<A> | AsyncData.Failure<E>>
+    readonly forkMutate: (...key: K) => Effect.Effect<readonly [
+        fiber: Fiber.RuntimeFiber<AsyncData.Success<A> | AsyncData.Failure<E>>,
+        state: Stream.Stream<AsyncData.AsyncData<A, E>>,
+    ]>
 
     readonly layer: <Self, Id extends string>(
         tag: Context.TagClass<Self, Id, MutationService.MutationService<K, A, E>>
