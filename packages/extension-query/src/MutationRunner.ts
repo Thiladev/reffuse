@@ -58,9 +58,12 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
 
     const forkMutate = (...key: K) => Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>().pipe(
         Effect.flatMap(stateQueue =>
-            run(key, value => Queue.offer(stateQueue, value).pipe(
-                Effect.andThen(Ref.set(stateRef, value))
-            )).pipe(
+            run(
+                key,
+                value => Ref.set(stateRef, value).pipe(
+                    Effect.andThen(Queue.offer(stateQueue, value))
+                ),
+            ).pipe(
                 Effect.tap(() => Queue.shutdown(stateQueue)),
                 Effect.forkDaemon,
                 Effect.map(fiber => [fiber, Stream.fromQueue(stateQueue)] as const)
