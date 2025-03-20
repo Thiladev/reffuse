@@ -1,6 +1,8 @@
 import * as AsyncData from "@typed/async-data"
 import { type Context, Effect, type Fiber, Queue, Ref, Stream, SubscriptionRef } from "effect"
 import type * as QueryClient from "./QueryClient.js"
+import * as QueryProgress from "./QueryProgress.js"
+import * as QueryState from "./QueryState.js"
 
 
 export interface MutationRunner<K extends readonly unknown[], A, E, R> {
@@ -31,50 +33,63 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
     R | QueryClient.TagClassShape<EH, HandledE> | EH
 > => Effect.gen(function*() {
     const context = yield* Effect.context<R | QueryClient.TagClassShape<EH, HandledE> | EH>()
-    const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, Exclude<E, HandledE>>())
+    const globalStateRef = yield* SubscriptionRef.make(AsyncData.noData<A, Exclude<E, HandledE>>())
 
-    const run = (
-        key: K,
-        setState: (value: AsyncData.AsyncData<A, Exclude<E, HandledE>>) => Effect.Effect<void>,
-    ) => QueryClient.pipe(
-        Effect.flatMap(client => client.ErrorHandler),
-        Effect.flatMap(errorHandler => setState(AsyncData.loading()).pipe(
-            Effect.andThen(mutation(key)),
-            errorHandler.handle,
-            Effect.matchCauseEffect({
-                onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
-                    Effect.tap(setState)
-                ),
-                onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
-                    Effect.tap(setState)
-                ),
-            }),
+    const run = (key: K) => Effect.all([
+        QueryClient,
+        QueryState.makeTag<A, Exclude<E, HandledE>>(),
+    ]).pipe(
+        Effect.flatMap(([client, state]) => client.ErrorHandler.pipe(
+            Effect.flatMap(errorHandler => state.set(AsyncData.loading()).pipe(
+                Effect.andThen(mutation(key)),
+                errorHandler.handle,
+                Effect.matchCauseEffect({
+                    onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
+                        Effect.tap(state.set)
+                    ),
+                    onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
+                        Effect.tap(state.set)
+                    ),
+                }),
+            ))
         )),
 
         Effect.provide(context),
+        Effect.provide(QueryProgress.QueryProgress.Live),
     )
 
-    const mutate = (...key: K) => run(key, value => Ref.set(stateRef, value))
+    const mutate = (...key: K) => run(key).pipe(
+        Effect.provide(QueryState.layer(
+            QueryState.makeTag<A, Exclude<E, HandledE>>(),
+            globalStateRef,
+            value => Ref.set(globalStateRef, value),
+        ))
+    )
 
-    const forkMutate = (...key: K) => Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>().pipe(
-        Effect.flatMap(stateQueue =>
-            run(
-                key,
-                value => Ref.set(stateRef, value).pipe(
-                    Effect.andThen(Queue.offer(stateQueue, value))
+    const forkMutate = (...key: K) => Effect.gen(function*() {
+        const stateRef = yield* Ref.make(AsyncData.noData<A, Exclude<E, HandledE>>())
+        const stateQueue = yield* Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>()
+
+        const fiber = yield* Effect.forkDaemon(run(key).pipe(
+            Effect.tap(() => Queue.shutdown(stateQueue)),
+
+            Effect.provide(QueryState.layer(
+                QueryState.makeTag<A, Exclude<E, HandledE>>(),
+                stateRef,
+                value => Queue.offer(stateQueue, value).pipe(
+                    Effect.andThen(Ref.set(stateRef, value)),
+                    Effect.andThen(Ref.set(globalStateRef, value)),
                 ),
-            ).pipe(
-                Effect.tap(() => Queue.shutdown(stateQueue)),
-                Effect.forkDaemon,
-                Effect.map(fiber => [fiber, Stream.fromQueue(stateQueue)] as const)
-            )
-        )
-    )
+            )),
+        ))
+
+        return [fiber, Stream.fromQueue(stateQueue)] as const
+    })
 
 
     return {
         context,
-        stateRef,
+        stateRef: globalStateRef,
 
         mutate,
         forkMutate,
