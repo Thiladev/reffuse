@@ -19,7 +19,7 @@ export interface MutationRunner<K extends readonly unknown[], A, E, R> {
 
 export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
     readonly QueryClient: QueryClient.GenericTagClass<EH, HandledE>
-    readonly mutation: (key: K) => Effect.Effect<A, E, R>
+    readonly mutation: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress | QueryState.QueryState<A, Exclude<E, HandledE>>>
 }
 
 export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(

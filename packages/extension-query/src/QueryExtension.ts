@@ -5,8 +5,10 @@ import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
 import * as MutationRunner from "./MutationRunner.js"
 import type * as MutationService from "./MutationService.js"
 import * as QueryClient from "./QueryClient.js"
+import type * as QueryProgress from "./QueryProgress.js"
 import * as QueryRunner from "./QueryRunner.js"
 import type * as QueryService from "./QueryService.js"
+import type * as QueryState from "./QueryState.js"
 
 
 export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
@@ -27,7 +29,7 @@ export interface UseQueryResult<K extends readonly unknown[], A, E> {
 
 
 export interface UseMutationProps<K extends readonly unknown[], A, E, R> {
-    readonly mutation: (key: K) => Effect.Effect<A, E, R>
+    readonly mutation: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress | QueryState.QueryState<A, E>>
 }
 
 export interface UseMutationResult<K extends readonly unknown[], A, E> {
