@@ -35,23 +35,23 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
     const context = yield* Effect.context<R | QueryClient.TagClassShape<EH, HandledE> | EH>()
     const globalStateRef = yield* SubscriptionRef.make(AsyncData.noData<A, Exclude<E, HandledE>>())
 
+    const queryStateTag = QueryState.makeTag<A, Exclude<E, HandledE>>()
+
     const run = (key: K) => Effect.all([
-        QueryClient,
-        QueryState.makeTag<A, Exclude<E, HandledE>>(),
+        queryStateTag,
+        QueryClient.pipe(Effect.flatMap(client => client.ErrorHandler)),
     ]).pipe(
-        Effect.flatMap(([client, state]) => client.ErrorHandler.pipe(
-            Effect.flatMap(errorHandler => state.set(AsyncData.loading()).pipe(
-                Effect.andThen(mutation(key)),
-                errorHandler.handle,
-                Effect.matchCauseEffect({
-                    onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
-                        Effect.tap(state.set)
-                    ),
-                    onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
-                        Effect.tap(state.set)
-                    ),
-                }),
-            ))
+        Effect.flatMap(([state, errorHandler]) => state.set(AsyncData.loading()).pipe(
+            Effect.andThen(mutation(key)),
+            errorHandler.handle,
+            Effect.matchCauseEffect({
+                onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
+                    Effect.tap(state.set)
+                ),
+                onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
+                    Effect.tap(state.set)
+                ),
+            }),
         )),
 
         Effect.provide(context),
@@ -60,7 +60,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
 
     const mutate = (...key: K) => run(key).pipe(
         Effect.provide(QueryState.layer(
-            QueryState.makeTag<A, Exclude<E, HandledE>>(),
+            queryStateTag,
             globalStateRef,
             value => Ref.set(globalStateRef, value),
         ))
@@ -74,7 +74,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
             Effect.tap(() => Queue.shutdown(stateQueue)),
 
             Effect.provide(QueryState.layer(
-                QueryState.makeTag<A, Exclude<E, HandledE>>(),
+                queryStateTag,
                 stateRef,
                 value => Queue.offer(stateQueue, value).pipe(
                     Effect.andThen(Ref.set(stateRef, value)),
