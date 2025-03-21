@@ -1,4 +1,4 @@
-import * as AsyncData from "@typed/async-data"
+import type * as AsyncData from "@typed/async-data"
 import { Context, Effect, Layer } from "effect"
 
 

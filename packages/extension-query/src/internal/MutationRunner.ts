@@ -1,7 +1,7 @@
 import * as AsyncData from "@typed/async-data"
 import { type Context, Effect, type Fiber, Queue, Ref, Stream, SubscriptionRef } from "effect"
-import type * as QueryClient from "./QueryClient.js"
-import * as QueryProgress from "./QueryProgress.js"
+import type * as QueryClient from "../QueryClient.js"
+import * as QueryProgress from "../QueryProgress.js"
 import * as QueryState from "./QueryState.js"
 
 
@@ -19,7 +19,7 @@ export interface MutationRunner<K extends readonly unknown[], A, E, R> {
 
 export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
     readonly QueryClient: QueryClient.GenericTagClass<EH, HandledE>
-    readonly mutation: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress | QueryState.QueryState<A, Exclude<E, HandledE>>>
+    readonly mutation: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress>
 }
 
 export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(

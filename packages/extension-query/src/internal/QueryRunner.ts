@@ -1,7 +1,7 @@
 import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
 import { type Cause, type Context, Effect, Fiber, identity, Option, Ref, type Scope, Stream, SubscriptionRef } from "effect"
-import type * as QueryClient from "./QueryClient.js"
+import type * as QueryClient from "../QueryClient.js"
 
 
 export interface QueryRunner<K extends readonly unknown[], A, E, R> {

@@ -1,6 +1,7 @@
 import { R } from "@/reffuse"
 import { HttpClient } from "@effect/platform"
 import { Button, Container, Flex, Slider, Text } from "@radix-ui/themes"
+import { QueryProgress } from "@reffuse/extension-query"
 import { createFileRoute } from "@tanstack/react-router"
 import * as AsyncData from "@typed/async-data"
 import { Array, Console, Effect, flow, Option, Schema, Stream } from "effect"
@@ -22,6 +23,7 @@ function RouteComponent() {
     const mutation = R.useMutation({
         mutation: ([count]: readonly [count: number]) => Console.log(`Querying ${ count } IDs...`).pipe(
             Effect.andThen(Effect.sleep("500 millis")),
+            Effect.tap(() => QueryProgress.QueryProgress.get),
             Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
             HttpClient.withTracerPropagation(false),
             Effect.flatMap(res => res.json),
