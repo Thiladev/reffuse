@@ -57,11 +57,14 @@ function RouteComponent() {
                 <Text>
                     {AsyncData.match(state, {
                         NoData: () => "No data yet",
-                        Loading: () => "Loading...",
-                        Success: value =>
-                            `Value: ${value}`,
-                        Failure: cause =>
-                            `Error: ${cause}`,
+                        Loading: progress =>
+                            `Loading...
+                            ${ Option.match(progress, {
+                                onSome: ({ loaded, total }) => ` (${ loaded }/${ Option.getOrElse(total, () => "unknown") })`,
+                                onNone: () => "",
+                            }) }`,
+                        Success: value => `Value: ${ value }`,
+                        Failure: cause => `Error: ${ cause }`,
                     })}
                 </Text>
 
