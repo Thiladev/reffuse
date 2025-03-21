@@ -25,7 +25,7 @@ export interface QueryRunner<K extends readonly unknown[], A, E, R> {
 export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
     readonly QueryClient: QueryClient.GenericTagClass<EH, HandledE>
     readonly key: Stream.Stream<K>
-    readonly query: (key: K) => Effect.Effect<A, E, R>
+    readonly query: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress>
 }
 
 export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(

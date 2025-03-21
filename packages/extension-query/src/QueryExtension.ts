@@ -11,7 +11,7 @@ import { MutationRunner, QueryRunner } from "./internal/index.js"
 
 export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
     readonly key: Stream.Stream<K>
-    readonly query: (key: K) => Effect.Effect<A, E, R>
+    readonly query: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress>
     readonly refreshOnWindowFocus?: boolean
 }
 
