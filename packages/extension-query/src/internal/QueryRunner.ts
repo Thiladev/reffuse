@@ -133,7 +133,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
     )
 
     const fetchOnKeyChange = Effect.addFinalizer(() => interrupt).pipe(
-        Effect.andThen(Stream.runForEach(key, latestKey =>
+        Effect.andThen(Stream.runForEach(Stream.changes(key), latestKey =>
             Ref.set(latestKeyRef, Option.some(latestKey)).pipe(
                 Effect.andThen(forkFetch)
             )
