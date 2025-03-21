@@ -16,14 +16,19 @@ export const Route = createFileRoute("/query/usemutation")({
 const Result = Schema.Array(Schema.String)
 
 function RouteComponent() {
-    const runSync = R.useRunSync()
+    const runFork = R.useRunFork()
 
     const [count, setCount] = useState(1)
 
     const mutation = R.useMutation({
         mutation: ([count]: readonly [count: number]) => Console.log(`Querying ${ count } IDs...`).pipe(
+            Effect.andThen(QueryProgress.QueryProgress.update(() =>
+                AsyncData.Progress.make({ loaded: 0, total: Option.some(100) })
+            )),
             Effect.andThen(Effect.sleep("500 millis")),
-            Effect.tap(() => QueryProgress.QueryProgress.get),
+            Effect.tap(() => QueryProgress.QueryProgress.update(() =>
+                AsyncData.Progress.make({ loaded: 50, total: Option.some(100) })
+            )),
             Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
             HttpClient.withTracerPropagation(false),
             Effect.flatMap(res => res.json),
@@ -63,8 +68,7 @@ function RouteComponent() {
                 <Button onClick={() => mutation.forkMutate(count).pipe(
                     Effect.flatMap(([, state]) => Stream.runForEach(state, Console.log)),
                     Effect.andThen(Console.log("Mutation done.")),
-                    Effect.forkDaemon,
-                    runSync,
+                    runFork,
                 )}>
                     Get
                 </Button>

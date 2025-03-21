@@ -1,6 +1,6 @@
 import { AlertDialog, Button, Flex, Text } from "@radix-ui/themes"
 import { ErrorHandler } from "@reffuse/extension-query"
-import { Cause, Chunk, Context, Effect, Match, Option, Stream } from "effect"
+import { Cause, Console, Context, Effect, Either, flow, Match, Option, Stream } from "effect"
 import { useState } from "react"
 import { AppQueryErrorHandler } from "./query"
 import { R } from "./reffuse"
@@ -12,8 +12,8 @@ export function VQueryErrorHandler() {
     >>())
 
     R.useFork(() => AppQueryErrorHandler.pipe(Effect.flatMap(handler =>
-        Stream.runForEach(handler.errors, v => Effect.sync(() =>
-            setFailure(Option.some(v))
+        Stream.runForEach(handler.errors, v => Console.error(v).pipe(
+            Effect.andThen(Effect.sync(() => { setFailure(Option.some(v)) }))
         ))
     )), [])
 
@@ -23,15 +23,22 @@ export function VQueryErrorHandler() {
                 <AlertDialog.Content maxWidth="450px">
                     <AlertDialog.Title>Error</AlertDialog.Title>
                     <AlertDialog.Description size="2">
-                        {Cause.failures(v).pipe(
-                            Chunk.head,
-                            Option.getOrThrow,
+                        {Either.match(Cause.failureOrCause(v), {
+                            onLeft: flow(
+                                Match.value,
+                                Match.tag("RequestError", () => <Text>HTTP request error</Text>),
+                                Match.tag("ResponseError", () => <Text>HTTP response error</Text>),
+                                Match.exhaustive,
+                            ),
 
-                            Match.value,
-                            Match.tag("RequestError", () => <Text>HTTP request error</Text>),
-                            Match.tag("ResponseError", () => <Text>HTTP response error</Text>),
-                            Match.exhaustive,
-                        )}
+                            onRight: flow(
+                                Cause.dieOption,
+                                Option.match({
+                                    onSome: () => <Text>Unrecoverable defect</Text>,
+                                    onNone: () => <Text>Unknown error</Text>,
+                                }),
+                            ),
+                        })}
                     </AlertDialog.Description>
 
                     <Flex gap="3" mt="4" justify="end">
