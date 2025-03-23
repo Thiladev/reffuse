@@ -4,7 +4,7 @@ import type { Mutable } from "effect/Types"
 
 export interface ErrorHandler<E> {
     readonly errors: Stream.Stream<Cause.Cause<E>>
-    readonly handle: <A, SelfE extends E, R>(self: Effect.Effect<A, SelfE, R>) => Effect.Effect<A, Exclude<SelfE, E>, R>
+    readonly handle: <A, SelfE, R>(self: Effect.Effect<A, SelfE, R>) => Effect.Effect<A, Exclude<SelfE, E>, R>
 }
 
 export type Error<T> = T extends ErrorHandler<infer E> ? E : never
@@ -29,9 +29,9 @@ export const Service = <Self, E = never>() => (
             const queue = yield* Queue.unbounded<Cause.Cause<E>>()
             const errors = Stream.fromQueue(queue)
 
-            const handle = <A, SelfE extends E, R>(
+            const handle = <A, SelfE, R>(
                 self: Effect.Effect<A, SelfE, R>
-            ): Effect.Effect<A, Exclude<SelfE, E>, R> => f(self,
+            ): Effect.Effect<A, Exclude<SelfE, E>, R> => f(self as unknown as Effect.Effect<A, E, R>,
                 (failure: E) => Queue.offer(queue, Cause.fail(failure)).pipe(
                     Effect.andThen(Effect.failCause(Cause.empty))
                 ),
