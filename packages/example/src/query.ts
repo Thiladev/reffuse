@@ -18,4 +18,4 @@ export class AppQueryErrorHandler extends ErrorHandler.Service<AppQueryErrorHand
     ),
 ) {}
 
-export class AppQueryClient extends QueryClient.Service({ ErrorHandler: AppQueryErrorHandler })<AppQueryClient>() {}
+export class AppQueryClient extends QueryClient.Service<AppQueryClient>()({ ErrorHandler: AppQueryErrorHandler }) {}

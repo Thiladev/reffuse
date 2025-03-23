@@ -23,13 +23,13 @@ export interface ServiceResult<Self, EH, HandledE> extends Context.TagClass<Self
     readonly Live: Layer.Layer<Self>
 }
 
-export const Service = <
-    EH = ErrorHandler.DefaultErrorHandler,
-    HandledE = ErrorHandler.Error<Context.Tag.Service<ErrorHandler.DefaultErrorHandler>>,
->(
-    props?: ServiceProps<EH, HandledE>
-) => (
-    <Self>(): ServiceResult<Self, EH, HandledE> => {
+export const Service = <Self>() => (
+    <
+        EH = ErrorHandler.DefaultErrorHandler,
+        HandledE = ErrorHandler.Error<Context.Tag.Service<ErrorHandler.DefaultErrorHandler>>,
+    >(
+        props?: ServiceProps<EH, HandledE>
+    ): ServiceResult<Self, EH, HandledE> => {
         const TagClass = Context.Tag(id)() as ServiceResult<Self, EH, HandledE>
         (TagClass as Mutable<typeof TagClass>).Live = Layer.succeed(TagClass, {
             ErrorHandler: (props?.ErrorHandler ?? ErrorHandler.DefaultErrorHandler) as Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
