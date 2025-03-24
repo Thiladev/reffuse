@@ -5,7 +5,7 @@ import { Uuid4Query } from "../services"
 
 
 export function Uuid4QueryService() {
-    const runSync = R.useRunSync()
+    const runFork = R.useRunFork()
 
     const query = R.useMemo(() => Uuid4Query.Uuid4Query, [])
     const [state] = R.useRefState(query.state)
@@ -25,7 +25,7 @@ export function Uuid4QueryService() {
                     })}
                 </Text>
 
-                <Button onClick={() => runSync(query.refresh)}>Refresh</Button>
+                <Button onClick={() => runFork(query.forkRefresh)}>Refresh</Button>
             </Flex>
         </Container>
     )

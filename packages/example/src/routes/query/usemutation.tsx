@@ -1,13 +1,14 @@
 import { R } from "@/reffuse"
 import { HttpClient } from "@effect/platform"
 import { Button, Container, Flex, Slider, Text } from "@radix-ui/themes"
+import { QueryProgress } from "@reffuse/extension-query"
 import { createFileRoute } from "@tanstack/react-router"
 import * as AsyncData from "@typed/async-data"
 import { Array, Console, Effect, flow, Option, Schema, Stream } from "effect"
 import { useState } from "react"
 
 
-export const Route = createFileRoute("/query/usequery")({
+export const Route = createFileRoute("/query/usemutation")({
     component: RouteComponent
 })
 
@@ -19,19 +20,24 @@ function RouteComponent() {
 
     const [count, setCount] = useState(1)
 
-    const query = R.useQuery({
-        key: R.useStreamFromValues(["uuid4", count]),
-        query: ([, count]) => Console.log(`Querying ${ count } IDs...`).pipe(
+    const mutation = R.useMutation({
+        mutation: ([count]: readonly [count: number]) => Console.log(`Querying ${ count } IDs...`).pipe(
+            Effect.andThen(QueryProgress.QueryProgress.update(() =>
+                AsyncData.Progress.make({ loaded: 0, total: Option.some(100) })
+            )),
             Effect.andThen(Effect.sleep("500 millis")),
+            Effect.tap(() => QueryProgress.QueryProgress.update(() =>
+                AsyncData.Progress.make({ loaded: 50, total: Option.some(100) })
+            )),
             Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
             HttpClient.withTracerPropagation(false),
             Effect.flatMap(res => res.json),
             Effect.flatMap(Schema.decodeUnknown(Result)),
             Effect.scoped,
-        ),
+        )
     })
 
-    const [state] = R.useRefState(query.state)
+    const [state] = R.useRefState(mutation.state)
 
 
     return (
@@ -51,22 +57,23 @@ function RouteComponent() {
                 <Text>
                     {AsyncData.match(state, {
                         NoData: () => "No data yet",
-                        Loading: () => "Loading...",
-                        Success: (value, { isRefreshing, isOptimistic }) =>
-                            `Value: ${value} ${isRefreshing ? "(refreshing)" : ""} ${isOptimistic ? "(optimistic)" : ""}`,
-                        Failure: (cause, { isRefreshing }) =>
-                            `Error: ${cause} ${isRefreshing ? "(refreshing)" : ""}`,
+                        Loading: progress =>
+                            `Loading...
+                            ${ Option.match(progress, {
+                                onSome: ({ loaded, total }) => ` (${ loaded }/${ Option.getOrElse(total, () => "unknown") })`,
+                                onNone: () => "",
+                            }) }`,
+                        Success: value => `Value: ${ value }`,
+                        Failure: cause => `Error: ${ cause }`,
                     })}
                 </Text>
 
-                <Button
-                    onClick={() => query.forkRefresh.pipe(
-                        Effect.flatMap(([, state]) => Stream.runForEach(state, Console.log)),
-                        Effect.andThen(Console.log("Refresh finished or stopped")),
-                        runFork,
-                    )}
-                >
-                    Refresh
+                <Button onClick={() => mutation.forkMutate(count).pipe(
+                    Effect.flatMap(([, state]) => Stream.runForEach(state, Console.log)),
+                    Effect.andThen(Console.log("Mutation done.")),
+                    runFork,
+                )}>
+                    Get
                 </Button>
             </Flex>
         </Container>

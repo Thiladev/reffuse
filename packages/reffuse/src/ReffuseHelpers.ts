@@ -395,9 +395,10 @@ export abstract class ReffuseHelpers<R> {
         const initialState = this.useMemo(() => ref, [], { doNotReExecuteOnRuntimeOrContextChange: true })
         const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
-        this.useFork(() => Stream.runForEach(ref.changes, v => Effect.sync(() =>
-            setReactStateValue(v)
-        )), [ref])
+        this.useFork(() => Stream.runForEach(
+            Stream.changesWith(ref.changes, (x, y) => x === y),
+            v => Effect.sync(() => setReactStateValue(v)),
+        ), [ref])
 
         const setValue = this.useCallbackSync((setStateAction: React.SetStateAction<A>) =>
             Ref.update(ref, prevState =>

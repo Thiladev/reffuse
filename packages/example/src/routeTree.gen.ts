@@ -19,6 +19,7 @@ import { Route as CountImport } from './routes/count'
 import { Route as BlankImport } from './routes/blank'
 import { Route as IndexImport } from './routes/index'
 import { Route as QueryUsequeryImport } from './routes/query/usequery'
+import { Route as QueryUsemutationImport } from './routes/query/usemutation'
 import { Route as QueryServiceImport } from './routes/query/service'
 
 // Create/Update Routes
@@ -68,6 +69,12 @@ const IndexRoute = IndexImport.update({
 const QueryUsequeryRoute = QueryUsequeryImport.update({
   id: '/query/usequery',
   path: '/query/usequery',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const QueryUsemutationRoute = QueryUsemutationImport.update({
+  id: '/query/usemutation',
+  path: '/query/usemutation',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -137,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QueryServiceImport
       parentRoute: typeof rootRoute
     }
+    '/query/usemutation': {
+      id: '/query/usemutation'
+      path: '/query/usemutation'
+      fullPath: '/query/usemutation'
+      preLoaderRoute: typeof QueryUsemutationImport
+      parentRoute: typeof rootRoute
+    }
     '/query/usequery': {
       id: '/query/usequery'
       path: '/query/usequery'
@@ -158,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
   '/query/service': typeof QueryServiceRoute
+  '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
 }
 
@@ -170,6 +185,7 @@ export interface FileRoutesByTo {
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
   '/query/service': typeof QueryServiceRoute
+  '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
 }
 
@@ -183,6 +199,7 @@ export interface FileRoutesById {
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
   '/query/service': typeof QueryServiceRoute
+  '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
 }
 
@@ -197,6 +214,7 @@ export interface FileRouteTypes {
     | '/tests'
     | '/time'
     | '/query/service'
+    | '/query/usemutation'
     | '/query/usequery'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -208,6 +226,7 @@ export interface FileRouteTypes {
     | '/tests'
     | '/time'
     | '/query/service'
+    | '/query/usemutation'
     | '/query/usequery'
   id:
     | '__root__'
@@ -219,6 +238,7 @@ export interface FileRouteTypes {
     | '/tests'
     | '/time'
     | '/query/service'
+    | '/query/usemutation'
     | '/query/usequery'
   fileRoutesById: FileRoutesById
 }
@@ -232,6 +252,7 @@ export interface RootRouteChildren {
   TestsRoute: typeof TestsRoute
   TimeRoute: typeof TimeRoute
   QueryServiceRoute: typeof QueryServiceRoute
+  QueryUsemutationRoute: typeof QueryUsemutationRoute
   QueryUsequeryRoute: typeof QueryUsequeryRoute
 }
 
@@ -244,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   TestsRoute: TestsRoute,
   TimeRoute: TimeRoute,
   QueryServiceRoute: QueryServiceRoute,
+  QueryUsemutationRoute: QueryUsemutationRoute,
   QueryUsequeryRoute: QueryUsequeryRoute,
 }
 
@@ -265,6 +287,7 @@ export const routeTree = rootRoute
         "/tests",
         "/time",
         "/query/service",
+        "/query/usemutation",
         "/query/usequery"
       ]
     },
@@ -291,6 +314,9 @@ export const routeTree = rootRoute
     },
     "/query/service": {
       "filePath": "query/service.tsx"
+    },
+    "/query/usemutation": {
+      "filePath": "query/usemutation.tsx"
     },
     "/query/usequery": {
       "filePath": "query/usequery.tsx"
