@@ -106,10 +106,12 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
     const forkFetch = Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>().pipe(
         Effect.flatMap(stateQueue => queryStateTag.pipe(
             Effect.flatMap(state => interrupt.pipe(
-                Effect.andThen(state.set(AsyncData.loading()).pipe(
+                Effect.andThen(Effect.addFinalizer(() => Ref.set(fiberRef, Option.none()).pipe(
+                    Effect.andThen(Queue.shutdown(stateQueue))
+                )).pipe(
+                    Effect.andThen(state.set(AsyncData.loading())),
                     Effect.andThen(run),
-                    Effect.tap(() => Ref.set(fiberRef, Option.none())),
-                    Effect.tap(() => Queue.shutdown(stateQueue)),
+                    Effect.scoped,
                     Effect.forkDaemon,
                 )),
 
@@ -139,10 +141,12 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
 
     const forkRefresh = Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>().pipe(
         Effect.flatMap(stateQueue => interrupt.pipe(
-            Effect.andThen(setInitialRefreshState.pipe(
+            Effect.andThen(Effect.addFinalizer(() => Ref.set(fiberRef, Option.none()).pipe(
+                Effect.andThen(Queue.shutdown(stateQueue))
+            )).pipe(
+                Effect.andThen(setInitialRefreshState),
                 Effect.andThen(run),
-                Effect.tap(() => Ref.set(fiberRef, Option.none())),
-                Effect.tap(() => Queue.shutdown(stateQueue)),
+                Effect.scoped,
                 Effect.forkDaemon,
             )),
 
