@@ -109,6 +109,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
                 Effect.andThen(state.set(AsyncData.loading()).pipe(
                     Effect.andThen(run),
                     Effect.tap(() => Ref.set(fiberRef, Option.none())),
+                    Effect.tap(() => Queue.shutdown(stateQueue)),
                     Effect.forkDaemon,
                 )),
 
@@ -141,6 +142,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
             Effect.andThen(setInitialRefreshState.pipe(
                 Effect.andThen(run),
                 Effect.tap(() => Ref.set(fiberRef, Option.none())),
+                Effect.tap(() => Queue.shutdown(stateQueue)),
                 Effect.forkDaemon,
             )),
 
