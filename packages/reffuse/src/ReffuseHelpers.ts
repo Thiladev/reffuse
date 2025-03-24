@@ -396,7 +396,7 @@ export abstract class ReffuseHelpers<R> {
         const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
         this.useFork(() => Stream.runForEach(
-            Stream.changes(ref.changes),
+            Stream.changesWith(ref.changes, (x, y) => x === y),
             v => Effect.sync(() => setReactStateValue(v)),
         ), [ref])
 
