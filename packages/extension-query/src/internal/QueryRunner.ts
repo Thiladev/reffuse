@@ -134,7 +134,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
             if (AsyncData.isRefreshing(previous))
                 return AsyncData.refreshing(previous.previous)
             return AsyncData.loading()
-        })),
+        }))
     )
 
     const forkRefresh = Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>().pipe(
