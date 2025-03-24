@@ -15,7 +15,7 @@ export const Route = createFileRoute("/query/usequery")({
 const Result = Schema.Array(Schema.String)
 
 function RouteComponent() {
-    const runSync = R.useRunSync()
+    const runFork = R.useRunFork()
 
     const [count, setCount] = useState(1)
 
@@ -59,7 +59,7 @@ function RouteComponent() {
                     })}
                 </Text>
 
-                <Button onClick={() => runSync(query.refresh)}>Refresh</Button>
+                <Button onClick={() => runFork(query.forkRefresh)}>Refresh</Button>
             </Flex>
         </Container>
     )

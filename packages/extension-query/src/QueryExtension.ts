@@ -18,7 +18,11 @@ export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
 export interface UseQueryResult<K extends readonly unknown[], A, E> {
     readonly latestKey: SubscriptionRef.SubscriptionRef<Option.Option<K>>
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-    readonly refresh: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
+
+    readonly forkRefresh: Effect.Effect<readonly [
+        fiber: Fiber.RuntimeFiber<AsyncData.Success<A> | AsyncData.Failure<E>, Cause.NoSuchElementException>,
+        state: Stream.Stream<AsyncData.AsyncData<A, E>>,
+    ]>
 
     readonly layer: <Self, Id extends string>(
         tag: Context.TagClass<Self, Id, QueryService.QueryService<K, A, E>>
@@ -32,6 +36,7 @@ export interface UseMutationProps<K extends readonly unknown[], A, E, R> {
 
 export interface UseMutationResult<K extends readonly unknown[], A, E> {
     readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
+
     readonly mutate: (...key: K) => Effect.Effect<AsyncData.Success<A> | AsyncData.Failure<E>>
     readonly forkMutate: (...key: K) => Effect.Effect<readonly [
         fiber: Fiber.RuntimeFiber<AsyncData.Success<A> | AsyncData.Failure<E>>,
@@ -73,12 +78,13 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         return React.useMemo(() => ({
             latestKey: runner.latestKeyRef,
             state: runner.stateRef,
-            refresh: runner.forkRefresh,
+
+            forkRefresh: runner.forkRefresh,
 
             layer: tag => Layer.succeed(tag, {
                 latestKey: runner.latestKeyRef,
                 state: runner.stateRef,
-                refresh: runner.forkRefresh,
+                forkRefresh: runner.forkRefresh,
             }),
         }), [runner])
     },
@@ -102,6 +108,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
 
         return React.useMemo(() => ({
             state: runner.stateRef,
+
             mutate: runner.mutate,
             forkMutate: runner.forkMutate,
 
