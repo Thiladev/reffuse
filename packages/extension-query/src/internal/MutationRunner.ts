@@ -58,34 +58,35 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
         Effect.provide(QueryProgress.QueryProgress.Live),
     )
 
-    const mutate = (...key: K) => run(key).pipe(
-        Effect.provide(QueryState.layer(
-            queryStateTag,
-            globalStateRef,
-            value => Ref.set(globalStateRef, value),
-        ))
+    const mutate = (...key: K) => Effect.provide(run(key), QueryState.layer(
+        queryStateTag,
+        globalStateRef,
+        value => Ref.set(globalStateRef, value),
+    ))
+
+    const forkMutate = (...key: K) => Effect.all([
+        Ref.make(AsyncData.noData<A, Exclude<E, HandledE>>()),
+        Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>(),
+    ]).pipe(
+        Effect.flatMap(([stateRef, stateQueue]) =>
+            Effect.addFinalizer(() => Queue.shutdown(stateQueue)).pipe(
+                Effect.andThen(run(key)),
+                Effect.scoped,
+                Effect.forkDaemon,
+
+                Effect.map(fiber => [fiber, Stream.fromQueue(stateQueue)] as const),
+
+                Effect.provide(QueryState.layer(
+                    queryStateTag,
+                    stateRef,
+                    value => Queue.offer(stateQueue, value).pipe(
+                        Effect.andThen(Ref.set(stateRef, value)),
+                        Effect.andThen(Ref.set(globalStateRef, value)),
+                    ),
+                )),
+            )
+        )
     )
-
-    const forkMutate = (...key: K) => Effect.gen(function*() {
-        const stateRef = yield* Ref.make(AsyncData.noData<A, Exclude<E, HandledE>>())
-        const stateQueue = yield* Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>()
-
-        const fiber = yield* Effect.forkDaemon(run(key).pipe(
-            Effect.tap(() => Queue.shutdown(stateQueue)),
-
-            Effect.provide(QueryState.layer(
-                queryStateTag,
-                stateRef,
-                value => Queue.offer(stateQueue, value).pipe(
-                    Effect.andThen(Ref.set(stateRef, value)),
-                    Effect.andThen(Ref.set(globalStateRef, value)),
-                ),
-            )),
-        ))
-
-        return [fiber, Stream.fromQueue(stateQueue)] as const
-    })
-
 
     return {
         context,
