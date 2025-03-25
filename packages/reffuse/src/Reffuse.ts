@@ -7,11 +7,6 @@ import type { Merge, StaticType } from "./types.js"
 export class Reffuse extends ReffuseHelpers.make() {}
 
 
-export const make = <
-    Class extends ReffuseHelpers.ReffuseHelpersClass<unknown>
->(class_: Class): InstanceType<Class> =>
-    new class_() as any
-
 export const withContexts = <R2 extends Array<unknown>>(
     ...contexts: [...{ [K in keyof R2]: ReffuseContext.ReffuseContext<R2[K]> }]
 ) => (
