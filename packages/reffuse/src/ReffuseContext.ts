@@ -27,7 +27,7 @@ export type ReactProvider<R> = React.FC<{
     readonly children?: React.ReactNode
 }>
 
-function makeProvider<R>(Context: React.Context<Context.Context<R>>): ReactProvider<R> {
+const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvider<R> => {
     return function ReffuseContextReactProvider(props) {
         const runtime = ReffuseRuntime.useRuntime()
 
@@ -46,13 +46,15 @@ export type AsyncReactProvider<R> = React.FC<{
     readonly children?: React.ReactNode
 }>
 
-function makeAsyncProvider<R>(Context: React.Context<Context.Context<R>>): AsyncReactProvider<R> {
-    function Inner({ promise, children }: {
+const makeAsyncProvider = <R>(Context: React.Context<Context.Context<R>>): AsyncReactProvider<R> => {
+    function ReffuseContextAsyncReactProviderInner({ promise, children }: {
         readonly promise: Promise<Context.Context<R>>
         readonly children?: React.ReactNode
     }) {
-        const value = React.use(promise)
-        return React.createElement(Context, { value, children })
+        return React.createElement(Context, {
+            value: React.use(promise),
+            children,
+        })
     }
 
     return function ReffuseContextAsyncReactProvider(props) {
@@ -63,26 +65,26 @@ function makeAsyncProvider<R>(Context: React.Context<Context.Context<R>>): Async
             Runtime.runPromise(runtime),
         ), [props.layer, runtime])
 
-        const inner = React.createElement(Inner, { ...props, promise })
-        return React.createElement(React.Suspense, { children: inner, fallback: props.fallback })
+        return React.createElement(React.Suspense, {
+            children: React.createElement(ReffuseContextAsyncReactProviderInner, { ...props, promise }),
+            fallback: props.fallback,
+        })
     }
 }
 
 
-export function make<R = never>() {
-    return new ReffuseContext<R>()
-}
+export const make = <R = never>() => new ReffuseContext<R>()
 
-export function useMergeAll<T extends Array<unknown>>(
+export const useMergeAll = <T extends Array<unknown>>(
     ...contexts: [...{ [K in keyof T]: ReffuseContext<T[K]> }]
-): Context.Context<T[number]> {
+): Context.Context<T[number]> => {
     const values = contexts.map(v => React.use(v.Context))
     return React.useMemo(() => Context.mergeAll(...values), values)
 }
 
-export function useMergeAllLayers<T extends Array<unknown>>(
+export const useMergeAllLayers = <T extends Array<unknown>>(
     ...contexts: [...{ [K in keyof T]: ReffuseContext<T[K]> }]
-): Layer.Layer<T[number]> {
+): Layer.Layer<T[number]> => {
     const values = contexts.map(v => React.use(v.Context))
 
     return React.useMemo(() => Array.isNonEmptyArray(values)
