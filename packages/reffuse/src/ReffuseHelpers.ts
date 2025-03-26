@@ -396,7 +396,7 @@ export abstract class ReffuseHelpers<R> {
         const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
         this.useFork(() => Stream.runForEach(
-            Stream.changes(ref.changes),
+            Stream.changesWith(ref.changes, (x, y) => x === y),
             v => Effect.sync(() => setReactStateValue(v)),
         ), [ref])
 
@@ -428,20 +428,26 @@ export interface ReffuseHelpers<R> extends Pipeable.Pipeable {}
 
 ReffuseHelpers.prototype.pipe = function pipe() {
     return Pipeable.pipeArguments(this, arguments)
-}
+};
 
 
 export interface ReffuseHelpersClass<R> extends Pipeable.Pipeable {
     new(): ReffuseHelpers<R>
+    make<Self>(this: new () => Self): Self
     readonly contexts: readonly ReffuseContext.ReffuseContext<R>[]
 }
 
+(ReffuseHelpers as ReffuseHelpersClass<any>).make = function make() {
+    return new this()
+};
+
 (ReffuseHelpers as ReffuseHelpersClass<any>).pipe = function pipe() {
     return Pipeable.pipeArguments(this, arguments)
-}
+};
 
 
-export const make = (): ReffuseHelpersClass<never> =>
+export const make = (): ReffuseHelpersClass<never> => (
     class extends (ReffuseHelpers<never> as ReffuseHelpersClass<never>) {
         static readonly contexts = []
     }
+)

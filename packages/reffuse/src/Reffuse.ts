@@ -9,7 +9,7 @@ export class Reffuse extends ReffuseHelpers.make() {}
 
 export const withContexts = <R2 extends Array<unknown>>(
     ...contexts: [...{ [K in keyof R2]: ReffuseContext.ReffuseContext<R2[K]> }]
-) =>
+) => (
     <
         BaseClass extends ReffuseHelpers.ReffuseHelpersClass<R1>,
         R1
@@ -29,9 +29,9 @@ export const withContexts = <R2 extends Array<unknown>>(
     ) => class extends self {
         static readonly contexts = [...self.contexts, ...contexts]
     } as any
+)
 
-
-export const withExtension = <A extends object>(extension: ReffuseExtension.ReffuseExtension<A>) =>
+export const withExtension = <A extends object>(extension: ReffuseExtension.ReffuseExtension<A>) => (
     <
         BaseClass extends ReffuseHelpers.ReffuseHelpersClass<R>,
         R
@@ -45,3 +45,4 @@ export const withExtension = <A extends object>(extension: ReffuseExtension.Reff
         Object.assign(class_.prototype, extension())
         return class_ as any
     }
+)

@@ -3,7 +3,7 @@ import { HttpClient } from "@effect/platform"
 import { Button, Container, Flex, Slider, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import * as AsyncData from "@typed/async-data"
-import { Array, Console, Effect, flow, Option, Schema } from "effect"
+import { Array, Console, Effect, flow, Option, Schema, Stream } from "effect"
 import { useState } from "react"
 
 
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/query/usequery")({
 const Result = Schema.Array(Schema.String)
 
 function RouteComponent() {
-    const runSync = R.useRunSync()
+    const runFork = R.useRunFork()
 
     const [count, setCount] = useState(1)
 
@@ -59,7 +59,15 @@ function RouteComponent() {
                     })}
                 </Text>
 
-                <Button onClick={() => runSync(query.refresh)}>Refresh</Button>
+                <Button
+                    onClick={() => query.forkRefresh.pipe(
+                        Effect.flatMap(([, state]) => Stream.runForEach(state, Console.log)),
+                        Effect.andThen(Console.log("Refresh finished or stopped")),
+                        runFork,
+                    )}
+                >
+                    Refresh
+                </Button>
             </Flex>
         </Container>
     )
