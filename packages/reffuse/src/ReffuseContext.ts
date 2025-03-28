@@ -1,4 +1,4 @@
-import { Array, Context, Effect, Layer, Ref, Runtime, Scope } from "effect"
+import { Array, Context, Effect, Exit, Layer, Ref, Runtime, Scope } from "effect"
 import * as React from "react"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
@@ -31,27 +31,36 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
     return function ReffuseContextReactProvider(props) {
         const runtime = ReffuseRuntime.useRuntime()
 
-        const makeScopeAndContext = React.useMemo(() => Scope.make().pipe(
-            Effect.flatMap(scope => Effect.context<R>().pipe(
-                Effect.map(context => [scope, context] as const),
-
+        const makeScopeAndContext = React.useMemo(() => Effect.Do.pipe(
+            Effect.bind("scope", () => Scope.make()),
+            Effect.bind("context", ({ scope }) => Effect.context<R>().pipe(
                 Effect.provide(props.layer),
                 Effect.provideService(Scope.Scope, scope),
-            ))
+            )),
+            Effect.map(({ scope, context }) => [scope, context] as const),
         ), [props.layer])
 
-        const [initialScope, initialValue, isInitialRun] = React.useMemo(() => makeScopeAndContext.pipe(
-            Effect.flatMap(v => Ref.make(true).pipe(
-                Effect.map(isInitialRun => [...v, isInitialRun] as const)
-            )),
+        const [isInitialRun, initialScope, initialValue] = React.useMemo(() => Effect.Do.pipe(
+            Effect.bind("isInitialRun", () => Ref.make(true)),
+            Effect.bind("scopeAndContext", () => makeScopeAndContext),
+            Effect.map(({ isInitialRun, scopeAndContext }) => [isInitialRun, ...scopeAndContext] as const),
             Runtime.runSync(runtime),
         ), [])
 
         const [value, setValue] = React.useState(initialValue)
 
-        React.useEffect(() => {
+        React.useEffect(() => isInitialRun.pipe(
+            Effect.if({
+                onTrue: () => Ref.set(isInitialRun, false),
+                onFalse: () => Effect.Do.pipe(
+                    Effect.tap(Scope.close(initialScope, Exit.void)),
+                    Effect.bind("scopeAndContext", () => makeScopeAndContext),
+                    Effect.tap(({ scopeAndContext }) => Effect.sync(() => setValue()))
+                ),
+            }),
 
-        }, [])
+            Runtime.runSync(runtime),
+        ), [makeScopeAndContext, runtime])
 
         return React.createElement(Context, { ...props, value })
     }
