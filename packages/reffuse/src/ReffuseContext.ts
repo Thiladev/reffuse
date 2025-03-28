@@ -1,4 +1,4 @@
-import { Array, Context, Effect, Exit, Layer, Ref, Runtime, Scope } from "effect"
+import { Array, Context, Effect, ExecutionStrategy, Exit, Layer, Ref, Runtime, Scope } from "effect"
 import * as React from "react"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
@@ -76,6 +76,10 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
 
 export type AsyncReactProvider<R> = React.FC<{
     readonly layer: Layer.Layer<R, unknown>
+    readonly options?: {
+        readonly scope?: Scope.Scope
+        readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
+    }
     readonly fallback?: React.ReactNode
     readonly children?: React.ReactNode
 }>
@@ -93,11 +97,33 @@ const makeAsyncProvider = <R>(Context: React.Context<Context.Context<R>>): Async
 
     return function ReffuseContextAsyncReactProvider(props) {
         const runtime = ReffuseRuntime.useRuntime()
+        const runSync = React.useMemo(() => Runtime.runSync(runtime), [runtime])
+        const runFork = React.useMemo(() => Runtime.runFork(runtime), [runtime])
 
-        const promise = React.useMemo(() => Effect.context<R>().pipe(
-            Effect.provide(props.layer),
-            Runtime.runPromise(runtime),
-        ), [props.layer, runtime])
+        const [promise, setPromise] = React.useState(Promise.withResolvers<Context.Context<R>>().promise)
+
+        React.useEffect(() => {
+            const { promise, resolve, reject } = Promise.withResolvers<Context.Context<R>>()
+            setPromise(promise)
+
+            const scope = runSync(props.options?.scope
+                ? Scope.fork(props.options.scope, props.options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
+                : Scope.make(props.options?.finalizerExecutionStrategy)
+            )
+
+            Effect.context<R>().pipe(
+                Effect.match({
+                    onSuccess: resolve,
+                    onFailure: reject,
+                }),
+
+                Effect.provide(props.layer),
+                Effect.provideService(Scope.Scope, scope),
+                effect => runFork(effect, { ...props.options, scope }),
+            )
+
+            return () => { runFork(Scope.close(scope, Exit.void)) }
+        }, [props.layer, runSync, runFork])
 
         return React.createElement(React.Suspense, {
             children: React.createElement(ReffuseContextAsyncReactProviderInner, { ...props, promise }),
