@@ -49,9 +49,13 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
 
         React.useEffect(() => isInitialRun.pipe(
             Effect.if({
-                onTrue: () => Ref.set(isInitialRun, false),
+                onTrue: () => Ref.set(isInitialRun, false).pipe(
+                    Effect.map(() =>
+                        () => runSync(Scope.close(initialScope, Exit.void))
+                    )
+                ),
+
                 onFalse: () => Effect.Do.pipe(
-                    Effect.tap(Scope.close(initialScope, Exit.void)),
                     Effect.bind("scope", () => Scope.make()),
                     Effect.bind("context", ({ scope }) => makeContext(scope)),
                     Effect.tap(({ context }) =>
