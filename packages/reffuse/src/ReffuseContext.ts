@@ -76,10 +76,8 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
 
 export type AsyncReactProvider<R> = React.FC<{
     readonly layer: Layer.Layer<R, unknown, Scope.Scope>
-    readonly options?: {
-        readonly scope?: Scope.Scope
-        readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
-    }
+    readonly scope?: Scope.Scope
+    readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
     readonly fallback?: React.ReactNode
     readonly children?: React.ReactNode
 }>
@@ -106,9 +104,9 @@ const makeAsyncProvider = <R>(Context: React.Context<Context.Context<R>>): Async
             const { promise, resolve, reject } = Promise.withResolvers<Context.Context<R>>()
             setPromise(promise)
 
-            const scope = runSync(props.options?.scope
-                ? Scope.fork(props.options.scope, props.options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
-                : Scope.make(props.options?.finalizerExecutionStrategy)
+            const scope = runSync(props.scope
+                ? Scope.fork(props.scope, props.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
+                : Scope.make(props.finalizerExecutionStrategy)
             )
 
             Effect.context<R>().pipe(
@@ -119,7 +117,7 @@ const makeAsyncProvider = <R>(Context: React.Context<Context.Context<R>>): Async
 
                 Effect.provide(props.layer),
                 Effect.provideService(Scope.Scope, scope),
-                effect => runFork(effect, { ...props.options, scope }),
+                effect => runFork(effect, { ...props, scope }),
             )
 
             return () => { runFork(Scope.close(scope, Exit.void)) }
