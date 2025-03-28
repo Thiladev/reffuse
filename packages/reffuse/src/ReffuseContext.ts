@@ -24,6 +24,7 @@ export type R<T> = T extends ReffuseContext<infer R> ? R : never
 
 export type ReactProvider<R> = React.FC<{
     readonly layer: Layer.Layer<R, unknown, Scope.Scope>
+    readonly scope?: Scope.Scope
     readonly children?: React.ReactNode
 }>
 
@@ -32,6 +33,11 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
         const runtime = ReffuseRuntime.useRuntime()
         const runSync = React.useMemo(() => Runtime.runSync(runtime), [runtime])
 
+        const makeScope = React.useMemo(() => props.scope
+            ? Scope.fork(props.scope, ExecutionStrategy.sequential)
+            : Scope.make(),
+        [props.scope])
+
         const makeContext = React.useCallback((scope: Scope.CloseableScope) => Effect.context<R>().pipe(
             Effect.provide(props.layer),
             Effect.provideService(Scope.Scope, scope),
@@ -39,7 +45,7 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
 
         const [isInitialRun, initialScope, initialValue] = React.useMemo(() => Effect.Do.pipe(
             Effect.bind("isInitialRun", () => Ref.make(true)),
-            Effect.bind("scope", () => Scope.make()),
+            Effect.bind("scope", () => makeScope),
             Effect.bind("context", ({ scope }) => makeContext(scope)),
             Effect.map(({ isInitialRun, scope, context }) => [isInitialRun, scope, context] as const),
             runSync,
@@ -56,7 +62,7 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
                 ),
 
                 onFalse: () => Effect.Do.pipe(
-                    Effect.bind("scope", () => Scope.make()),
+                    Effect.bind("scope", () => makeScope),
                     Effect.bind("context", ({ scope }) => makeContext(scope)),
                     Effect.tap(({ context }) =>
                         Effect.sync(() => setValue(context))
@@ -68,7 +74,7 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
             }),
 
             runSync,
-        ), [makeContext, runSync])
+        ), [makeScope, makeContext, runSync])
 
         return React.createElement(Context, { ...props, value })
     }
