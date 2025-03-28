@@ -75,7 +75,7 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
 }
 
 export type AsyncReactProvider<R> = React.FC<{
-    readonly layer: Layer.Layer<R, unknown>
+    readonly layer: Layer.Layer<R, unknown, Scope.Scope>
     readonly options?: {
         readonly scope?: Scope.Scope
         readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
