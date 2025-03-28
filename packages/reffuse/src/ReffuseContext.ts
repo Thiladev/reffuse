@@ -1,4 +1,4 @@
-import { Array, Context, Effect, Layer, Runtime } from "effect"
+import { Array, Context, Effect, Layer, Ref, Runtime, Scope } from "effect"
 import * as React from "react"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
@@ -31,10 +31,27 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
     return function ReffuseContextReactProvider(props) {
         const runtime = ReffuseRuntime.useRuntime()
 
-        const value = React.useMemo(() => Effect.context<R>().pipe(
-            Effect.provide(props.layer),
+        const makeScopeAndContext = React.useMemo(() => Scope.make().pipe(
+            Effect.flatMap(scope => Effect.context<R>().pipe(
+                Effect.map(context => [scope, context] as const),
+
+                Effect.provide(props.layer),
+                Effect.provideService(Scope.Scope, scope),
+            ))
+        ), [props.layer])
+
+        const [initialScope, initialValue, isInitialRun] = React.useMemo(() => makeScopeAndContext.pipe(
+            Effect.flatMap(v => Ref.make(true).pipe(
+                Effect.map(isInitialRun => [...v, isInitialRun] as const)
+            )),
             Runtime.runSync(runtime),
-        ), [props.layer, runtime])
+        ), [])
+
+        const [value, setValue] = React.useState(initialValue)
+
+        React.useEffect(() => {
+
+        }, [])
 
         return React.createElement(Context, { ...props, value })
     }
