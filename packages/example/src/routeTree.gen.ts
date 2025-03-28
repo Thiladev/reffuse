@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as TodosImport } from './routes/todos'
 import { Route as TimeImport } from './routes/time'
 import { Route as TestsImport } from './routes/tests'
 import { Route as PromiseImport } from './routes/promise'
@@ -23,6 +24,12 @@ import { Route as QueryUsemutationImport } from './routes/query/usemutation'
 import { Route as QueryServiceImport } from './routes/query/service'
 
 // Create/Update Routes
+
+const TodosRoute = TodosImport.update({
+  id: '/todos',
+  path: '/todos',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const TimeRoute = TimeImport.update({
   id: '/time',
@@ -137,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TimeImport
       parentRoute: typeof rootRoute
     }
+    '/todos': {
+      id: '/todos'
+      path: '/todos'
+      fullPath: '/todos'
+      preLoaderRoute: typeof TodosImport
+      parentRoute: typeof rootRoute
+    }
     '/query/service': {
       id: '/query/service'
       path: '/query/service'
@@ -171,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/promise': typeof PromiseRoute
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
+  '/todos': typeof TodosRoute
   '/query/service': typeof QueryServiceRoute
   '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
@@ -184,6 +199,7 @@ export interface FileRoutesByTo {
   '/promise': typeof PromiseRoute
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
+  '/todos': typeof TodosRoute
   '/query/service': typeof QueryServiceRoute
   '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
@@ -198,6 +214,7 @@ export interface FileRoutesById {
   '/promise': typeof PromiseRoute
   '/tests': typeof TestsRoute
   '/time': typeof TimeRoute
+  '/todos': typeof TodosRoute
   '/query/service': typeof QueryServiceRoute
   '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
@@ -213,6 +230,7 @@ export interface FileRouteTypes {
     | '/promise'
     | '/tests'
     | '/time'
+    | '/todos'
     | '/query/service'
     | '/query/usemutation'
     | '/query/usequery'
@@ -225,6 +243,7 @@ export interface FileRouteTypes {
     | '/promise'
     | '/tests'
     | '/time'
+    | '/todos'
     | '/query/service'
     | '/query/usemutation'
     | '/query/usequery'
@@ -237,6 +256,7 @@ export interface FileRouteTypes {
     | '/promise'
     | '/tests'
     | '/time'
+    | '/todos'
     | '/query/service'
     | '/query/usemutation'
     | '/query/usequery'
@@ -251,6 +271,7 @@ export interface RootRouteChildren {
   PromiseRoute: typeof PromiseRoute
   TestsRoute: typeof TestsRoute
   TimeRoute: typeof TimeRoute
+  TodosRoute: typeof TodosRoute
   QueryServiceRoute: typeof QueryServiceRoute
   QueryUsemutationRoute: typeof QueryUsemutationRoute
   QueryUsequeryRoute: typeof QueryUsequeryRoute
@@ -264,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   PromiseRoute: PromiseRoute,
   TestsRoute: TestsRoute,
   TimeRoute: TimeRoute,
+  TodosRoute: TodosRoute,
   QueryServiceRoute: QueryServiceRoute,
   QueryUsemutationRoute: QueryUsemutationRoute,
   QueryUsequeryRoute: QueryUsequeryRoute,
@@ -286,6 +308,7 @@ export const routeTree = rootRoute
         "/promise",
         "/tests",
         "/time",
+        "/todos",
         "/query/service",
         "/query/usemutation",
         "/query/usequery"
@@ -311,6 +334,9 @@ export const routeTree = rootRoute
     },
     "/time": {
       "filePath": "time.tsx"
+    },
+    "/todos": {
+      "filePath": "todos.tsx"
     },
     "/query/service": {
       "filePath": "query/service.tsx"

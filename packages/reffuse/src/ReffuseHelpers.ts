@@ -108,41 +108,38 @@ export abstract class ReffuseHelpers<R> {
     ): A {
         const runSync = this.useRunSync()
 
-        // Calculate an initial version of the value so that it can be accessed during the first render
-        const [initialScope, initialValue] = React.useMemo(() => Scope.make(options?.finalizerExecutionStrategy).pipe(
-            Effect.flatMap(scope => effect().pipe(
-                Effect.provideService(Scope.Scope, scope),
-                Effect.map(value => [scope, value] as const),
-            )),
-
+        const [isInitialRun, initialScope, initialValue] = React.useMemo(() => Effect.Do.pipe(
+            Effect.bind("isInitialRun", () => Ref.make(true)),
+            Effect.bind("scope", () => Scope.make(options?.finalizerExecutionStrategy)),
+            Effect.bind("value", ({ scope }) => Effect.provideService(effect(), Scope.Scope, scope)),
+            Effect.map(({ isInitialRun, scope, value }) => [isInitialRun, scope, value] as const),
             runSync,
         ), [])
 
-        // Keep track of the state of the initial scope
-        const initialScopeClosed = React.useRef(false)
-
         const [value, setValue] = React.useState(initialValue)
 
-        React.useEffect(() => {
-            const closeInitialScopeIfNeeded = Scope.close(initialScope, Exit.void).pipe(
-                Effect.andThen(Effect.sync(() => { initialScopeClosed.current = true })),
-                Effect.when(() => !initialScopeClosed.current),
-            )
+        React.useEffect(() => isInitialRun.pipe(
+            Effect.if({
+                onTrue: () => Ref.set(isInitialRun, false).pipe(
+                    Effect.map(() =>
+                        () => runSync(Scope.close(initialScope, Exit.void))
+                    )
+                ),
 
-            const [scope, value] = closeInitialScopeIfNeeded.pipe(
-                Effect.andThen(Scope.make(options?.finalizerExecutionStrategy).pipe(
-                    Effect.flatMap(scope => effect().pipe(
-                        Effect.provideService(Scope.Scope, scope),
-                        Effect.map(value => [scope, value] as const),
-                    ))
-                )),
+                onFalse: () => Effect.Do.pipe(
+                    Effect.bind("scope", () => Scope.make(options?.finalizerExecutionStrategy)),
+                    Effect.bind("value", ({ scope }) => Effect.provideService(effect(), Scope.Scope, scope)),
+                    Effect.tap(({ value }) =>
+                        Effect.sync(() => setValue(value))
+                    ),
+                    Effect.map(({ scope }) =>
+                        () => runSync(Scope.close(scope, Exit.void))
+                    ),
+                ),
+            }),
 
-                runSync,
-            )
-
-            setValue(value)
-            return () => { runSync(Scope.close(scope, Exit.void)) }
-        }, [
+            runSync,
+        ), [
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
             ...deps,
         ])
@@ -428,20 +425,26 @@ export interface ReffuseHelpers<R> extends Pipeable.Pipeable {}
 
 ReffuseHelpers.prototype.pipe = function pipe() {
     return Pipeable.pipeArguments(this, arguments)
-}
+};
 
 
 export interface ReffuseHelpersClass<R> extends Pipeable.Pipeable {
     new(): ReffuseHelpers<R>
+    make<Self>(this: new () => Self): Self
     readonly contexts: readonly ReffuseContext.ReffuseContext<R>[]
 }
 
+(ReffuseHelpers as ReffuseHelpersClass<any>).make = function make() {
+    return new this()
+};
+
 (ReffuseHelpers as ReffuseHelpersClass<any>).pipe = function pipe() {
     return Pipeable.pipeArguments(this, arguments)
-}
+};
 
 
-export const make = (): ReffuseHelpersClass<never> =>
+export const make = (): ReffuseHelpersClass<never> => (
     class extends (ReffuseHelpers<never> as ReffuseHelpersClass<never>) {
         static readonly contexts = []
     }
+)
