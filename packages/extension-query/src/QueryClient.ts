@@ -1,4 +1,4 @@
-import { Context, Layer } from "effect"
+import { Context, Effect, Layer } from "effect"
 import type { Mutable } from "effect/Types"
 import * as ErrorHandler from "./ErrorHandler.js"
 
@@ -12,15 +12,15 @@ const id = "@reffuse/extension-query/QueryClient"
 
 export type TagClassShape<HandledE> = Context.TagClassShape<typeof id, QueryClient<HandledE>>
 export type GenericTagClass<HandledE> = Context.TagClass<TagClassShape<HandledE>, typeof id, QueryClient<HandledE>>
-export const makeGenericTagClass = <EH = never, HandledE = never>(): GenericTagClass<HandledE> => Context.Tag(id)()
+export const makeGenericTagClass = <HandledE = never>(): GenericTagClass<HandledE> => Context.Tag(id)()
 
 
 export interface ServiceProps<EH, HandledE> {
     readonly ErrorHandler?: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
 }
 
-export interface ServiceResult<Self, HandledE> extends Context.TagClass<Self, typeof id, QueryClient<HandledE>> {
-    readonly Live: Layer.Layer<Self>
+export interface ServiceResult<Self, EH, HandledE> extends Context.TagClass<Self, typeof id, QueryClient<HandledE>> {
+    readonly Live: Layer.Layer<Self, never, EH>
 }
 
 export const Service = <Self>() => (
@@ -31,9 +31,9 @@ export const Service = <Self>() => (
         props?: ServiceProps<EH, HandledE>
     ): ServiceResult<Self, EH, HandledE> => {
         const TagClass = Context.Tag(id)() as ServiceResult<Self, EH, HandledE>
-        (TagClass as Mutable<typeof TagClass>).Live = Layer.succeed(TagClass, {
-            ErrorHandler: (props?.ErrorHandler ?? ErrorHandler.DefaultErrorHandler) as Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
-        })
+        (TagClass as Mutable<typeof TagClass>).Live = Layer.effect(TagClass, Effect.Do.pipe(
+            Effect.bind("errorHandler", () => (props?.ErrorHandler as Effect.Effect<ErrorHandler.ErrorHandler<HandledE>, never, EH>) ?? ErrorHandler.DefaultErrorHandler as Effect.Effect<ErrorHandler.ErrorHandler<HandledE>, never, EH>)
+        ))
         return TagClass
     }
 )
