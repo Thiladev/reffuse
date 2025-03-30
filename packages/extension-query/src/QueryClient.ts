@@ -3,23 +3,23 @@ import type { Mutable } from "effect/Types"
 import * as ErrorHandler from "./ErrorHandler.js"
 
 
-export interface QueryClient<EH, HandledE> {
-    readonly ErrorHandler: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
+export interface QueryClient<HandledE> {
+    readonly errorHandler: ErrorHandler.ErrorHandler<HandledE>
 }
 
 
 const id = "@reffuse/extension-query/QueryClient"
 
-export type TagClassShape<EH, HandledE> = Context.TagClassShape<typeof id, QueryClient<EH, HandledE>>
-export type GenericTagClass<EH, HandledE> = Context.TagClass<TagClassShape<EH, HandledE>, typeof id, QueryClient<EH, HandledE>>
-export const makeGenericTagClass = <EH = never, HandledE = never>(): GenericTagClass<EH, HandledE> => Context.Tag(id)()
+export type TagClassShape<HandledE> = Context.TagClassShape<typeof id, QueryClient<HandledE>>
+export type GenericTagClass<HandledE> = Context.TagClass<TagClassShape<HandledE>, typeof id, QueryClient<HandledE>>
+export const makeGenericTagClass = <EH = never, HandledE = never>(): GenericTagClass<HandledE> => Context.Tag(id)()
 
 
 export interface ServiceProps<EH, HandledE> {
     readonly ErrorHandler?: Context.Tag<EH, ErrorHandler.ErrorHandler<HandledE>>
 }
 
-export interface ServiceResult<Self, EH, HandledE> extends Context.TagClass<Self, typeof id, QueryClient<EH, HandledE>> {
+export interface ServiceResult<Self, HandledE> extends Context.TagClass<Self, typeof id, QueryClient<HandledE>> {
     readonly Live: Layer.Layer<Self>
 }
 
