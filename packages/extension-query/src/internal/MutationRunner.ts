@@ -37,11 +37,11 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
 
     const queryStateTag = QueryState.makeTag<A | FallbackA, Exclude<E, HandledE>>()
 
-    const run = (key: K) => Effect.all([
-        queryStateTag,
-        QueryClient,
-    ]).pipe(
-        Effect.flatMap(([state, client]) => state.set(AsyncData.loading()).pipe(
+    const run = (key: K) => Effect.Do.pipe(
+        Effect.bind("state", () => queryStateTag),
+        Effect.bind("client", () => QueryClient),
+
+        Effect.flatMap(({ state, client }) => state.set(AsyncData.loading()).pipe(
             Effect.andThen(mutation(key)),
             client.errorHandler.handle,
             Effect.matchCauseEffect({
@@ -64,11 +64,11 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         value => Ref.set(globalStateRef, value),
     ))
 
-    const forkMutate = (...key: K) => Effect.all([
-        Ref.make(AsyncData.noData<A | FallbackA, Exclude<E, HandledE>>()),
-        Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>(),
-    ]).pipe(
-        Effect.flatMap(([stateRef, stateQueue]) =>
+    const forkMutate = (...key: K) => Effect.Do.pipe(
+        Effect.bind("stateRef", () => Ref.make(AsyncData.noData<A | FallbackA, Exclude<E, HandledE>>())),
+        Effect.bind("stateQueue", () => Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>()),
+
+        Effect.flatMap(({ stateRef, stateQueue }) =>
             Effect.addFinalizer(() => Queue.shutdown(stateQueue)).pipe(
                 Effect.andThen(run(key)),
                 Effect.scoped,

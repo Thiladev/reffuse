@@ -80,23 +80,21 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         }))
     )
 
-    const run = Effect.all([
-        queryStateTag,
-        QueryClient,
-    ]).pipe(
-        Effect.flatMap(([state, client]) => latestKeyRef.pipe(
-            Effect.flatMap(identity),
-            Effect.flatMap(key => query(key).pipe(
-                client.errorHandler.handle,
-                Effect.matchCauseEffect({
-                    onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
-                        Effect.tap(state.set)
-                    ),
-                    onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
-                        Effect.tap(state.set)
-                    ),
-                }),
-            )),
+    const run = Effect.Do.pipe(
+        Effect.bind("state", () => queryStateTag),
+        Effect.bind("client", () => QueryClient),
+        Effect.bind("latestKey", () => latestKeyRef.pipe(Effect.flatMap(identity))),
+
+        Effect.flatMap(({ state, client, latestKey }) => query(latestKey).pipe(
+            client.errorHandler.handle,
+            Effect.matchCauseEffect({
+                onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
+                    Effect.tap(state.set)
+                ),
+                onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
+                    Effect.tap(state.set)
+                ),
+            }),
         )),
 
         Effect.provide(context),
