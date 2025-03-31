@@ -1,5 +1,5 @@
 import { AlertDialog, Button, Flex, Text } from "@radix-ui/themes"
-import { ErrorHandler } from "@reffuse/extension-query"
+import { QueryErrorHandler } from "@reffuse/extension-query"
 import { Cause, Console, Context, Effect, Either, flow, Match, Option, Stream } from "effect"
 import { useState } from "react"
 import { AppQueryErrorHandler } from "./query"
@@ -8,7 +8,7 @@ import { R } from "./reffuse"
 
 export function VQueryErrorHandler() {
     const [failure, setFailure] = useState(Option.none<Cause.Cause<
-        ErrorHandler.Error<Context.Tag.Service<AppQueryErrorHandler>>
+        QueryErrorHandler.Error<Context.Tag.Service<AppQueryErrorHandler>>
     >>())
 
     R.useFork(() => AppQueryErrorHandler.pipe(Effect.flatMap(handler =>

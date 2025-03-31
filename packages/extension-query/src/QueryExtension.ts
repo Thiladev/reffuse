@@ -51,19 +51,19 @@ export interface UseMutationResult<K extends readonly unknown[], A, E> {
 
 export const QueryExtension = ReffuseExtension.make(() => ({
     useQuery<
-        EH,
         QK extends readonly unknown[],
         QA,
+        FallbackA,
         QE,
         HandledE,
         QR extends R,
         R,
     >(
-        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<EH, HandledE> | EH>,
+        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
         props: UseQueryProps<QK, QA, QE, QR>,
-    ): UseQueryResult<QK, QA, Exclude<QE, HandledE>> {
+    ): UseQueryResult<QK, QA | FallbackA, Exclude<QE, HandledE>> {
         const runner = this.useMemo(() => QueryRunner.make({
-            QueryClient: QueryClient.makeGenericTagClass<EH, HandledE>(),
+            QueryClient: QueryClient.makeGenericTagClass<FallbackA, HandledE>(),
             key: props.key,
             query: props.query,
         }), [props.key])
@@ -90,19 +90,19 @@ export const QueryExtension = ReffuseExtension.make(() => ({
     },
 
     useMutation<
-        EH,
         QK extends readonly unknown[],
         QA,
+        FallbackA,
         QE,
         HandledE,
         QR extends R,
         R,
     >(
-        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<EH, HandledE> | EH>,
+        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
         props: UseMutationProps<QK, QA, QE, QR>,
-    ): UseMutationResult<QK, QA, Exclude<QE, HandledE>> {
+    ): UseMutationResult<QK, QA | FallbackA, Exclude<QE, HandledE>> {
         const runner = this.useMemo(() => MutationRunner.make({
-            QueryClient: QueryClient.makeGenericTagClass<EH, HandledE>(),
+            QueryClient: QueryClient.makeGenericTagClass<FallbackA, HandledE>(),
             mutation: props.mutation,
         }), [])
 

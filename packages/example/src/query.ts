@@ -1,9 +1,9 @@
 import { HttpClientError } from "@effect/platform"
-import { ErrorHandler, QueryClient } from "@reffuse/extension-query"
+import { QueryClient, QueryErrorHandler } from "@reffuse/extension-query"
 import { Effect } from "effect"
 
 
-export class AppQueryErrorHandler extends ErrorHandler.Service<AppQueryErrorHandler,
+export class AppQueryErrorHandler extends QueryErrorHandler.Service<AppQueryErrorHandler,
     HttpClientError.HttpClientError
 >()(
     "AppQueryErrorHandler",

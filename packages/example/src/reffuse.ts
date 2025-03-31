@@ -6,19 +6,19 @@ import { Reffuse, ReffuseContext } from "reffuse"
 import { AppQueryClient, AppQueryErrorHandler } from "./query"
 
 
-export const GlobalContext = ReffuseContext.make<
+export const RootContext = ReffuseContext.make<
+    | AppQueryClient
+    | AppQueryErrorHandler
     | Clipboard.Clipboard
     | Geolocation.Geolocation
     | Permissions.Permissions
     | HttpClient.HttpClient
-    | AppQueryClient
-    | AppQueryErrorHandler
 >()
 
-export class GlobalReffuse extends Reffuse.Reffuse.pipe(
+export class RootReffuse extends Reffuse.Reffuse.pipe(
     Reffuse.withExtension(LazyRefExtension),
     Reffuse.withExtension(QueryExtension),
-    Reffuse.withContexts(GlobalContext),
+    Reffuse.withContexts(RootContext),
 ) {}
 
-export const R = new GlobalReffuse()
+export const R = new RootReffuse()

@@ -31,33 +31,33 @@ export interface QueryRunner<K extends readonly unknown[], A, E, R> {
 }
 
 
-export interface MakeProps<EH, K extends readonly unknown[], A, E, HandledE, R> {
-    readonly QueryClient: QueryClient.GenericTagClass<EH, HandledE>
+export interface MakeProps<K extends readonly unknown[], A, FallbackA, E, HandledE, R> {
+    readonly QueryClient: QueryClient.GenericTagClass<FallbackA, HandledE>
     readonly key: Stream.Stream<K>
     readonly query: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress>
 }
 
-export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
+export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>(
     {
         QueryClient,
         key,
         query,
-    }: MakeProps<EH, K, A, E, HandledE, R>
+    }: MakeProps<K, A, FallbackA, E, HandledE, R>
 ): Effect.Effect<
-    QueryRunner<K, A, Exclude<E, HandledE>, R>,
+    QueryRunner<K, A | FallbackA, Exclude<E, HandledE>, R>,
     never,
-    R | QueryClient.TagClassShape<EH, HandledE> | EH
+    R | QueryClient.TagClassShape<FallbackA, HandledE>
 > => Effect.gen(function*() {
-    const context = yield* Effect.context<R | QueryClient.TagClassShape<EH, HandledE> | EH>()
+    const context = yield* Effect.context<R | QueryClient.TagClassShape<FallbackA, HandledE>>()
 
     const latestKeyRef = yield* SubscriptionRef.make(Option.none<K>())
-    const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A, Exclude<E, HandledE>>())
+    const stateRef = yield* SubscriptionRef.make(AsyncData.noData<A | FallbackA, Exclude<E, HandledE>>())
     const fiberRef = yield* SubscriptionRef.make(Option.none<Fiber.RuntimeFiber<
-        AsyncData.Success<A> | AsyncData.Failure<Exclude<E, HandledE>>,
+        AsyncData.Success<A | FallbackA> | AsyncData.Failure<Exclude<E, HandledE>>,
         Cause.NoSuchElementException
     >>())
 
-    const queryStateTag = QueryState.makeTag<A, Exclude<E, HandledE>>()
+    const queryStateTag = QueryState.makeTag<A | FallbackA, Exclude<E, HandledE>>()
 
     const interrupt = fiberRef.pipe(
         Effect.flatMap(Option.match({
@@ -80,30 +80,28 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
         }))
     )
 
-    const run = Effect.all([
-        queryStateTag,
-        QueryClient.pipe(Effect.flatMap(client => client.ErrorHandler)),
-    ]).pipe(
-        Effect.flatMap(([state, errorHandler]) => latestKeyRef.pipe(
-            Effect.flatMap(identity),
-            Effect.flatMap(key => query(key).pipe(
-                errorHandler.handle,
-                Effect.matchCauseEffect({
-                    onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
-                        Effect.tap(state.set)
-                    ),
-                    onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
-                        Effect.tap(state.set)
-                    ),
-                }),
-            )),
+    const run = Effect.Do.pipe(
+        Effect.bind("state", () => queryStateTag),
+        Effect.bind("client", () => QueryClient),
+        Effect.bind("latestKey", () => latestKeyRef.pipe(Effect.flatMap(identity))),
+
+        Effect.flatMap(({ state, client, latestKey }) => query(latestKey).pipe(
+            client.errorHandler.handle,
+            Effect.matchCauseEffect({
+                onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
+                    Effect.tap(state.set)
+                ),
+                onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
+                    Effect.tap(state.set)
+                ),
+            }),
         )),
 
         Effect.provide(context),
         Effect.provide(QueryProgress.QueryProgress.Live),
     )
 
-    const forkFetch = Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>().pipe(
+    const forkFetch = Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>().pipe(
         Effect.flatMap(stateQueue => queryStateTag.pipe(
             Effect.flatMap(state => interrupt.pipe(
                 Effect.andThen(Effect.addFinalizer(() => Ref.set(fiberRef, Option.none()).pipe(
@@ -139,7 +137,7 @@ export const make = <EH, K extends readonly unknown[], A, E, HandledE, R>(
         }))
     )
 
-    const forkRefresh = Queue.unbounded<AsyncData.AsyncData<A, Exclude<E, HandledE>>>().pipe(
+    const forkRefresh = Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>().pipe(
         Effect.flatMap(stateQueue => interrupt.pipe(
             Effect.andThen(Effect.addFinalizer(() => Ref.set(fiberRef, Option.none()).pipe(
                 Effect.andThen(Queue.shutdown(stateQueue))
