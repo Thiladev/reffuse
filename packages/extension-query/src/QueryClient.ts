@@ -20,7 +20,11 @@ export interface ServiceProps<EH, HandledE> {
 }
 
 export interface ServiceResult<Self, EH, HandledE> extends Context.TagClass<Self, typeof id, QueryClient<HandledE>> {
-    readonly Live: Layer.Layer<Self, never, EH>
+    readonly Live: Layer.Layer<
+        Self,
+        never,
+        EH extends ErrorHandler.DefaultErrorHandler ? never : EH
+    >
 }
 
 export const Service = <Self>() => (
@@ -31,9 +35,17 @@ export const Service = <Self>() => (
         props?: ServiceProps<EH, HandledE>
     ): ServiceResult<Self, EH, HandledE> => {
         const TagClass = Context.Tag(id)() as ServiceResult<Self, EH, HandledE>
+
         (TagClass as Mutable<typeof TagClass>).Live = Layer.effect(TagClass, Effect.Do.pipe(
-            Effect.bind("errorHandler", () => (props?.ErrorHandler as Effect.Effect<ErrorHandler.ErrorHandler<HandledE>, never, EH>) ?? ErrorHandler.DefaultErrorHandler as Effect.Effect<ErrorHandler.ErrorHandler<HandledE>, never, EH>)
+            Effect.bind("errorHandler", () =>
+                (props?.ErrorHandler ?? ErrorHandler.DefaultErrorHandler) as Effect.Effect<
+                    ErrorHandler.ErrorHandler<HandledE>,
+                    never,
+                    EH extends ErrorHandler.DefaultErrorHandler ? never : EH
+                >
+            )
         ))
+
         return TagClass
     }
 )
