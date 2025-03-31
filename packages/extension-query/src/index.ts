@@ -1,6 +1,6 @@
-export * as ErrorHandler from "./ErrorHandler.js"
 export * as MutationService from "./MutationService.js"
 export * as QueryClient from "./QueryClient.js"
+export * as QueryErrorHandler from "./QueryErrorHandler.js"
 export * from "./QueryExtension.js"
 export * as QueryProgress from "./QueryProgress.js"
 export * as QueryService from "./QueryService.js"
