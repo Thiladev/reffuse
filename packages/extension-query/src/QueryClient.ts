@@ -29,7 +29,7 @@ export interface ServiceResult<Self, EH, FallbackA, HandledE> extends Context.Ta
     QueryClient<FallbackA, HandledE>
 > {
     readonly Live: Layer.Layer<
-        Self | EH extends QueryErrorHandler.DefaultQueryErrorHandler ? EH : never,
+        Self | (EH extends QueryErrorHandler.DefaultQueryErrorHandler ? EH : never),
         never,
         EH extends QueryErrorHandler.DefaultQueryErrorHandler ? never : EH
     >
