@@ -1,5 +1,5 @@
 import { R } from "@/reffuse"
-import { Button, Flex } from "@radix-ui/themes"
+import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
 import { Console, Effect, Stream } from "effect"
@@ -22,6 +22,9 @@ function RouteComponent() {
         Effect.delay("1 second"),
     ), [])
 
+
+    const aRef = R.useRef("a value")
+
     const [reactValue, setReactValue] = useState("initial")
     const reactValueStream = R.useStreamFromValues([reactValue])
     R.useFork(() => Stream.runForEach(reactValueStream, Console.log), [reactValueStream])
@@ -39,6 +42,10 @@ function RouteComponent() {
 
     return (
         <Flex direction="row" justify="center" align="center" gap="2">
+            <R.RefState ref={aRef}>
+                {([aValue]) => <Text>{aValue}</Text>}
+            </R.RefState>
+
             <Button onClick={() => logValue("test")}>Log value</Button>
             <Button onClick={() => generateUuid()}>Generate UUID</Button>
         </Flex>

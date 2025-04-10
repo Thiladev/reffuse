@@ -420,7 +420,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
 
-    RefState<A>(
+    RefState<A, R>(
         this: ReffuseHelpers<R>,
         props: {
             readonly ref: SubscriptionRef.SubscriptionRef<A>
