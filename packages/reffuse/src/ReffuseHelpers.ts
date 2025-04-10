@@ -418,6 +418,17 @@ export abstract class ReffuseHelpers<R> {
 
         return stream
     }
+
+
+    RefState<A>(
+        this: ReffuseHelpers<R>,
+        props: {
+            readonly ref: SubscriptionRef.SubscriptionRef<A>
+            readonly children: (state: [A, React.Dispatch<React.SetStateAction<A>>]) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(this.useRefState(props.ref))
+    }
 }
 
 
