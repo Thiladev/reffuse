@@ -18,6 +18,10 @@ export interface ScopeOptions {
 export abstract class ReffuseHelpers<R> {
     declare ["constructor"]: ReffuseHelpersClass<R>
 
+    constructor() {
+        this.RefState = this.RefState.bind(this as any) as any
+    }
+
 
     useContext<R>(this: ReffuseHelpers<R>): Context.Context<R> {
         return ReffuseContext.useMergeAll(...this.constructor.contexts)
