@@ -24,6 +24,10 @@ function RouteComponent() {
 
 
     const aRef = R.useRef("a value")
+    const anotherRef = R.useRef(69)
+
+    const res = R.useRefsState({ aRef, anotherRef })
+
 
     const [reactValue, setReactValue] = useState("initial")
     const reactValueStream = R.useStreamFromValues([reactValue])

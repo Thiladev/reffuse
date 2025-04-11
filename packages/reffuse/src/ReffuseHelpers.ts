@@ -411,35 +411,36 @@ export abstract class ReffuseHelpers<R> {
     }
 
     useRefsState<
-        Refs extends { [K in keyof Refs]: SubscriptionRef.SubscriptionRef<any> },
+        const Refs extends { readonly [K in keyof Refs]: SubscriptionRef.SubscriptionRef<any> },
         R,
     >(
         this: ReffuseHelpers<R>,
         refs: Refs,
     ): {
-        [K in keyof Refs]: readonly [
-            Effect.Effect<Refs[K]>,
-            React.Dispatch<React.SetStateAction<Effect.Effect<Refs[K]>>>,
+        readonly [K in keyof Refs]: readonly [
+            Effect.Effect.Success<Refs[K]>,
+            React.Dispatch<React.SetStateAction<Effect.Effect.Success<Refs[K]>>>,
         ]
     } {
-        const initialState = this.useMemo(() => Effect.Do.pipe(
-            Effect.bindAll(() => refs)
-        ), [], { doNotReExecuteOnRuntimeOrContextChange: true })
+        // const initialState = this.useMemo(() => Effect.Do.pipe(
+        //     Effect.bindAll(() => refs)
+        // ), [], { doNotReExecuteOnRuntimeOrContextChange: true })
 
-        const [reactStateValue, setReactStateValue] = React.useState(initialState)
+        // const [reactStateValue, setReactStateValue] = React.useState(initialState)
 
-        this.useFork(() => Stream.runForEach(
-            Stream.changesWith(ref.changes, (x, y) => x === y),
-            v => Effect.sync(() => setReactStateValue(v)),
-        ), [ref])
+        // this.useFork(() => Stream.runForEach(
+        //     Stream.changesWith(ref.changes, (x, y) => x === y),
+        //     v => Effect.sync(() => setReactStateValue(v)),
+        // ), [ref])
 
-        const setValue = this.useCallbackSync((setStateAction: React.SetStateAction<A>) =>
-            Ref.update(ref, prevState =>
-                SetStateAction.value(setStateAction, prevState)
-            ),
-        [ref])
+        // const setValue = this.useCallbackSync((setStateAction: React.SetStateAction<A>) =>
+        //     Ref.update(ref, prevState =>
+        //         SetStateAction.value(setStateAction, prevState)
+        //     ),
+        // [ref])
 
-        return [reactStateValue, setValue]
+        // return [reactStateValue, setValue]
+        return null!
     }
 
     useStreamFromValues<const A extends React.DependencyList, R>(
