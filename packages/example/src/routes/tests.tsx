@@ -2,7 +2,7 @@ import { R } from "@/reffuse"
 import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Console, Effect, Stream } from "effect"
+import { Console, Effect, Ref, Stream } from "effect"
 import { useState } from "react"
 
 
@@ -23,15 +23,8 @@ function RouteComponent() {
     ), [])
 
 
-    const aRef = R.useRef("a value")
+    const uuidRef = R.useRef("none")
     const anotherRef = R.useRef(69)
-
-    const res = R.useSubscribeRefs(aRef, anotherRef)
-
-
-    const [reactValue, setReactValue] = useState("initial")
-    const reactValueStream = R.useStreamFromValues([reactValue])
-    R.useFork(() => Stream.runForEach(reactValueStream, Console.log), [reactValueStream])
 
 
     const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {
@@ -40,14 +33,14 @@ function RouteComponent() {
 
     const generateUuid = R.useCallbackSync(() => makeUuid4.pipe(
         Effect.provide(GetRandomValues.CryptoRandom),
-        Effect.map(setReactValue),
+        Effect.flatMap(v => Ref.set(uuidRef, v)),
     ), [])
 
 
     return (
         <Flex direction="row" justify="center" align="center" gap="2">
-            <R.SubscribeRefs refs={[aRef, anotherRef]}>
-                {(aValue, anotherRef) => <Text>{aValue} / {anotherRef}</Text>}
+            <R.SubscribeRefs refs={[uuidRef, anotherRef]}>
+                {(uuid, anotherRef) => <Text>{uuid} / {anotherRef}</Text>}
             </R.SubscribeRefs>
 
             <Button onClick={() => logValue("test")}>Log value</Button>
