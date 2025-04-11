@@ -422,11 +422,15 @@ export abstract class ReffuseHelpers<R> {
             React.Dispatch<React.SetStateAction<Effect.Effect.Success<Refs[K]>>>,
         ]
     } {
-        // const initialState = this.useMemo(() => Effect.Do.pipe(
-        //     Effect.bindAll(() => refs)
-        // ), [], { doNotReExecuteOnRuntimeOrContextChange: true })
+        const [reactStateValue, setReactStateValue] = React.useState(
+            this.useMemo(() => Effect.Do.pipe(
+                Effect.bindAll(() => refs as Record<string, SubscriptionRef.SubscriptionRef<any>>)
+            ), [], {
+                doNotReExecuteOnRuntimeOrContextChange: true
+            }) as { readonly [K in keyof Refs]: any }
+        )
 
-        // const [reactStateValue, setReactStateValue] = React.useState(initialState)
+        this.useFork(() => )
 
         // this.useFork(() => Stream.runForEach(
         //     Stream.changesWith(ref.changes, (x, y) => x === y),
