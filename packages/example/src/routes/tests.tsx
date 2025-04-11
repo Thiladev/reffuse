@@ -26,7 +26,7 @@ function RouteComponent() {
     const aRef = R.useRef("a value")
     const anotherRef = R.useRef(69)
 
-    const res = R.useRefsState({ aRef, anotherRef })
+    const res = R.useSubscribeRefs(aRef, anotherRef)
 
 
     const [reactValue, setReactValue] = useState("initial")
@@ -46,9 +46,9 @@ function RouteComponent() {
 
     return (
         <Flex direction="row" justify="center" align="center" gap="2">
-            <R.RefState ref={aRef}>
-                {([aValue]) => <Text>{aValue}</Text>}
-            </R.RefState>
+            <R.SubscribeRefs refs={[aRef, anotherRef]}>
+                {(aValue, anotherRef) => <Text>{aValue} / {anotherRef}</Text>}
+            </R.SubscribeRefs>
 
             <Button onClick={() => logValue("test")}>Log value</Button>
             <Button onClick={() => generateUuid()}>Generate UUID</Button>

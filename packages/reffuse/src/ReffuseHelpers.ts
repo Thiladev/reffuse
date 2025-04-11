@@ -19,6 +19,7 @@ export abstract class ReffuseHelpers<R> {
     declare ["constructor"]: ReffuseHelpersClass<R>
 
     constructor() {
+        this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
     }
 
@@ -447,6 +448,19 @@ export abstract class ReffuseHelpers<R> {
         return stream
     }
 
+
+    SubscribeRefs<
+        const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[],
+        R,
+    >(
+        this: ReffuseHelpers<R>,
+        props: {
+            readonly refs: Refs
+            readonly children: (...args: [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }]) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(...this.useSubscribeRefs(...props.refs))
+    }
 
     RefState<A, R>(
         this: ReffuseHelpers<R>,
