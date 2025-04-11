@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { Array, type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -389,9 +389,21 @@ export abstract class ReffuseHelpers<R> {
         this: ReffuseHelpers<R>,
         ...refs: Refs
     ): [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }] {
-        const [reactStateValue, setReactStateValue] = React.useState(
-            this.useMemo(() => Effect.all(refs), [], { doNotReExecuteOnRuntimeOrContextChange: true })
-        )
+        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
+            () => Effect.all(refs as readonly SubscriptionRef.SubscriptionRef<any>[]),
+            [],
+            { doNotReExecuteOnRuntimeOrContextChange: true },
+        ) as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }])
+
+        this.useFork(() => pipe(refs as readonly SubscriptionRef.SubscriptionRef<any>[],
+            Array.map(ref => Stream.changesWith(ref.changes, (x, y) => x === y)),
+            streams => Stream.zipLatestAll(...streams),
+            Stream.runForEach(v =>
+                Effect.sync(() => setReactStateValue(v as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }]))
+            ),
+        ), refs)
+
+        return reactStateValue
     }
 
     /**
