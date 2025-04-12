@@ -31,7 +31,7 @@ function RouteComponent() {
         ),
     })
 
-    const [state] = R.useRefState(query.state)
+    const [state] = R.useSubscribeRefs(query.state)
 
 
     return (
