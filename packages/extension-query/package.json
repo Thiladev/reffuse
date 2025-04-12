@@ -1,6 +1,6 @@
 {
   "name": "@reffuse/extension-query",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "files": [
     "./README.md",
@@ -39,6 +39,6 @@
     "@types/react": "^19.0.0",
     "effect": "^3.13.0",
     "react": "^19.0.0",
-    "reffuse": "^0.1.4"
+    "reffuse": "^0.1.6"
   }
 }

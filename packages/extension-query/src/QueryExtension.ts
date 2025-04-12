@@ -1,7 +1,7 @@
 import type * as AsyncData from "@typed/async-data"
 import { type Cause, type Context, Effect, type Fiber, Layer, type Option, type Stream, type SubscriptionRef } from "effect"
 import * as React from "react"
-import { ReffuseExtension, type ReffuseHelpers } from "reffuse"
+import { ReffuseExtension, type ReffuseNamespace } from "reffuse"
 import type * as MutationService from "./MutationService.js"
 import * as QueryClient from "./QueryClient.js"
 import type * as QueryProgress from "./QueryProgress.js"
@@ -59,7 +59,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         QR extends R,
         R,
     >(
-        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
+        this: ReffuseNamespace.ReffuseNamespace<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
         props: UseQueryProps<QK, QA, QE, QR>,
     ): UseQueryResult<QK, QA | FallbackA, Exclude<QE, HandledE>> {
         const runner = this.useMemo(() => QueryRunner.make({
@@ -98,7 +98,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
         QR extends R,
         R,
     >(
-        this: ReffuseHelpers.ReffuseHelpers<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
+        this: ReffuseNamespace.ReffuseNamespace<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
         props: UseMutationProps<QK, QA, QE, QR>,
     ): UseMutationResult<QK, QA | FallbackA, Exclude<QE, HandledE>> {
         const runner = this.useMemo(() => MutationRunner.make({

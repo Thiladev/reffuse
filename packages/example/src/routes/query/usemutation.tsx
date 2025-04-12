@@ -37,7 +37,7 @@ function RouteComponent() {
         )
     })
 
-    const [state] = R.useRefState(mutation.state)
+    const [state] = R.useSubscribeRefs(mutation.state)
 
 
     return (
