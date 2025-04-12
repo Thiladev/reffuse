@@ -2,8 +2,7 @@ import { R } from "@/reffuse"
 import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Console, Effect, Ref, Stream } from "effect"
-import { useState } from "react"
+import { Console, Effect, Ref } from "effect"
 
 
 export const Route = createFileRoute("/tests")({

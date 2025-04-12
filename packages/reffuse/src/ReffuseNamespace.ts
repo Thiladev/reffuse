@@ -15,8 +15,8 @@ export interface ScopeOptions {
 }
 
 
-export abstract class ReffuseHelpers<R> {
-    declare ["constructor"]: ReffuseHelpersClass<R>
+export abstract class ReffuseNamespace<R> {
+    declare ["constructor"]: ReffuseNamespaceClass<R>
 
     constructor() {
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
@@ -24,16 +24,16 @@ export abstract class ReffuseHelpers<R> {
     }
 
 
-    useContext<R>(this: ReffuseHelpers<R>): Context.Context<R> {
+    useContext<R>(this: ReffuseNamespace<R>): Context.Context<R> {
         return ReffuseContext.useMergeAll(...this.constructor.contexts)
     }
 
-    useLayer<R>(this: ReffuseHelpers<R>): Layer.Layer<R> {
+    useLayer<R>(this: ReffuseNamespace<R>): Layer.Layer<R> {
         return ReffuseContext.useMergeAllLayers(...this.constructor.contexts)
     }
 
 
-    useRunSync<R>(this: ReffuseHelpers<R>): <A, E>(effect: Effect.Effect<A, E, R>) => A {
+    useRunSync<R>(this: ReffuseNamespace<R>): <A, E>(effect: Effect.Effect<A, E, R>) => A {
         const runtime = ReffuseRuntime.useRuntime()
         const context = this.useContext()
 
@@ -43,7 +43,7 @@ export abstract class ReffuseHelpers<R> {
         ), [runtime, context])
     }
 
-    useRunPromise<R>(this: ReffuseHelpers<R>): <A, E>(
+    useRunPromise<R>(this: ReffuseNamespace<R>): <A, E>(
         effect: Effect.Effect<A, E, R>,
         options?: { readonly signal?: AbortSignal },
     ) => Promise<A> {
@@ -56,7 +56,7 @@ export abstract class ReffuseHelpers<R> {
         ), [runtime, context])
     }
 
-    useRunFork<R>(this: ReffuseHelpers<R>): <A, E>(
+    useRunFork<R>(this: ReffuseNamespace<R>): <A, E>(
         effect: Effect.Effect<A, E, R>,
         options?: Runtime.RunForkOptions,
     ) => Fiber.RuntimeFiber<A, E> {
@@ -69,7 +69,7 @@ export abstract class ReffuseHelpers<R> {
         ), [runtime, context])
     }
 
-    useRunCallback<R>(this: ReffuseHelpers<R>): <A, E>(
+    useRunCallback<R>(this: ReffuseNamespace<R>): <A, E>(
         effect: Effect.Effect<A, E, R>,
         options?: Runtime.RunCallbackOptions<A, E>,
     ) => Runtime.Cancel<A, E> {
@@ -92,7 +92,7 @@ export abstract class ReffuseHelpers<R> {
      * You can disable this behavior by setting `doNotReExecuteOnRuntimeOrContextChange` to `true` in `options`.
      */
     useMemo<A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         effect: () => Effect.Effect<A, E, R>,
         deps: React.DependencyList,
         options?: RenderOptions,
@@ -106,7 +106,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
     useMemoScoped<A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
@@ -179,7 +179,7 @@ export abstract class ReffuseHelpers<R> {
      * ```
      */
     useEffect<A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
@@ -227,7 +227,7 @@ export abstract class ReffuseHelpers<R> {
      * ```
      */
     useLayoutEffect<A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: RenderOptions & ScopeOptions,
@@ -275,7 +275,7 @@ export abstract class ReffuseHelpers<R> {
      * ```
      */
     useFork<A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: Runtime.RunForkOptions & RenderOptions & ScopeOptions,
@@ -298,7 +298,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
     usePromise<A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         effect: () => Effect.Effect<A, E, R | Scope.Scope>,
         deps?: React.DependencyList,
         options?: { readonly signal?: AbortSignal } & Runtime.RunForkOptions & RenderOptions & ScopeOptions,
@@ -345,7 +345,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
     useCallbackSync<Args extends unknown[], A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         callback: (...args: Args) => Effect.Effect<A, E, R>,
         deps: React.DependencyList,
         options?: RenderOptions,
@@ -359,7 +359,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
     useCallbackPromise<Args extends unknown[], A, E, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         callback: (...args: Args) => Effect.Effect<A, E, R>,
         deps: React.DependencyList,
         options?: { readonly signal?: AbortSignal } & RenderOptions,
@@ -373,7 +373,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
     useRef<A, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         value: A,
     ): SubscriptionRef.SubscriptionRef<A> {
         return this.useMemo(
@@ -387,7 +387,7 @@ export abstract class ReffuseHelpers<R> {
         const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[],
         R,
     >(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         ...refs: Refs
     ): [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }] {
         const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
@@ -415,7 +415,7 @@ export abstract class ReffuseHelpers<R> {
      * Note that the rules of React's immutable state still apply: updating a ref with the same value will not trigger a re-render.
      */
     useRefState<A, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         ref: SubscriptionRef.SubscriptionRef<A>,
     ): [A, React.Dispatch<React.SetStateAction<A>>] {
         const initialState = this.useMemo(() => ref, [], { doNotReExecuteOnRuntimeOrContextChange: true })
@@ -436,7 +436,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
     useStreamFromValues<const A extends React.DependencyList, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
         const [queue, stream] = this.useMemo(() => Queue.unbounded<A>().pipe(
@@ -453,7 +453,7 @@ export abstract class ReffuseHelpers<R> {
         const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[],
         R,
     >(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         props: {
             readonly refs: Refs
             readonly children: (...args: [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }]) => React.ReactNode
@@ -463,7 +463,7 @@ export abstract class ReffuseHelpers<R> {
     }
 
     RefState<A, R>(
-        this: ReffuseHelpers<R>,
+        this: ReffuseNamespace<R>,
         props: {
             readonly ref: SubscriptionRef.SubscriptionRef<A>
             readonly children: (state: [A, React.Dispatch<React.SetStateAction<A>>]) => React.ReactNode
@@ -474,30 +474,30 @@ export abstract class ReffuseHelpers<R> {
 }
 
 
-export interface ReffuseHelpers<R> extends Pipeable.Pipeable {}
+export interface ReffuseNamespace<R> extends Pipeable.Pipeable {}
 
-ReffuseHelpers.prototype.pipe = function pipe() {
+ReffuseNamespace.prototype.pipe = function pipe() {
     return Pipeable.pipeArguments(this, arguments)
 };
 
 
-export interface ReffuseHelpersClass<R> extends Pipeable.Pipeable {
-    new(): ReffuseHelpers<R>
+export interface ReffuseNamespaceClass<R> extends Pipeable.Pipeable {
+    new(): ReffuseNamespace<R>
     make<Self>(this: new () => Self): Self
     readonly contexts: readonly ReffuseContext.ReffuseContext<R>[]
 }
 
-(ReffuseHelpers as ReffuseHelpersClass<any>).make = function make() {
+(ReffuseNamespace as ReffuseNamespaceClass<any>).make = function make() {
     return new this()
 };
 
-(ReffuseHelpers as ReffuseHelpersClass<any>).pipe = function pipe() {
+(ReffuseNamespace as ReffuseNamespaceClass<any>).pipe = function pipe() {
     return Pipeable.pipeArguments(this, arguments)
 };
 
 
-export const make = (): ReffuseHelpersClass<never> => (
-    class extends (ReffuseHelpers<never> as ReffuseHelpersClass<never>) {
+export const makeClass = (): ReffuseNamespaceClass<never> => (
+    class extends (ReffuseNamespace<never> as ReffuseNamespaceClass<never>) {
         static readonly contexts = []
     }
 )
