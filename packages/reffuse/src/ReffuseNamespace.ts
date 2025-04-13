@@ -419,8 +419,11 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         ref: SubscriptionRef.SubscriptionRef<A>,
     ): [A, React.Dispatch<React.SetStateAction<A>>] {
-        const initialState = this.useMemo(() => ref, [], { doNotReExecuteOnRuntimeOrContextChange: true })
-        const [reactStateValue, setReactStateValue] = React.useState(initialState)
+        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
+            () => ref,
+            [],
+            { doNotReExecuteOnRuntimeOrContextChange: true },
+        ))
 
         this.useFork(() => Stream.runForEach(
             Stream.changesWith(ref.changes, (x, y) => x === y),
