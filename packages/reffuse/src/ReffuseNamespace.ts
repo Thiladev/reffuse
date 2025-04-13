@@ -1,4 +1,4 @@
-import { Array, type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -21,6 +21,7 @@ export abstract class ReffuseNamespace<R> {
     constructor() {
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
+        this.SubscribeStream = this.SubscribeStream.bind(this as any) as any
     }
 
 
@@ -396,8 +397,8 @@ export abstract class ReffuseNamespace<R> {
             { doNotReExecuteOnRuntimeOrContextChange: true },
         ) as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }])
 
-        this.useFork(() => pipe(refs as readonly SubscriptionRef.SubscriptionRef<any>[],
-            Array.map(ref => Stream.changesWith(ref.changes, (x, y) => x === y)),
+        this.useFork(() => pipe(
+            refs.map(ref => Stream.changesWith(ref.changes, (x, y) => x === y)),
             streams => Stream.zipLatestAll(...streams),
             Stream.runForEach(v =>
                 Effect.sync(() => setReactStateValue(v as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }]))
@@ -418,8 +419,11 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         ref: SubscriptionRef.SubscriptionRef<A>,
     ): [A, React.Dispatch<React.SetStateAction<A>>] {
-        const initialState = this.useMemo(() => ref, [], { doNotReExecuteOnRuntimeOrContextChange: true })
-        const [reactStateValue, setReactStateValue] = React.useState(initialState)
+        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
+            () => ref,
+            [],
+            { doNotReExecuteOnRuntimeOrContextChange: true },
+        ))
 
         this.useFork(() => Stream.runForEach(
             Stream.changesWith(ref.changes, (x, y) => x === y),
@@ -448,6 +452,21 @@ export abstract class ReffuseNamespace<R> {
         return stream
     }
 
+    useSubscribeStream<A, InitialA extends A | undefined, E, R>(
+        this: ReffuseNamespace<R>,
+        stream: Stream.Stream<A, E, R>,
+        initialValue?: InitialA,
+    ): InitialA extends A ? Option.Some<A> : Option.Option<A> {
+        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
+
+        this.useFork(() => Stream.runForEach(
+            Stream.changesWith(stream, (x, y) => x === y),
+            v => Effect.sync(() => setReactStateValue(Option.some(v))),
+        ), [stream])
+
+        return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
+    }
+
 
     SubscribeRefs<
         const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[],
@@ -470,6 +489,17 @@ export abstract class ReffuseNamespace<R> {
         },
     ): React.ReactNode {
         return props.children(this.useRefState(props.ref))
+    }
+
+    SubscribeStream<A, InitialA extends A | undefined, E, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly stream: Stream.Stream<A, E, R>
+            readonly initialValue?: InitialA
+            readonly children: (latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(this.useSubscribeStream(props.stream, props.initialValue))
     }
 }
 

@@ -1,4 +1,4 @@
-import { VQueryErrorHandler } from "@/QueryErrorHandler"
+import { VQueryErrorHandler } from "@/VQueryErrorHandler"
 import { Container, Flex, Theme } from "@radix-ui/themes"
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
