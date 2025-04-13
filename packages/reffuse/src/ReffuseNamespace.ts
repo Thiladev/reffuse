@@ -21,6 +21,7 @@ export abstract class ReffuseNamespace<R> {
     constructor() {
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
+        this.SubscribeStream = this.SubscribeStream.bind(this as any) as any
     }
 
 
