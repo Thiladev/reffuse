@@ -1,4 +1,4 @@
-import { Array, type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { Array, type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -446,6 +446,21 @@ export abstract class ReffuseNamespace<R> {
         this.useEffect(() => Queue.offer(queue, values), values)
 
         return stream
+    }
+
+    useSubscribeStream<A, InitialA extends A | undefined, E, R>(
+        this: ReffuseNamespace<R>,
+        stream: Stream.Stream<A, E, R>,
+        initialValue?: InitialA,
+    ): InitialA extends A ? Option.Some<A> : Option.Option<A> {
+        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
+
+        this.useFork(() => Stream.runForEach(
+            Stream.changesWith(stream, (x, y) => x === y),
+            v => Effect.sync(() => setReactStateValue(Option.some(v))),
+        ), [stream])
+
+        return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
 
 
