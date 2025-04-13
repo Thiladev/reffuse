@@ -1,4 +1,4 @@
-import { Array, type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -397,8 +397,8 @@ export abstract class ReffuseNamespace<R> {
             { doNotReExecuteOnRuntimeOrContextChange: true },
         ) as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }])
 
-        this.useFork(() => pipe(refs as readonly SubscriptionRef.SubscriptionRef<any>[],
-            Array.map(ref => Stream.changesWith(ref.changes, (x, y) => x === y)),
+        this.useFork(() => pipe(
+            refs.map(ref => Stream.changesWith(ref.changes, (x, y) => x === y)),
             streams => Stream.zipLatestAll(...streams),
             Stream.runForEach(v =>
                 Effect.sync(() => setReactStateValue(v as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }]))
