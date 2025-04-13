@@ -25,8 +25,6 @@ function RouteComponent() {
     const uuidRef = R.useRef("none")
     const anotherRef = R.useRef(69)
 
-    console.log(R.useSubscribeStream(uuidRef.changes))
-
 
     const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {
         yield* Effect.log(value)
