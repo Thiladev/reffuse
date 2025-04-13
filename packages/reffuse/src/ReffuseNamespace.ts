@@ -486,6 +486,17 @@ export abstract class ReffuseNamespace<R> {
     ): React.ReactNode {
         return props.children(this.useRefState(props.ref))
     }
+
+    SubscribeStream<A, InitialA extends A | undefined, E, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly stream: Stream.Stream<A, E, R>
+            readonly initialValue?: InitialA
+            readonly children: (latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(this.useSubscribeStream(props.stream, props.initialValue))
+    }
 }
 
 
