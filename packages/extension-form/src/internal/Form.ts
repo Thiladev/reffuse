@@ -1,4 +1,5 @@
 import { Schema } from "effect"
+import type * as FormField from "./FormField.js"
 
 
 export interface Form<A, I, R> {
@@ -7,29 +8,10 @@ export interface Form<A, I, R> {
 
 
 export type FormTree<S extends Schema.Schema<any>> = (
-    S extends Schema.Array$<any> ? ArrayFormField<S> :
-    S extends Schema.Struct<any> ? StructFormField<S> :
-    GenericFormField<S>
+    S extends Schema.Array$<any> ? FormField.ArrayFormField<S> :
+    S extends Schema.Struct<any> ? FormField.StructFormField<S> :
+    FormField.GenericFormField<S>
 )
-
-
-export interface GenericFormField<S extends Schema.Schema<any>> {
-    readonly _tag: "GenericFormField"
-    readonly schema: S
-    readonly value: S["Type"]
-}
-
-export interface ArrayFormField<S extends Schema.Array$<any>> {
-    readonly _tag: "ArrayFormField"
-    readonly schema: S
-    readonly elements: readonly FormTree<S["value"]>[]
-}
-
-export interface StructFormField<S extends Schema.Struct<any>> {
-    readonly _tag: "StructFormField"
-    readonly schema: S
-    readonly fields: { [K in keyof S["fields"]]: FormTree<S["fields"][K]> }
-}
 
 
 const MySchema = Schema.Struct({
