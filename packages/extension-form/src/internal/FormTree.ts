@@ -4,6 +4,7 @@ import type * as FormField from "./FormField.js"
 
 export type FormTree<S extends Schema.Schema.Any> = (
     S extends Schema.Tuple<any> ? FormField.TupleFormField<S> :
+    S extends Schema.Tuple2<any, any> ? FormField.Tuple2FormField<S> :
     S extends Schema.Array$<any> ? FormField.ArrayFormField<S> :
     S extends Schema.Struct<any> ? FormField.StructFormField<S> :
     FormField.GenericFormField<S>
