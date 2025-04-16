@@ -13,7 +13,13 @@ export interface GenericFormField<S extends Schema.Schema.Any> extends FormField
 
 export interface TupleFormField<S extends Schema.Tuple<readonly Schema.Schema.AnyNoContext[]>> extends FormField<S> {
     readonly _tag: "TupleFormField"
-    readonly elements: { readonly [K in keyof S["elements"]]: FormTree.FormTree<S["elements"][K]> }
+    readonly elements: { [K in keyof S]: FormTree.FormTree<S["elements"][K]> }
+}
+
+export interface Tuple2FormField<S extends Schema.Tuple2<Schema.Schema.Any, Schema.Schema.Any>> extends FormField<S> {
+    readonly _tag: "Tuple2FormField"
+    // readonly elements: readonly [FormTree.FormTree<S["elements"][0]>, FormTree.FormTree<S["elements"][0]>]
+    readonly elements: [...{ [K in keyof S["elements"]]: S["elements"][K] }]
 }
 
 export interface ArrayFormField<S extends Schema.Array$<Schema.Schema.AnyNoContext>> extends FormField<S> {
