@@ -1,4 +1,4 @@
-import type { Schema } from "effect"
+import type { Array, Schema, SchemaAST } from "effect"
 import type * as FormTree from "./FormTree.ts"
 
 
@@ -34,4 +34,36 @@ export interface StructFormField<
 > extends FormField<S> {
     readonly _tag: "StructFormField"
     readonly fields: { readonly [K in keyof Fields]: FormTree.FormTree<Fields[K]> }
+}
+
+export interface LiteralFormField<
+    S extends Schema.Literal<Literals>,
+    Literals extends Array.NonEmptyReadonlyArray<SchemaAST.LiteralValue>,
+> extends FormField<S> {
+    readonly _tag: "LiteralFormField"
+    readonly value: S["Type"]
+}
+
+export interface UnionFormField<
+    S extends Schema.Union<Members>,
+    Members extends ReadonlyArray<Schema.Schema.All>,
+> extends FormField<S> {
+    readonly _tag: "UnionFormField"
+    readonly member: FormTree.FormTree<Members[number]>
+}
+
+
+export interface PropertySignatureFormField<
+    S extends Schema.PropertySignature<TypeToken, Type, Key, EncodedToken, Encoded, HasDefault, R>,
+    TypeToken extends Schema.PropertySignature.Token,
+    Type,
+    Key extends PropertyKey,
+    EncodedToken extends Schema.PropertySignature.Token,
+    Encoded,
+    HasDefault extends boolean = false,
+    R = never,
+> {
+    readonly _tag: "PropertySignatureFormField"
+    readonly propertySignature: S
+    readonly value: Type
 }
