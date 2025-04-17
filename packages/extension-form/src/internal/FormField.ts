@@ -11,34 +11,27 @@ export interface GenericFormField<S extends Schema.Schema.Any> extends FormField
     readonly value: S["Type"]
 }
 
-export interface TupleFormField<S extends Schema.Tuple<readonly Schema.Schema.Any[]>> extends FormField<S> {
+export interface TupleFormField<
+    S extends Schema.TupleType<Elements, Rest>,
+    Elements extends Schema.TupleType.Elements,
+    Rest extends Schema.TupleType.Rest,
+> extends FormField<S> {
     readonly _tag: "TupleFormField"
-    readonly elements: { readonly [K in keyof S["elements"]]: FormTree.FormTree<
-        S["elements"][K] extends Schema.Schema.Any
-            ? S["elements"][K]
-            : never
-    > }
+    readonly elements: [...{ readonly [K in keyof Elements]: FormTree.FormTree<Elements[K]> }]
 }
 
-export interface Tuple2FormField<S extends Schema.Tuple2<Schema.Schema.Any, Schema.Schema.Any>> extends FormField<S> {
-    readonly _tag: "Tuple2FormField"
-    readonly elements: { readonly [K in keyof S["elements"]]: FormTree.FormTree<
-        S["elements"][K] extends Schema.Schema.Any
-            ? S["elements"][K]
-            : never
-    > }
-}
-
-export interface ArrayFormField<S extends Schema.Array$<Schema.Schema.AnyNoContext>> extends FormField<S> {
+export interface ArrayFormField<
+    S extends Schema.Array$<Value>,
+    Value extends Schema.Schema.Any,
+> extends FormField<S> {
     readonly _tag: "ArrayFormField"
-    readonly elements: readonly FormTree.FormTree<S["value"]>[]
+    readonly elements: readonly FormTree.FormTree<Value>[]
 }
 
-export interface StructFormField<S extends Schema.Struct<{
-    readonly [x: string]: Schema.Schema.AnyNoContext
-    readonly [x: number]: Schema.Schema.AnyNoContext
-    readonly [x: symbol]: Schema.Schema.AnyNoContext
-}>> extends FormField<S> {
+export interface StructFormField<
+    S extends Schema.Struct<Fields>,
+    Fields extends Schema.Struct.Fields,
+> extends FormField<S> {
     readonly _tag: "StructFormField"
-    readonly fields: { readonly [K in keyof S["fields"]]: FormTree.FormTree<S["fields"][K]> }
+    readonly fields: { readonly [K in keyof Fields]: FormTree.FormTree<Fields[K]> }
 }
