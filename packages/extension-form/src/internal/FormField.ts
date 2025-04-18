@@ -35,12 +35,19 @@ export interface ArrayFormField<
     readonly elements: readonly Formify.Formify<Value>[]
 }
 
-export interface StructFormField<
+export type StructFormField<
     S extends Schema.Struct<Fields>,
     Fields extends Schema.Struct.Fields,
-> extends FormField<S> {
-    readonly fields: { readonly [K in keyof Fields]: Formify.Formify<Fields[K]> }
-}
+> = (
+    & FormField<S>
+    & { readonly fields: { readonly [K in keyof Fields]: Formify.Formify<Fields[K]> } }
+    & {
+        [K in keyof Fields as Fields[K] extends
+            Schema.tag<infer _> ? K : never
+        ]: Fields[K] extends
+            Schema.tag<infer Tag> ? Tag : never
+    }
+)
 
 export interface GenericFormField<S extends Schema.Schema.Any> extends FormField<S> {
     readonly value: S["Type"]

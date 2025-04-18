@@ -22,7 +22,7 @@ export type Formify<S> = (
 )
 
 
-const LoginForm = Schema.Union(
+const Login = Schema.Union(
     Schema.Struct({
         _tag: Schema.tag("ByEmail"),
         email: Schema.String,
@@ -34,12 +34,18 @@ const LoginForm = Schema.Union(
         phone: Schema.String,
         password: Schema.RedactedFromSelf(Schema.String),
     }),
-)
-type LoginFormTree = Formify<typeof LoginForm>
-declare const loginFormTree: LoginFormTree
 
-switch (loginFormTree.member.fields._tag.value) {
+    Schema.TaggedStruct("ByKey", {
+        id: Schema.String,
+        password: Schema.RedactedFromSelf(Schema.String),
+    }),
+)
+type LoginForm = Formify<typeof Login>
+declare const loginForm: LoginForm
+
+switch (loginForm.member._tag) {
     case "ByEmail":
+        loginForm.member
     break
     case "ByPhone":
     break
