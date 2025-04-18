@@ -2,12 +2,12 @@ import { Schema } from "effect"
 import type * as FormField from "./FormField.js"
 
 
-export type FormTree<S> = (
+export type Formify<S> = (
+    S extends Schema.Literal<infer Literals> ? FormField.LiteralFormField<S, Literals> :
+    S extends Schema.Union<infer Members> ? FormField.UnionFormField<S, Members> :
     S extends Schema.TupleType<infer Elements, infer Rest> ? FormField.TupleFormField<S, Elements, Rest> :
     S extends Schema.Array$<infer Value> ? FormField.ArrayFormField<S, Value> :
     S extends Schema.Struct<infer Fields> ? FormField.StructFormField<S, Fields> :
-    S extends Schema.Literal<infer Literals> ? FormField.LiteralFormField<S, Literals> :
-    S extends Schema.Union<infer Members> ? FormField.UnionFormField<S, Members> :
     S extends Schema.Schema.Any ? FormField.GenericFormField<S> :
     S extends Schema.PropertySignature<
         infer TypeToken,
@@ -35,7 +35,7 @@ const LoginForm = Schema.Union(
         password: Schema.RedactedFromSelf(Schema.String),
     }),
 )
-type LoginFormTree = FormTree<typeof LoginForm>
+type LoginFormTree = Formify<typeof LoginForm>
 declare const loginFormTree: LoginFormTree
 
 switch (loginFormTree.member.fields._tag.value) {
@@ -53,7 +53,7 @@ const User = Schema.Struct({
     values: Schema.Array(Schema.String),
 })
 
-type TestFormTree = FormTree<typeof User>
+type TestFormTree = Formify<typeof User>
 declare const testFormTree: TestFormTree
 
 testFormTree.fields._tag
