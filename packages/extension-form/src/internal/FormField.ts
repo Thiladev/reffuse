@@ -1,4 +1,4 @@
-import type { Array, Schema, SchemaAST } from "effect"
+import type { Effect, Schema } from "effect"
 import type * as Formify from "./Formify.js"
 
 
@@ -6,11 +6,12 @@ export interface FormField<S extends Schema.Schema.Any> {
     readonly schema: S
 }
 
-export interface LiteralFormField<
-    S extends Schema.Literal<Literals>,
-    Literals extends Array.NonEmptyReadonlyArray<SchemaAST.LiteralValue>,
-> extends FormField<S> {
-    readonly value: S["Type"]
+export const makeFormField = <S extends Schema.Schema.Any>(
+    schema: S,
+    get: Effect.Effect<S["Type"]>,
+    set: (value: S["Type"]) => Effect.Effect<void>,
+): FormField<S> => {
+
 }
 
 export interface UnionFormField<
@@ -50,7 +51,6 @@ export type StructFormField<
 )
 
 export interface GenericFormField<S extends Schema.Schema.Any> extends FormField<S> {
-    readonly value: S["Type"]
 }
 
 

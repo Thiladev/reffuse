@@ -3,7 +3,6 @@ import type * as FormField from "./FormField.js"
 
 
 export type Formify<S> = (
-    S extends Schema.Literal<infer Literals> ? FormField.LiteralFormField<S, Literals> :
     S extends Schema.Union<infer Members> ? FormField.UnionFormField<S, Members> :
     S extends Schema.TupleType<infer Elements, infer Rest> ? FormField.TupleFormField<S, Elements, Rest> :
     S extends Schema.Array$<infer Value> ? FormField.ArrayFormField<S, Value> :
@@ -50,17 +49,3 @@ switch (loginForm.member._tag) {
     case "ByPhone":
     break
 }
-
-
-const User = Schema.Struct({
-    _tag: Schema.tag("User"),
-    name: Schema.String,
-    roles: Schema.Tuple(Schema.Literal("Admin"), Schema.Literal("Moderator"), Schema.Literal("User")),
-    values: Schema.Array(Schema.String),
-})
-
-type TestFormTree = Formify<typeof User>
-declare const testFormTree: TestFormTree
-
-testFormTree.fields._tag
-testFormTree.fields.roles.elements[0].value
