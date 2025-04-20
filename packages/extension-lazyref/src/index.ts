@@ -1,7 +1,8 @@
 import * as LazyRef from "@typed/lazy-ref"
 import { Effect, pipe, Stream } from "effect"
 import * as React from "react"
-import { ReffuseExtension, type ReffuseNamespace, SetStateAction } from "reffuse"
+import { ReffuseExtension, type ReffuseNamespace } from "reffuse"
+import { SetStateAction } from "reffuse/types"
 
 
 export const LazyRefExtension = ReffuseExtension.make(() => ({
