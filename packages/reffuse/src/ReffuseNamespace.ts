@@ -2,7 +2,7 @@ import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, 
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
-import { SetStateAction } from "./types/index.js"
+import { SetStateAction, SubscriptionSubRef } from "./types/index.js"
 
 
 export interface RenderOptions {
@@ -381,6 +381,18 @@ export abstract class ReffuseNamespace<R> {
             () => SubscriptionRef.make(value),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true }, // Do not recreate the ref when the context changes
+        )
+    }
+
+    useSubRefFromGetSet<A, B, R>(
+        this: ReffuseNamespace<R>,
+        parent: SubscriptionRef.SubscriptionRef<B>,
+        getter: (parentValue: B) => A,
+        setter: (parentValue: B, value: A) => B,
+    ): SubscriptionSubRef.SubscriptionSubRef<A, B> {
+        return React.useMemo(
+            () => SubscriptionSubRef.makeFromGetSet(parent, getter, setter),
+            [parent],
         )
     }
 

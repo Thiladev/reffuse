@@ -3,8 +3,6 @@ import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
 import { Console, Effect, Ref } from "effect"
-import { useMemo } from "react"
-import { SubscriptionSubRef } from "reffuse/types"
 
 
 export const Route = createFileRoute("/tests")({
@@ -13,11 +11,11 @@ export const Route = createFileRoute("/tests")({
 
 function RouteComponent() {
     const deepRef = R.useRef({ value: "poulet" })
-    const deepValueRef = useMemo(() => SubscriptionSubRef.makeFromGetSet(
+    const deepValueRef = R.useSubRefFromGetSet(
         deepRef,
         b => b.value,
         (b, a) => ({ ...b, value: a }),
-    ), [deepRef])
+    )
 
     // const value = R.useMemoScoped(Effect.addFinalizer(() => Console.log("cleanup")).pipe(
     //     Effect.andThen(makeUuid4),
