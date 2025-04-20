@@ -6,13 +6,14 @@ export interface SubscriptionSubRef<in out A, in out B> extends SubscriptionRef.
 }
 
 
+const refVariance = { _A: (_: any) => _ }
 const synchronizedRefVariance = { _A: (_: any) => _ }
 const subscriptionRefVariance = { _A: (_: any) => _ }
 
 class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> implements SubscriptionSubRef<A, B> {
     readonly [Readable.TypeId]: Readable.TypeId = Readable.TypeId
     readonly [Subscribable.TypeId]: Subscribable.TypeId = Subscribable.TypeId
-    readonly [Ref.RefTypeId]: Ref.Ref.Variance<A>[Ref.RefTypeId] = { _A: (_: any) => _ }
+    readonly [Ref.RefTypeId]: Ref.Ref.Variance<A>[Ref.RefTypeId] = refVariance
     readonly [SynchronizedRef.SynchronizedRefTypeId]: SynchronizedRef.SynchronizedRef.Variance<A>[SynchronizedRef.SynchronizedRefTypeId] = synchronizedRefVariance
     readonly [SubscriptionRef.SubscriptionRefTypeId]: SubscriptionRef.SubscriptionRef.Variance<A>[SubscriptionRef.SubscriptionRefTypeId] = subscriptionRefVariance
 
