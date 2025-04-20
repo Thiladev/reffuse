@@ -3,12 +3,6 @@ import { Effect, Effectable, Readable, Ref, Stream, Subscribable, SubscriptionRe
 
 export interface SubscriptionSubRef<in out A, in out B> extends SubscriptionRef.SubscriptionRef<A> {
     readonly ref: SubscriptionRef.SubscriptionRef<B>
-
-    /**
-     * A stream containing the current value of the `Ref` as well as all changes
-     * to that value.
-     */
-    readonly changes: Stream.Stream<A>
 }
 
 
