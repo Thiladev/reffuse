@@ -13,7 +13,7 @@ export const Route = createFileRoute("/tests")({
 
 function RouteComponent() {
     const deepRef = R.useRef({ value: "poulet" })
-    const deepValueRef = useMemo(() => SubscriptionSubRef.make(
+    const deepValueRef = useMemo(() => SubscriptionSubRef.makeFromGetSet(
         deepRef,
         b => b.value,
         (b, a) => ({ ...b, value: a }),

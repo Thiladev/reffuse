@@ -2,7 +2,7 @@ import { Effect, Effectable, Readable, Ref, Stream, Subscribable, SubscriptionRe
 
 
 export interface SubscriptionSubRef<in out A, in out B> extends SubscriptionRef.SubscriptionRef<A> {
-    readonly ref: SubscriptionRef.SubscriptionRef<B>
+    readonly parent: SubscriptionRef.SubscriptionRef<B>
 }
 
 
@@ -19,12 +19,12 @@ class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> imp
     readonly get: Effect.Effect<A>
 
     constructor(
-        readonly ref: SubscriptionRef.SubscriptionRef<B>,
-        readonly select: (value: B) => A,
-        readonly setter: (value: B, subValue: A) => B,
+        readonly parent: SubscriptionRef.SubscriptionRef<B>,
+        readonly getter: (parentValue: B) => A,
+        readonly setter: (parentValue: B, value: A) => B,
     ) {
         super()
-        this.get = Ref.get(this.ref).pipe(Effect.map(this.select))
+        this.get = Ref.get(this.parent).pipe(Effect.map(this.getter))
     }
 
     commit() {
@@ -33,8 +33,8 @@ class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> imp
 
     get changes(): Stream.Stream<A> {
         return this.get.pipe(
-            Effect.map(a => this.ref.changes.pipe(
-                Stream.map(this.select),
+            Effect.map(a => this.parent.changes.pipe(
+                Stream.map(this.getter),
                 s => Stream.concat(Stream.make(a), s),
             )),
             Stream.unwrap,
@@ -47,17 +47,17 @@ class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> imp
 
     modifyEffect<C, E, R>(f: (a: A) => Effect.Effect<readonly [C, A], E, R>): Effect.Effect<C, E, R> {
         return Effect.Do.pipe(
-            Effect.bind("b", () => Ref.get(this.ref)),
-            Effect.bind("ca", ({ b }) => f(this.select(b))),
-            Effect.tap(({ b, ca: [, a] }) => Ref.set(this.ref, this.setter(b, a))),
+            Effect.bind("b", () => Ref.get(this.parent)),
+            Effect.bind("ca", ({ b }) => f(this.getter(b))),
+            Effect.tap(({ b, ca: [, a] }) => Ref.set(this.parent, this.setter(b, a))),
             Effect.map(({ ca: [c] }) => c),
         )
     }
 }
 
 
-export const make = <A, B>(
-    ref: SubscriptionRef.SubscriptionRef<B>,
-    select: (value: B) => A,
-    setter: (value: B, subValue: A) => B,
-): SubscriptionSubRef<A, B> => new SubscriptionSubRefImpl(ref, select, setter)
+export const makeFromGetSet = <A, B>(
+    parent: SubscriptionRef.SubscriptionRef<B>,
+    getter: (parentValue: B) => A,
+    setter: (parentValue: B, value: A) => B,
+): SubscriptionSubRef<A, B> => new SubscriptionSubRefImpl(parent, getter, setter)
