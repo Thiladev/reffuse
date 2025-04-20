@@ -27,7 +27,7 @@ class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> imp
     constructor(
         readonly ref: SubscriptionRef.SubscriptionRef<B>,
         readonly select: (value: B) => A,
-        readonly setter: (value: A) => B,
+        readonly setter: (value: B, subValue: A) => B,
     ) {
         super()
         this.get = Ref.get(this.ref).pipe(Effect.map(this.select))
@@ -52,11 +52,11 @@ class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> imp
     }
 
     modifyEffect<C, E, R>(f: (a: A) => Effect.Effect<readonly [C, A], E, R>): Effect.Effect<C, E, R> {
-        return this.get.pipe(
-            Effect.flatMap(f),
-            Effect.flatMap(([b, a]) => Ref.set(this.ref, this.setter(a)).pipe(
-                Effect.as(b)
-            )),
+        return Effect.Do.pipe(
+            Effect.bind("b", () => Ref.get(this.ref)),
+            Effect.bind("ca", ({ b }) => f(this.select(b))),
+            Effect.tap(({ b, ca: [, a] }) => Ref.set(this.ref, this.setter(b, a))),
+            Effect.map(({ ca: [c] }) => c),
         )
     }
 }
@@ -65,5 +65,5 @@ class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> imp
 export const make = <A, B>(
     ref: SubscriptionRef.SubscriptionRef<B>,
     select: (value: B) => A,
-    setter: (value: A) => B,
+    setter: (value: B, subValue: A) => B,
 ): SubscriptionSubRef<A, B> => new SubscriptionSubRefImpl(ref, select, setter)
