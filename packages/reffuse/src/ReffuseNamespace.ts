@@ -2,7 +2,7 @@ import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, 
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
-import * as SetStateAction from "./SetStateAction.js"
+import { SetStateAction } from "./types/index.js"
 
 
 export interface RenderOptions {

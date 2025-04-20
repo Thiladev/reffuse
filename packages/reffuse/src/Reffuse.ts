@@ -1,7 +1,7 @@
 import type * as ReffuseContext from "./ReffuseContext.js"
 import type * as ReffuseExtension from "./ReffuseExtension.js"
 import * as ReffuseNamespace from "./ReffuseNamespace.js"
-import type { Merge, StaticType } from "./types.js"
+import type { Merge, StaticType } from "./utils.js"
 
 
 export class Reffuse extends ReffuseNamespace.makeClass() {}

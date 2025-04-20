@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
 import { Console, Effect, Ref } from "effect"
 import { useMemo } from "react"
-import { SubscriptionSubRef } from "reffuse"
+import { SubscriptionSubRef } from "reffuse/types"
 
 
 export const Route = createFileRoute("/tests")({
