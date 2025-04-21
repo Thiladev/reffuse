@@ -1,10 +1,14 @@
-import { Effect, Effectable, Readable, Ref, Stream, Subscribable, SubscriptionRef, SynchronizedRef, type Types } from "effect"
+import { Effect, Effectable, Readable, Ref, Stream, Subscribable, SubscriptionRef, SynchronizedRef, type Types, type Unify } from "effect"
 
 
 export const SubscriptionSubRefTypeId: unique symbol = Symbol.for("reffuse/types/SubscriptionSubRef")
 
 export interface SubscriptionSubRef<in out A, in out B> extends SubscriptionSubRef.Variance<A, B>, SubscriptionRef.SubscriptionRef<A> {
     readonly parent: SubscriptionRef.SubscriptionRef<B>
+
+    readonly [Unify.typeSymbol]?: unknown
+    readonly [Unify.unifySymbol]?: SubscriptionSubRefUnify<this>
+    readonly [Unify.ignoreSymbol]?: SubscriptionSubRefUnifyIgnore
 }
 
 export declare namespace SubscriptionSubRef {
@@ -14,6 +18,14 @@ export declare namespace SubscriptionSubRef {
             readonly _B: Types.Invariant<B>
         }
     }
+}
+
+export interface SubscriptionSubRefUnify<A extends { [Unify.typeSymbol]?: any }> extends SubscriptionRef.SubscriptionRefUnify<A> {
+    SubscriptionSubRef?: () => Extract<A[Unify.typeSymbol], SubscriptionSubRef<any, any>>
+}
+
+export interface SubscriptionSubRefUnifyIgnore extends SubscriptionRef.SubscriptionRefUnifyIgnore {
+    SynchronizedRef?: true
 }
 
 
