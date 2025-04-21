@@ -1,21 +1,34 @@
-import { Effect, Effectable, Readable, Ref, Stream, Subscribable, SubscriptionRef, SynchronizedRef } from "effect"
+import { Effect, Effectable, Readable, Ref, Stream, Subscribable, SubscriptionRef, SynchronizedRef, type Types } from "effect"
 
 
-export interface SubscriptionSubRef<in out A, in out B> extends SubscriptionRef.SubscriptionRef<A> {
+export const SubscriptionSubRefTypeId: unique symbol = Symbol.for("reffuse/types/SubscriptionSubRef")
+
+export interface SubscriptionSubRef<in out A, in out B> extends SubscriptionSubRef.Variance<A, B>, SubscriptionRef.SubscriptionRef<A> {
     readonly parent: SubscriptionRef.SubscriptionRef<B>
+}
+
+export declare namespace SubscriptionSubRef {
+    export interface Variance<in out A, in out B> {
+        readonly [SubscriptionSubRefTypeId]: {
+            readonly _A: Types.Invariant<A>
+            readonly _B: Types.Invariant<B>
+        }
+    }
 }
 
 
 const refVariance = { _A: (_: any) => _ }
 const synchronizedRefVariance = { _A: (_: any) => _ }
 const subscriptionRefVariance = { _A: (_: any) => _ }
+const subscriptionSubRefVariance = { _A: (_: any) => _, _B: (_: any) => _ }
 
 class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> implements SubscriptionSubRef<A, B> {
     readonly [Readable.TypeId]: Readable.TypeId = Readable.TypeId
     readonly [Subscribable.TypeId]: Subscribable.TypeId = Subscribable.TypeId
-    readonly [Ref.RefTypeId]: Ref.Ref.Variance<A>[Ref.RefTypeId] = refVariance
-    readonly [SynchronizedRef.SynchronizedRefTypeId]: SynchronizedRef.SynchronizedRef.Variance<A>[SynchronizedRef.SynchronizedRefTypeId] = synchronizedRefVariance
-    readonly [SubscriptionRef.SubscriptionRefTypeId]: SubscriptionRef.SubscriptionRef.Variance<A>[SubscriptionRef.SubscriptionRefTypeId] = subscriptionRefVariance
+    readonly [Ref.RefTypeId] = refVariance
+    readonly [SynchronizedRef.SynchronizedRefTypeId] = synchronizedRefVariance
+    readonly [SubscriptionRef.SubscriptionRefTypeId] = subscriptionRefVariance
+    readonly [SubscriptionSubRefTypeId] = subscriptionSubRefVariance
 
     readonly get: Effect.Effect<A>
 
