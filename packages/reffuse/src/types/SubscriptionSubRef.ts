@@ -25,7 +25,7 @@ export interface SubscriptionSubRefUnify<A extends { [Unify.typeSymbol]?: any }>
 }
 
 export interface SubscriptionSubRefUnifyIgnore extends SubscriptionRef.SubscriptionRefUnifyIgnore {
-    SynchronizedRef?: true
+    SubscriptionRef?: true
 }
 
 
