@@ -10,6 +10,13 @@ export const Route = createFileRoute("/tests")({
 })
 
 function RouteComponent() {
+    const deepRef = R.useRef({ value: "poulet" })
+    const deepValueRef = R.useSubRefFromGetSet(
+        deepRef,
+        b => b.value,
+        (b, a) => ({ ...b, value: a }),
+    )
+
     // const value = R.useMemoScoped(Effect.addFinalizer(() => Console.log("cleanup")).pipe(
     //     Effect.andThen(makeUuid4),
     //     Effect.provide(GetRandomValues.CryptoRandom),
@@ -32,7 +39,8 @@ function RouteComponent() {
 
     const generateUuid = R.useCallbackSync(() => makeUuid4.pipe(
         Effect.provide(GetRandomValues.CryptoRandom),
-        Effect.flatMap(v => Ref.set(uuidRef, v)),
+        Effect.tap(v => Ref.set(uuidRef, v)),
+        Effect.tap(v => Ref.set(deepValueRef, v)),
     ), [])
 
 
@@ -40,6 +48,10 @@ function RouteComponent() {
         <Flex direction="row" justify="center" align="center" gap="2">
             <R.SubscribeRefs refs={[uuidRef, anotherRef]}>
                 {(uuid, anotherRef) => <Text>{uuid} / {anotherRef}</Text>}
+            </R.SubscribeRefs>
+
+            <R.SubscribeRefs refs={[deepRef, deepValueRef]}>
+                {(deep, deepValue) => <Text>{JSON.stringify(deep)} / {deepValue}</Text>}
             </R.SubscribeRefs>
 
             <Button onClick={() => logValue("test")}>Log value</Button>

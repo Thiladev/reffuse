@@ -1,6 +1,6 @@
 {
   "name": "reffuse",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "files": [
     "./README.md",
@@ -15,6 +15,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
     },
     "./*": {
       "types": "./dist/*.d.ts",
