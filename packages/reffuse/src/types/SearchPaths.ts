@@ -29,6 +29,10 @@ const persons = [
 ]
 
 
+export const unsafeGet = <T, const P extends Paths<T>>(parent: T, path: P): ValueFromPath<T, P> => (
+    path.reduce((acc: any, key: any) => acc?.[key], parent)
+)
+
 export const get = <T, const P extends Paths<T>>(parent: T, path: P): Option.Option<ValueFromPath<T, P>> => path.reduce(
     (acc: Option.Option<any>, key: any): Option.Option<any> => Option.isSome(acc)
         ? Predicate.hasProperty(acc.value, key)
@@ -39,9 +43,18 @@ export const get = <T, const P extends Paths<T>>(parent: T, path: P): Option.Opt
     Option.some(parent),
 )
 
-export const getOrUndefined = <T, const P extends Paths<T>>(parent: T, path: P): ValueFromPath<T, P> => (
-    path.reduce((acc: any, key: any) => acc?.[key], parent)
+
+export const unsafeImmutableSet = <T, const P extends Paths<T>>(parent: T, path: P): Option.Option<ValueFromPath<T, P>> => path.reduce(
+    (acc: Option.Option<any>, key: any): Option.Option<any> => Option.isSome(acc)
+        ? Predicate.hasProperty(acc.value, key)
+            ? Option.some(acc.value[key])
+            : Option.none()
+        : acc,
+
+    Option.some(parent),
 )
 
+
 const res = get(persons, [1, "name"])
+
 console.log(res)
