@@ -1,4 +1,4 @@
-import { Array, Option, Predicate } from "effect"
+import { Array, Option, Predicate, Schema } from "effect"
 
 
 export type Key = string | number | symbol
@@ -65,25 +65,28 @@ export const immutableSet = <T, const P extends Paths<T>>(
             : Option.none()
 
     if (typeof parent === "object")
-        return Object.assign(
-            Object.create(Object.getPrototypeOf(parent)),
-            { ...parent, [key.value]: child.value },
+        return Option.some(
+            Object.assign(
+                Object.create(Object.getPrototypeOf(parent)),
+                { ...parent, [key.value]: child.value },
+            )
         )
 
     return Option.none()
 }
 
 
+class Person extends Schema.Class<Person>("Person")({
+    name: Schema.String,
+}) {}
+
 const persons = [
-    { name: "Monsieur Poulet" },
-    { name: "El Chanclador" },
-    { name: "AAAYAYAYAYAAY" },
+    Person.make({ name: "Monsieur Poulet" }),
+    Person.make({ name: "El Chanclador" }),
+    Person.make({ name: "AAAYAYAYAYAAY" }),
 ]
-console.log(persons)
 
 const res = get(persons, [1, "name"])
-console.log(res)
-
 const persons2 = Option.getOrThrow(immutableSet(persons, [1, "name"], "El Risitas"))
 console.log(persons2)
 console.log(get(persons2, [1, "name"]))
