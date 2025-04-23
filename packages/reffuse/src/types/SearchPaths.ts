@@ -52,11 +52,20 @@ export const immutableSet = <T, const P extends Paths<T>>(
         return Option.none()
 
     const child = immutableSet<any, any>(parent[key.value], Option.getOrThrow(Array.tail(path as Path)), value)
+    if (Option.isNone(child))
+        return child
 
-    if (Array.isArray(parent) && typeof key === "number") {
+    if (Array.isArray(parent) && typeof key === "number")
+        return Option.some([
+            ...parent.slice(0, key),
+            child.value,
+            ...parent.slice(key + 1),
+        ] as T)
 
-        return Option.some([])
-    }
+    if (typeof parent === "object")
+        return Option.some({ ...parent, [key.value]: child.value })
+
+    return Option.none()
 }
 
 
@@ -65,6 +74,11 @@ const persons = [
     { name: "El Chanclador" },
     { name: "AAAYAYAYAYAAY" },
 ]
+console.log(persons)
 
 const res = get(persons, [1, "name"])
 console.log(res)
+
+const persons2 = Option.getOrThrow(immutableSet(persons, [1, "name"], "El Risitas"))
+console.log(Array.isArray(persons2))
+console.log(get(persons2, [1, "name"]))
