@@ -1,7 +1,10 @@
-import { Option, Predicate } from "effect"
+import { Array, Option, Predicate } from "effect"
 
 
-export type Paths<T> = T extends object
+export type Key = string | number | symbol
+export type Path = readonly Key[]
+
+export type Paths<T> = [] | (T extends object
     ? {
         [K in keyof T as K extends string | number | symbol ? K : never]:
             | [K]
@@ -9,9 +12,9 @@ export type Paths<T> = T extends object
     } extends infer O
         ? O[keyof O]
         : never
-    : []
+    : never)
 
-type ValueFromPath<T, P extends any[]> = P extends [infer Head, ...infer Tail]
+export type ValueFromPath<T, P extends any[]> = P extends [infer Head, ...infer Tail]
     ? Head extends keyof T
         ? ValueFromPath<T[Head], Tail>
         : T extends readonly any[]
@@ -20,13 +23,6 @@ type ValueFromPath<T, P extends any[]> = P extends [infer Head, ...infer Tail]
                 : never
             : never
     : T
-
-
-const persons = [
-    { name: "Monsieur Poulet" },
-    { name: "El Chanclador" },
-    { name: "AAAYAYAYAYAAY" },
-]
 
 
 export const unsafeGet = <T, const P extends Paths<T>>(parent: T, path: P): ValueFromPath<T, P> => (
@@ -44,17 +40,31 @@ export const get = <T, const P extends Paths<T>>(parent: T, path: P): Option.Opt
 )
 
 
-export const unsafeImmutableSet = <T, const P extends Paths<T>>(parent: T, path: P): Option.Option<ValueFromPath<T, P>> => path.reduce(
-    (acc: Option.Option<any>, key: any): Option.Option<any> => Option.isSome(acc)
-        ? Predicate.hasProperty(acc.value, key)
-            ? Option.some(acc.value[key])
-            : Option.none()
-        : acc,
+export const immutableSet = <T, const P extends Paths<T>>(
+    parent: T,
+    path: P,
+    value: ValueFromPath<T, P>,
+): Option.Option<T> => {
+    const key = Array.head(path as Path)
+    if (Option.isNone(key))
+        return Option.some(value as T)
+    if (!Predicate.hasProperty(parent, key.value))
+        return Option.none()
 
-    Option.some(parent),
-)
+    const child = immutableSet<any, any>(parent[key.value], Option.getOrThrow(Array.tail(path as Path)), value)
 
+    if (Array.isArray(parent) && typeof key === "number") {
+
+        return Option.some([])
+    }
+}
+
+
+const persons = [
+    { name: "Monsieur Poulet" },
+    { name: "El Chanclador" },
+    { name: "AAAYAYAYAYAAY" },
+]
 
 const res = get(persons, [1, "name"])
-
 console.log(res)
