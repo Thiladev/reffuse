@@ -55,16 +55,20 @@ export const immutableSet = <T, const P extends Paths<T>>(
     if (Option.isNone(child))
         return child
 
-    if (Array.isArray(parent) && typeof key.value === "number") {
-        return Option.some([
-            ...parent.slice(0, key.value),
-            child.value,
-            ...parent.slice(key.value + 1),
-        ] as T)
-    }
+    if (Array.isArray(parent))
+        return typeof key.value === "number"
+            ? Option.some([
+                ...parent.slice(0, key.value),
+                child.value,
+                ...parent.slice(key.value + 1),
+            ] as T)
+            : Option.none()
 
     if (typeof parent === "object")
-        return Option.some({ ...parent, [key.value]: child.value })
+        return Object.assign(
+            Object.create(Object.getPrototypeOf(parent)),
+            { ...parent, [key.value]: child.value },
+        )
 
     return Option.none()
 }
