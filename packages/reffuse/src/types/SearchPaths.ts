@@ -4,15 +4,27 @@ import { Array, Option, Predicate, Schema } from "effect"
 export type Key = string | number | symbol
 export type Path = readonly Key[]
 
-export type Paths<T> = [] | (T extends object
-    ? {
-        [K in keyof T as K extends string | number | symbol ? K : never]:
-            | [K]
-            | [K, ...Paths<T[K]>]
-    } extends infer O
-        ? O[keyof O]
-        : never
-    : never)
+export type Paths<T> = [] | (
+    T extends readonly any[] ? ArrayPaths<T> :
+    T extends object ? ObjectPaths<T> :
+    never
+)
+
+type ArrayPaths<T> = {
+    [K in keyof T as K extends number ? K : never]:
+        | [K]
+        | [K, ...Paths<T[K]>]
+} extends infer O
+    ? O[keyof O]
+    : never
+
+type ObjectPaths<T> = {
+    [K in keyof T as K extends string | number | symbol ? K : never]:
+        | [K]
+        | [K, ...Paths<T[K]>]
+} extends infer O
+    ? O[keyof O]
+    : never
 
 export type ValueFromPath<T, P extends any[]> = P extends [infer Head, ...infer Tail]
     ? Head extends keyof T
@@ -86,7 +98,7 @@ const persons = [
     Person.make({ name: "AAAYAYAYAYAAY" }),
 ]
 
-const res = get(persons, [1, "name"])
+const res = get(persons, [0, "name"])
 const persons2 = Option.getOrThrow(immutableSet(persons, [1, "name"], "El Risitas"))
 console.log(persons2)
 console.log(get(persons2, [1, "name"]))
