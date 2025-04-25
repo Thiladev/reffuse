@@ -94,6 +94,6 @@ export const makeFromPath = <B, const P extends PropertyPath.Paths<B>>(
     path: P,
 ): SubscriptionSubRef<PropertyPath.ValueFromPath<B, P>, B> => new SubscriptionSubRefImpl(
     parent,
-    parentValue => PropertyPath.unsafeGet(parentValue, path),
+    parentValue => Option.getOrThrow(PropertyPath.get(parentValue, path)),
     (parentValue, value) => Option.getOrThrow(PropertyPath.immutableSet(parentValue, path, value)),
 )
