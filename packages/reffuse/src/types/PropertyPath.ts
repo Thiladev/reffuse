@@ -1,16 +1,13 @@
 import { Array, Option, Predicate, Schema } from "effect"
 
 
-export type Key = string | number | symbol
-export type Path = readonly Key[]
-
 export type Paths<T> = [] | (
     T extends readonly any[] ? ArrayPaths<T> :
     T extends object ? ObjectPaths<T> :
     never
 )
 
-type ArrayPaths<T> = {
+export type ArrayPaths<T extends readonly any[]> = {
     [K in keyof T as K extends number ? K : never]:
         | [K]
         | [K, ...Paths<T[K]>]
@@ -18,7 +15,7 @@ type ArrayPaths<T> = {
     ? O[keyof O]
     : never
 
-type ObjectPaths<T> = {
+export type ObjectPaths<T extends object> = {
     [K in keyof T as K extends string | number | symbol ? K : never]:
         | [K]
         | [K, ...Paths<T[K]>]
@@ -36,12 +33,21 @@ export type ValueFromPath<T, P extends any[]> = P extends [infer Head, ...infer 
             : never
     : T
 
+export type AnyKey = string | number | symbol
+export type AnyPath = readonly AnyKey[]
 
-export const unsafeGet = <T, const P extends Paths<T>>(parent: T, path: P): ValueFromPath<T, P> => (
+
+export const unsafeGet = <T, const P extends Paths<T>>(
+    parent: T,
+    path: P,
+): ValueFromPath<T, P> => (
     path.reduce((acc: any, key: any) => acc?.[key], parent)
 )
 
-export const get = <T, const P extends Paths<T>>(parent: T, path: P): Option.Option<ValueFromPath<T, P>> => path.reduce(
+export const get = <T, const P extends Paths<T>>(
+    parent: T,
+    path: P,
+): Option.Option<ValueFromPath<T, P>> => path.reduce(
     (acc: Option.Option<any>, key: any): Option.Option<any> => Option.isSome(acc)
         ? Predicate.hasProperty(acc.value, key)
             ? Option.some(acc.value[key])
@@ -57,13 +63,13 @@ export const immutableSet = <T, const P extends Paths<T>>(
     path: P,
     value: ValueFromPath<T, P>,
 ): Option.Option<T> => {
-    const key = Array.head(path as Path)
+    const key = Array.head(path as AnyPath)
     if (Option.isNone(key))
         return Option.some(value as T)
     if (!Predicate.hasProperty(parent, key.value))
         return Option.none()
 
-    const child = immutableSet<any, any>(parent[key.value], Option.getOrThrow(Array.tail(path as Path)), value)
+    const child = immutableSet<any, any>(parent[key.value], Option.getOrThrow(Array.tail(path as AnyPath)), value)
     if (Option.isNone(child))
         return child
 
