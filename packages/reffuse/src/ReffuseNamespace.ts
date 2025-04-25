@@ -14,6 +14,10 @@ export interface ScopeOptions {
     readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
 }
 
+export type RefsA<T extends readonly SubscriptionRef.SubscriptionRef<any>[]> = {
+    [K in keyof T]: Effect.Effect.Success<T[K]>
+}
+
 
 export abstract class ReffuseNamespace<R> {
     declare ["constructor"]: ReffuseNamespaceClass<R>
@@ -401,18 +405,18 @@ export abstract class ReffuseNamespace<R> {
     >(
         this: ReffuseNamespace<R>,
         ...refs: Refs
-    ): [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }] {
+    ): RefsA<Refs> {
         const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
             () => Effect.all(refs as readonly SubscriptionRef.SubscriptionRef<any>[]),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true },
-        ) as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }])
+        ) as RefsA<Refs>)
 
         this.useFork(() => pipe(
             refs.map(ref => Stream.changesWith(ref.changes, (x, y) => x === y)),
             streams => Stream.zipLatestAll(...streams),
             Stream.runForEach(v =>
-                Effect.sync(() => setReactStateValue(v as [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }]))
+                Effect.sync(() => setReactStateValue(v as RefsA<Refs>))
             ),
         ), refs)
 
@@ -486,7 +490,7 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         props: {
             readonly refs: Refs
-            readonly children: (...args: [...{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }]) => React.ReactNode
+            readonly children: (...args: RefsA<Refs>) => React.ReactNode
         },
     ): React.ReactNode {
         return props.children(...this.useSubscribeRefs(...props.refs))

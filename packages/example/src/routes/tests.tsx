@@ -11,7 +11,7 @@ export const Route = createFileRoute("/tests")({
 
 function RouteComponent() {
     const deepRef = R.useRef({ value: "poulet" })
-    const deepValueRef = R.useSubRefFromPath(deepRef, ["value"])
+    const deepValueRef = R.useSubRef(deepRef, ["value"])
 
     // const value = R.useMemoScoped(Effect.addFinalizer(() => Console.log("cleanup")).pipe(
     //     Effect.andThen(makeUuid4),
