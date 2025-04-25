@@ -23,6 +23,7 @@ export abstract class ReffuseNamespace<R> {
     declare ["constructor"]: ReffuseNamespaceClass<R>
 
     constructor() {
+        this.SubRef = this.SubRef.bind(this as any) as any
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
         this.SubscribeStream = this.SubscribeStream.bind(this as any) as any
@@ -482,6 +483,17 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
 
+
+    SubRef<B, const P extends PropertyPath.Paths<B>, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly parent: SubscriptionRef.SubscriptionRef<B>,
+            readonly path: P,
+            readonly children: (subRef: SubscriptionSubRef.SubscriptionSubRef<PropertyPath.ValueFromPath<B, P>, B>) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(this.useSubRef(props.parent, props.path))
+    }
 
     SubscribeRefs<
         const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[],
