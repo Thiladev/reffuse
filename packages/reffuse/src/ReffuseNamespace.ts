@@ -384,19 +384,7 @@ export abstract class ReffuseNamespace<R> {
         )
     }
 
-    useSubRefFromGetSet<A, B, R>(
-        this: ReffuseNamespace<R>,
-        parent: SubscriptionRef.SubscriptionRef<B>,
-        getter: (parentValue: B) => A,
-        setter: (parentValue: B, value: A) => B,
-    ): SubscriptionSubRef.SubscriptionSubRef<A, B> {
-        return React.useMemo(
-            () => SubscriptionSubRef.makeFromGetSet(parent, getter, setter),
-            [parent],
-        )
-    }
-
-    useSubRefFromPath<B, const P extends PropertyPath.Paths<B>, R>(
+    useSubRef<B, const P extends PropertyPath.Paths<B>, R>(
         this: ReffuseNamespace<R>,
         parent: SubscriptionRef.SubscriptionRef<B>,
         path: P,
