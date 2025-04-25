@@ -2,7 +2,7 @@ import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, 
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
-import { SetStateAction, SubscriptionSubRef } from "./types/index.js"
+import { PropertyPath, SetStateAction, SubscriptionSubRef } from "./types/index.js"
 
 
 export interface RenderOptions {
@@ -392,6 +392,17 @@ export abstract class ReffuseNamespace<R> {
     ): SubscriptionSubRef.SubscriptionSubRef<A, B> {
         return React.useMemo(
             () => SubscriptionSubRef.makeFromGetSet(parent, getter, setter),
+            [parent],
+        )
+    }
+
+    useSubRefFromPath<B, const P extends PropertyPath.Paths<B>, R>(
+        this: ReffuseNamespace<R>,
+        parent: SubscriptionRef.SubscriptionRef<B>,
+        path: P,
+    ): SubscriptionSubRef.SubscriptionSubRef<PropertyPath.ValueFromPath<B, P>, B> {
+        return React.useMemo(
+            () => SubscriptionSubRef.makeFromPath(parent, path),
             [parent],
         )
     }
