@@ -1,4 +1,4 @@
-import { Array, Option, Predicate, Schema } from "effect"
+import { Array, Option, Predicate } from "effect"
 
 
 export type Paths<T> = [] | (
@@ -57,7 +57,6 @@ export const get = <T, const P extends Paths<T>>(
     Option.some(parent),
 )
 
-
 export const immutableSet = <T, const P extends Paths<T>>(
     parent: T,
     path: P,
@@ -92,19 +91,3 @@ export const immutableSet = <T, const P extends Paths<T>>(
 
     return Option.none()
 }
-
-
-class Person extends Schema.Class<Person>("Person")({
-    name: Schema.String,
-}) {}
-
-const persons = [
-    Person.make({ name: "Monsieur Poulet" }),
-    Person.make({ name: "El Chanclador" }),
-    Person.make({ name: "AAAYAYAYAYAAY" }),
-]
-
-const res = get(persons, [0, "name"])
-const persons2 = Option.getOrThrow(immutableSet(persons, [1, "name"], "El Risitas"))
-console.log(persons2)
-console.log(get(persons2, [1, "name"]))
