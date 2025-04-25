@@ -1,4 +1,5 @@
-import { Effect, Effectable, Readable, Ref, Stream, Subscribable, SubscriptionRef, SynchronizedRef, type Types, type Unify } from "effect"
+import { Effect, Effectable, Option, Readable, Ref, Stream, Subscribable, SubscriptionRef, SynchronizedRef, type Types, type Unify } from "effect"
+import * as PropertyPath from "./PropertyPath.js"
 
 
 export const SubscriptionSubRefTypeId: unique symbol = Symbol.for("reffuse/types/SubscriptionSubRef")
@@ -87,3 +88,12 @@ export const makeFromGetSet = <A, B>(
     getter: (parentValue: B) => A,
     setter: (parentValue: B, value: A) => B,
 ): SubscriptionSubRef<A, B> => new SubscriptionSubRefImpl(parent, getter, setter)
+
+export const makeFromPath = <B, const P extends PropertyPath.Paths<B>>(
+    parent: SubscriptionRef.SubscriptionRef<B>,
+    path: P,
+): SubscriptionSubRef<PropertyPath.ValueFromPath<B, P>, B> => new SubscriptionSubRefImpl(
+    parent,
+    parentValue => PropertyPath.unsafeGet(parentValue, path),
+    (parentValue, value) => Option.getOrThrow(PropertyPath.immutableSet(parentValue, path, value)),
+)
