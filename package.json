@@ -1,6 +1,6 @@
 {
   "name": "@reffuse/monorepo",
-  "packageManager": "bun@1.2.9",
+  "packageManager": "bun@1.2.10",
   "private": true,
   "workspaces": [
     "./packages/*"
@@ -15,9 +15,9 @@
     "clean:node": "rm -rf node_modules"
   },
   "devDependencies": {
-    "npm-check-updates": "^17.1.18",
+    "npm-check-updates": "^18.0.1",
     "npm-sort": "^0.0.4",
-    "turbo": "^2.5.0",
+    "turbo": "^2.5.2",
     "typescript": "^5.8.3"
   }
 }
