@@ -1,4 +1,4 @@
-import { Array, Option, Predicate } from "effect"
+import { Array, Function, Option, Predicate } from "effect"
 
 
 export type Paths<T> = [] | (
@@ -37,57 +37,58 @@ export type AnyKey = string | number | symbol
 export type AnyPath = readonly AnyKey[]
 
 
-export const unsafeGet = <T, const P extends Paths<T>>(
-    parent: T,
-    path: P,
-): ValueFromPath<T, P> => (
-    path.reduce((acc: any, key: any) => acc?.[key], parent)
+export const unsafeGet: {
+    <T, const P extends Paths<T>>(path: P): (self: T) => ValueFromPath<T, P>
+    <T, const P extends Paths<T>>(self: T, path: P): ValueFromPath<T, P>
+} = Function.dual(2, <T, const P extends Paths<T>>(self: T, path: P): ValueFromPath<T, P> =>
+    path.reduce((acc: any, key: any) => acc?.[key], self)
 )
 
-export const get = <T, const P extends Paths<T>>(
-    parent: T,
-    path: P,
-): Option.Option<ValueFromPath<T, P>> => path.reduce(
-    (acc: Option.Option<any>, key: any): Option.Option<any> => Option.isSome(acc)
-        ? Predicate.hasProperty(acc.value, key)
-            ? Option.some(acc.value[key])
-            : Option.none()
-        : acc,
+export const get: {
+    <T, const P extends Paths<T>>(path: P): (self: T) => Option.Option<ValueFromPath<T, P>>
+    <T, const P extends Paths<T>>(self: T, path: P): Option.Option<ValueFromPath<T, P>>
+} = Function.dual(2, <T, const P extends Paths<T>>(self: T, path: P): Option.Option<ValueFromPath<T, P>> =>
+    path.reduce(
+        (acc: Option.Option<any>, key: any): Option.Option<any> => Option.isSome(acc)
+            ? Predicate.hasProperty(acc.value, key)
+                ? Option.some(acc.value[key])
+                : Option.none()
+            : acc,
 
-    Option.some(parent),
+        Option.some(self),
+    )
 )
 
-export const immutableSet = <T, const P extends Paths<T>>(
-    parent: T,
-    path: P,
-    value: ValueFromPath<T, P>,
-): Option.Option<T> => {
+export const immutableSet: {
+    <T, const P extends Paths<T>>(path: P, value: ValueFromPath<T, P>): (self: T) => ValueFromPath<T, P>
+    <T, const P extends Paths<T>>(self: T, path: P, value: ValueFromPath<T, P>): Option.Option<T>
+} = Function.dual(3, <T, const P extends Paths<T>>(self: T, path: P, value: ValueFromPath<T, P>): Option.Option<T> => {
     const key = Array.head(path as AnyPath)
     if (Option.isNone(key))
         return Option.some(value as T)
-    if (!Predicate.hasProperty(parent, key.value))
+    if (!Predicate.hasProperty(self, key.value))
         return Option.none()
 
-    const child = immutableSet<any, any>(parent[key.value], Option.getOrThrow(Array.tail(path as AnyPath)), value)
+    const child = immutableSet<any, any>(self[key.value], Option.getOrThrow(Array.tail(path as AnyPath)), value)
     if (Option.isNone(child))
         return child
 
-    if (Array.isArray(parent))
+    if (Array.isArray(self))
         return typeof key.value === "number"
             ? Option.some([
-                ...parent.slice(0, key.value),
+                ...self.slice(0, key.value),
                 child.value,
-                ...parent.slice(key.value + 1),
+                ...self.slice(key.value + 1),
             ] as T)
             : Option.none()
 
-    if (typeof parent === "object")
+    if (typeof self === "object")
         return Option.some(
             Object.assign(
-                Object.create(Object.getPrototypeOf(parent)),
-                { ...parent, [key.value]: child.value },
+                Object.create(Object.getPrototypeOf(self)),
+                { ...self, [key.value]: child.value },
             )
         )
 
     return Option.none()
-}
+})
