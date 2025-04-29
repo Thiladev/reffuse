@@ -380,10 +380,10 @@ export abstract class ReffuseNamespace<R> {
 
     useRef<A, R>(
         this: ReffuseNamespace<R>,
-        value: A,
+        initialValue: A,
     ): SubscriptionRef.SubscriptionRef<A> {
         return this.useMemo(
-            () => SubscriptionRef.make(value),
+            () => SubscriptionRef.make(initialValue),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true }, // Do not recreate the ref when the context changes
         )
