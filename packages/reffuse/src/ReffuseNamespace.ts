@@ -389,6 +389,15 @@ export abstract class ReffuseNamespace<R> {
         )
     }
 
+    useRefFromValue<A, R>(
+        this: ReffuseNamespace<R>,
+        value: A,
+    ): SubscriptionRef.SubscriptionRef<A> {
+        const ref = this.useRef(value)
+        this.useEffect(() => Ref.set(ref, value), [value])
+        return ref
+    }
+
     useSubRef<B, const P extends PropertyPath.Paths<B>, R>(
         this: ReffuseNamespace<R>,
         parent: SubscriptionRef.SubscriptionRef<B>,
