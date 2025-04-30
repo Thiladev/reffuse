@@ -389,12 +389,12 @@ export abstract class ReffuseNamespace<R> {
         )
     }
 
-    useRefFromValue<A, R>(
+    useRefFromReactiveValue<A, R>(
         this: ReffuseNamespace<R>,
         value: A,
     ): SubscriptionRef.SubscriptionRef<A> {
         const ref = this.useRef(value)
-        this.useEffect(() => Ref.set(ref, value), [value])
+        this.useEffect(() => Ref.set(ref, value), [value], { doNotReExecuteOnRuntimeOrContextChange: true })
         return ref
     }
 
