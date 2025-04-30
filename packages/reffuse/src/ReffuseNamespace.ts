@@ -464,7 +464,7 @@ export abstract class ReffuseNamespace<R> {
         return [reactStateValue, setValue]
     }
 
-    useStreamFromValues<const A extends React.DependencyList, R>(
+    useStreamFromReactiveValues<const A extends React.DependencyList, R>(
         this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
