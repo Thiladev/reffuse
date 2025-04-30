@@ -378,12 +378,15 @@ export abstract class ReffuseNamespace<R> {
         ])
     }
 
-    useRef<A, R>(
+    useRef<A, E, R>(
         this: ReffuseNamespace<R>,
-        initialValue: A,
+        initialValue: () => A | Effect.Effect<A, E, R>,
     ): SubscriptionRef.SubscriptionRef<A> {
         return this.useMemo(
-            () => SubscriptionRef.make(initialValue),
+            () => pipe(initialValue(),
+                v => Effect.isEffect(v) ? v : Effect.succeed(v),
+                Effect.flatMap(SubscriptionRef.make),
+            ),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true }, // Do not recreate the ref when the context changes
         )
@@ -393,7 +396,7 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         value: A,
     ): SubscriptionRef.SubscriptionRef<A> {
-        const ref = this.useRef(value)
+        const ref = this.useRef(() => value)
         this.useEffect(() => Ref.set(ref, value), [value], { doNotReExecuteOnRuntimeOrContextChange: true })
         return ref
     }
