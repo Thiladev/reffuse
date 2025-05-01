@@ -1,8 +1,8 @@
 import { R } from "@/reffuse"
-import { Button, Flex, Text } from "@radix-ui/themes"
+import { Flex } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Console, Effect, Ref } from "effect"
+import { Console, Effect, Scope } from "effect"
+import { useEffect } from "react"
 
 
 export const Route = createFileRoute("/tests")({
@@ -10,48 +10,17 @@ export const Route = createFileRoute("/tests")({
 })
 
 function RouteComponent() {
-    const deepRef = R.useRef(() => Effect.succeed({ value: "poulet" }))
-    const deepValueRef = R.useSubRef(deepRef, ["value"])
+    const runSync = R.useRunSync()
+    const componentScope = R.useScope()
 
-    // const value = R.useMemoScoped(Effect.addFinalizer(() => Console.log("cleanup")).pipe(
-    //     Effect.andThen(makeUuid4),
-    //     Effect.provide(GetRandomValues.CryptoRandom),
-    // ), [])
-    // console.log(value)
-
-    R.useFork(() => Effect.addFinalizer(() => Console.log("cleanup")).pipe(
-        Effect.andThen(Console.log("ouient")),
-        Effect.delay("1 second"),
-    ), [])
-
-
-    const uuidRef = R.useRef(() => Effect.succeed("none"))
-    const anotherRef = R.useRef(() => Effect.succeed(69))
-
-
-    const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {
-        yield* Effect.log(value)
-    }), [])
-
-    const generateUuid = R.useCallbackSync(() => makeUuid4.pipe(
-        Effect.provide(GetRandomValues.CryptoRandom),
-        Effect.tap(v => Ref.set(uuidRef, v)),
-        Effect.tap(v => Ref.set(deepValueRef, v)),
-    ), [])
-
+    useEffect(() => Effect.addFinalizer(() => Console.log("Component scope cleanup!")).pipe(
+        Effect.andThen(Console.log("Component mounted")),
+        Effect.provideService(Scope.Scope, componentScope),
+        runSync,
+    ), [componentScope, runSync])
 
     return (
         <Flex direction="row" justify="center" align="center" gap="2">
-            <R.SubscribeRefs refs={[uuidRef, anotherRef]}>
-                {(uuid, anotherRef) => <Text>{uuid} / {anotherRef}</Text>}
-            </R.SubscribeRefs>
-
-            <R.SubscribeRefs refs={[deepRef, deepValueRef]}>
-                {(deep, deepValue) => <Text>{JSON.stringify(deep)} / {deepValue}</Text>}
-            </R.SubscribeRefs>
-
-            <Button onClick={() => logValue("test")}>Log value</Button>
-            <Button onClick={() => generateUuid()}>Generate UUID</Button>
         </Flex>
     )
 }
