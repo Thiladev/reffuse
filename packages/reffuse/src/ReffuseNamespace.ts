@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Match, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -12,6 +12,10 @@ export interface RenderOptions {
 
 export interface ScopeOptions {
     readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
+}
+
+export interface UseScopeOptions extends ScopeOptions {
+    readonly finalizerExecutionMode?: "sync" | "fork"
 }
 
 export type RefsA<T extends readonly SubscriptionRef.SubscriptionRef<any>[]> = {
@@ -91,9 +95,10 @@ export abstract class ReffuseNamespace<R> {
     useScope<R>(
         this: ReffuseNamespace<R>,
         deps: React.DependencyList = [],
-        options?: ScopeOptions,
+        options?: UseScopeOptions,
     ): Scope.Scope {
         const runSync = this.useRunSync()
+        const runFork = this.useRunFork()
 
         const [isInitialRun, initialScope] = React.useMemo(() => runSync(Effect.all([
             Ref.make(true),
@@ -106,17 +111,29 @@ export abstract class ReffuseNamespace<R> {
             Effect.if({
                 onTrue: () => Effect.as(
                     Ref.set(isInitialRun, false),
-                    () => runSync(Scope.close(initialScope, Exit.void)),
+                    () => Scope.close(initialScope, Exit.void).pipe(
+                        effect => Match.value(options?.finalizerExecutionMode ?? "sync").pipe(
+                            Match.when("sync", () => { runSync(effect) }),
+                            Match.when("fork", () => { runFork(effect) }),
+                            Match.exhaustive,
+                        )
+                    ),
                 ),
 
                 onFalse: () => Scope.make(options?.finalizerExecutionStrategy).pipe(
                     Effect.tap(v => Effect.sync(() => setScope(v))),
-                    Effect.map(v => () => runSync(Scope.close(v, Exit.void))),
+                    Effect.map(v => () => Scope.close(v, Exit.void).pipe(
+                        effect => Match.value(options?.finalizerExecutionMode ?? "sync").pipe(
+                            Match.when("sync", () => { runSync(effect) }),
+                            Match.when("fork", () => { runFork(effect) }),
+                            Match.exhaustive,
+                        )
+                    )),
                 ),
             }),
 
             runSync,
-        ), [runSync, ...deps])
+        ), [runSync, runFork, ...deps])
 
         return scope
     }
@@ -142,51 +159,6 @@ export abstract class ReffuseNamespace<R> {
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
             ...deps,
         ])
-    }
-
-    useMemoScoped<A, E, R>(
-        this: ReffuseNamespace<R>,
-        effect: () => Effect.Effect<A, E, R | Scope.Scope>,
-        deps: React.DependencyList,
-        options?: RenderOptions & ScopeOptions,
-    ): A {
-        const runSync = this.useRunSync()
-
-        const { isInitialRun, initialScope, initialValue } = React.useMemo(() => Effect.Do.pipe(
-            Effect.bind("isInitialRun", () => Ref.make(true)),
-            Effect.bind("initialScope", () => Scope.make(options?.finalizerExecutionStrategy)),
-            Effect.bind("initialValue", ({ initialScope }) => Effect.provideService(effect(), Scope.Scope, initialScope)),
-            runSync,
-        ), [])
-
-        const [value, setValue] = React.useState(initialValue)
-
-        React.useEffect(() => isInitialRun.pipe(
-            Effect.if({
-                onTrue: () => Effect.as(
-                    Ref.set(isInitialRun, false),
-                    () => runSync(Scope.close(initialScope, Exit.void)),
-                ),
-
-                onFalse: () => Effect.Do.pipe(
-                    Effect.bind("scope", () => Scope.make(options?.finalizerExecutionStrategy)),
-                    Effect.bind("value", ({ scope }) => Effect.provideService(effect(), Scope.Scope, scope)),
-                    Effect.tap(({ value }) =>
-                        Effect.sync(() => setValue(value))
-                    ),
-                    Effect.map(({ scope }) =>
-                        () => runSync(Scope.close(scope, Exit.void))
-                    ),
-                ),
-            }),
-
-            runSync,
-        ), [
-            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
-            ...deps,
-        ])
-
-        return value
     }
 
     /**
