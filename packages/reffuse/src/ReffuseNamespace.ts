@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Match, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { Chunk, type Context, Effect, ExecutionStrategy, Exit, type Fiber, flow, type Layer, Match, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -495,19 +495,34 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
 
-    // usePullStream<A, InitialA extends A | undefined, E, R>(
-    //     this: ReffuseNamespace<R>,
-    //     stream: Stream.Stream<A, E, R>,
-    //     initialValue?: InitialA,
-    // ): [
-    //     latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
-    //     pull: () => void,
-    // ] {
-    //     const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
-    //     const pull = this.useMemo(() => Stream.toPull(stream), [stream])
+    usePullStream<A, InitialA extends A | undefined, E, R extends ContextR, ContextR>(
+        this: ReffuseNamespace<ContextR>,
+        stream: Stream.Stream<A, E, R>,
+        initialValue?: InitialA,
+    ): [
+        latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
+        pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>, R>,
+    ] {
+        const scope = this.useScope([stream])
 
-    //     return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
-    // }
+        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
+        const pull = this.useMemo(() => Stream.toPull(stream).pipe(
+            Effect.map(Effect.tap(flow(
+                Chunk.last,
+                v => Option.match(v, {
+                    onSome: () => Effect.sync(() => setReactStateValue(v)),
+                    onNone: () => Effect.void,
+                }),
+            ))),
+
+            Effect.provideService(Scope.Scope, scope),
+        ), [stream, scope])
+
+        return [
+            reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>,
+            pull,
+        ]
+    }
 
 
     SubRef<B, const P extends PropertyPath.Paths<B>, R>(
