@@ -507,7 +507,7 @@ export abstract class ReffuseNamespace<R> {
 
         const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
         const pull = this.useMemo(() => Effect.context<R>().pipe(
-            Effect.flatMap(context => Stream.toPull(stream).pipe(
+            Effect.flatMap(context => Stream.toPull(Stream.changesWith(stream, (x, y) => x === y)).pipe(
                 Effect.map(effect => effect.pipe(
                     Effect.tap(flow(
                         Chunk.last,
