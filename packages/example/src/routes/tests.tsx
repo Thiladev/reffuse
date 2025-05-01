@@ -1,8 +1,12 @@
 import { R } from "@/reffuse"
-import { Flex } from "@radix-ui/themes"
+import { Button, Flex } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
+import { GetRandomValues, makeUuid4 } from "@typed/id"
 import { Console, Effect, Scope } from "effect"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+
+
+const makeUuid = Effect.provide(makeUuid4, GetRandomValues.CryptoRandom)
 
 
 export const Route = createFileRoute("/tests")({
@@ -11,16 +15,23 @@ export const Route = createFileRoute("/tests")({
 
 function RouteComponent() {
     const runSync = R.useRunSync()
-    const componentScope = R.useScope()
 
-    useEffect(() => Effect.addFinalizer(() => Console.log("Component scope cleanup!")).pipe(
-        Effect.andThen(Console.log("Component mounted")),
-        Effect.provideService(Scope.Scope, componentScope),
+    const [uuid, setUuid] = useState(R.useMemo(() => makeUuid, []))
+    const generateUuid = R.useCallbackSync(() => makeUuid.pipe(
+        Effect.tap(v => Effect.sync(() => setUuid(v)))
+    ), [])
+
+    const scope = R.useScope([uuid])
+
+    useEffect(() => Effect.addFinalizer(() => Console.log("Scope cleanup!")).pipe(
+        Effect.andThen(Console.log("Scope changed")),
+        Effect.provideService(Scope.Scope, scope),
         runSync,
-    ), [componentScope, runSync])
+    ), [scope, runSync])
 
     return (
         <Flex direction="row" justify="center" align="center" gap="2">
+            <Button onClick={generateUuid}>Generate UUID</Button>
         </Flex>
     )
 }
