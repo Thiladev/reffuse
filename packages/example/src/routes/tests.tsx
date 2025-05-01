@@ -10,7 +10,7 @@ export const Route = createFileRoute("/tests")({
 })
 
 function RouteComponent() {
-    const deepRef = R.useRef({ value: "poulet" })
+    const deepRef = R.useRef(() => Effect.succeed({ value: "poulet" }))
     const deepValueRef = R.useSubRef(deepRef, ["value"])
 
     // const value = R.useMemoScoped(Effect.addFinalizer(() => Console.log("cleanup")).pipe(
@@ -25,8 +25,8 @@ function RouteComponent() {
     ), [])
 
 
-    const uuidRef = R.useRef("none")
-    const anotherRef = R.useRef(69)
+    const uuidRef = R.useRef(() => Effect.succeed("none"))
+    const anotherRef = R.useRef(() => Effect.succeed(69))
 
 
     const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {

@@ -523,19 +523,19 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
 
-    usePullStream<A, InitialA extends A | undefined, E, R>(
-        this: ReffuseNamespace<R>,
-        stream: Stream.Stream<A, E, R>,
-        initialValue?: InitialA,
-    ): [
-        latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
-        pull: () => void,
-    ] {
-        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
-        const pull = this.useMemo(() => Stream.toPull(stream), [stream])
+    // usePullStream<A, InitialA extends A | undefined, E, R>(
+    //     this: ReffuseNamespace<R>,
+    //     stream: Stream.Stream<A, E, R>,
+    //     initialValue?: InitialA,
+    // ): [
+    //     latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
+    //     pull: () => void,
+    // ] {
+    //     const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
+    //     const pull = this.useMemo(() => Stream.toPull(stream), [stream])
 
-        return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
-    }
+    //     return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
+    // }
 
 
     SubRef<B, const P extends PropertyPath.Paths<B>, R>(

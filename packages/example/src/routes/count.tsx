@@ -1,6 +1,6 @@
 import { R } from "@/reffuse"
 import { createFileRoute } from "@tanstack/react-router"
-import { Ref } from "effect"
+import { Effect, Ref } from "effect"
 
 
 export const Route = createFileRoute("/count")({
@@ -11,7 +11,7 @@ function Count() {
 
     const runSync = R.useRunSync()
 
-    const countRef = R.useRef(0)
+    const countRef = R.useRef(() => Effect.succeed(0))
     const [count] = R.useRefState(countRef)
 
 
