@@ -19,6 +19,7 @@ import { Route as LazyrefImport } from './routes/lazyref'
 import { Route as CountImport } from './routes/count'
 import { Route as BlankImport } from './routes/blank'
 import { Route as IndexImport } from './routes/index'
+import { Route as StreamsPullImport } from './routes/streams/pull'
 import { Route as QueryUsequeryImport } from './routes/query/usequery'
 import { Route as QueryUsemutationImport } from './routes/query/usemutation'
 import { Route as QueryServiceImport } from './routes/query/service'
@@ -70,6 +71,12 @@ const BlankRoute = BlankImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const StreamsPullRoute = StreamsPullImport.update({
+  id: '/streams/pull',
+  path: '/streams/pull',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -172,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QueryUsequeryImport
       parentRoute: typeof rootRoute
     }
+    '/streams/pull': {
+      id: '/streams/pull'
+      path: '/streams/pull'
+      fullPath: '/streams/pull'
+      preLoaderRoute: typeof StreamsPullImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -189,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/query/service': typeof QueryServiceRoute
   '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
+  '/streams/pull': typeof StreamsPullRoute
 }
 
 export interface FileRoutesByTo {
@@ -203,6 +218,7 @@ export interface FileRoutesByTo {
   '/query/service': typeof QueryServiceRoute
   '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
+  '/streams/pull': typeof StreamsPullRoute
 }
 
 export interface FileRoutesById {
@@ -218,6 +234,7 @@ export interface FileRoutesById {
   '/query/service': typeof QueryServiceRoute
   '/query/usemutation': typeof QueryUsemutationRoute
   '/query/usequery': typeof QueryUsequeryRoute
+  '/streams/pull': typeof StreamsPullRoute
 }
 
 export interface FileRouteTypes {
@@ -234,6 +251,7 @@ export interface FileRouteTypes {
     | '/query/service'
     | '/query/usemutation'
     | '/query/usequery'
+    | '/streams/pull'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -247,6 +265,7 @@ export interface FileRouteTypes {
     | '/query/service'
     | '/query/usemutation'
     | '/query/usequery'
+    | '/streams/pull'
   id:
     | '__root__'
     | '/'
@@ -260,6 +279,7 @@ export interface FileRouteTypes {
     | '/query/service'
     | '/query/usemutation'
     | '/query/usequery'
+    | '/streams/pull'
   fileRoutesById: FileRoutesById
 }
 
@@ -275,6 +295,7 @@ export interface RootRouteChildren {
   QueryServiceRoute: typeof QueryServiceRoute
   QueryUsemutationRoute: typeof QueryUsemutationRoute
   QueryUsequeryRoute: typeof QueryUsequeryRoute
+  StreamsPullRoute: typeof StreamsPullRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -289,6 +310,7 @@ const rootRouteChildren: RootRouteChildren = {
   QueryServiceRoute: QueryServiceRoute,
   QueryUsemutationRoute: QueryUsemutationRoute,
   QueryUsequeryRoute: QueryUsequeryRoute,
+  StreamsPullRoute: StreamsPullRoute,
 }
 
 export const routeTree = rootRoute
@@ -311,7 +333,8 @@ export const routeTree = rootRoute
         "/todos",
         "/query/service",
         "/query/usemutation",
-        "/query/usequery"
+        "/query/usequery",
+        "/streams/pull"
       ]
     },
     "/": {
@@ -346,6 +369,9 @@ export const routeTree = rootRoute
     },
     "/query/usequery": {
       "filePath": "query/usequery.tsx"
+    },
+    "/streams/pull": {
+      "filePath": "streams/pull.tsx"
     }
   }
 }

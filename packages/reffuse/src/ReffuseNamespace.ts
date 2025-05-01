@@ -495,27 +495,32 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
 
-    usePullStream<A, InitialA extends A | undefined, E, R extends ContextR, ContextR>(
-        this: ReffuseNamespace<ContextR>,
+    usePullStream<A, InitialA extends A | undefined, E, R>(
+        this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
         initialValue?: InitialA,
     ): [
         latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
-        pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>, R>,
+        pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>,
     ] {
         const scope = this.useScope([stream])
 
         const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
-        const pull = this.useMemo(() => Stream.toPull(stream).pipe(
-            Effect.map(Effect.tap(flow(
-                Chunk.last,
-                v => Option.match(v, {
-                    onSome: () => Effect.sync(() => setReactStateValue(v)),
-                    onNone: () => Effect.void,
-                }),
-            ))),
+        const pull = this.useMemo(() => Effect.context<R>().pipe(
+            Effect.flatMap(context => Stream.toPull(stream).pipe(
+                Effect.map(effect => effect.pipe(
+                    Effect.tap(flow(
+                        Chunk.last,
+                        v => Option.match(v, {
+                            onSome: () => Effect.sync(() => setReactStateValue(v)),
+                            onNone: () => Effect.void,
+                        }),
+                    )),
+                    Effect.provide(context),
+                )),
 
-            Effect.provideService(Scope.Scope, scope),
+                Effect.provideService(Scope.Scope, scope),
+            ))
         ), [stream, scope])
 
         return [
