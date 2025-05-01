@@ -88,6 +88,39 @@ export abstract class ReffuseNamespace<R> {
         ), [runtime, context])
     }
 
+    useScope<R>(
+        this: ReffuseNamespace<R>,
+        deps: React.DependencyList = [],
+        options?: ScopeOptions,
+    ): Scope.Scope {
+        const runSync = this.useRunSync()
+
+        const [isInitialRun, initialScope] = React.useMemo(() => runSync(Effect.all([
+            Ref.make(true),
+            Scope.make(options?.finalizerExecutionStrategy),
+        ])), [])
+
+        const [scope, setScope] = React.useState(initialScope)
+
+        React.useEffect(() => isInitialRun.pipe(
+            Effect.if({
+                onTrue: () => Effect.as(
+                    Ref.set(isInitialRun, false),
+                    () => runSync(Scope.close(initialScope, Exit.void)),
+                ),
+
+                onFalse: () => Scope.make(options?.finalizerExecutionStrategy).pipe(
+                    Effect.tap(v => Effect.sync(() => setScope(v))),
+                    Effect.map(v => () => runSync(Scope.close(v, Exit.void))),
+                ),
+            }),
+
+            runSync,
+        ), [runSync, ...deps])
+
+        return scope
+    }
+
     /**
      * Reffuse equivalent to `React.useMemo`.
      *
@@ -119,11 +152,10 @@ export abstract class ReffuseNamespace<R> {
     ): A {
         const runSync = this.useRunSync()
 
-        const [isInitialRun, initialScope, initialValue] = React.useMemo(() => Effect.Do.pipe(
+        const { isInitialRun, initialScope, initialValue } = React.useMemo(() => Effect.Do.pipe(
             Effect.bind("isInitialRun", () => Ref.make(true)),
-            Effect.bind("scope", () => Scope.make(options?.finalizerExecutionStrategy)),
-            Effect.bind("value", ({ scope }) => Effect.provideService(effect(), Scope.Scope, scope)),
-            Effect.map(({ isInitialRun, scope, value }) => [isInitialRun, scope, value] as const),
+            Effect.bind("initialScope", () => Scope.make(options?.finalizerExecutionStrategy)),
+            Effect.bind("initialValue", ({ initialScope }) => Effect.provideService(effect(), Scope.Scope, initialScope)),
             runSync,
         ), [])
 
@@ -131,10 +163,9 @@ export abstract class ReffuseNamespace<R> {
 
         React.useEffect(() => isInitialRun.pipe(
             Effect.if({
-                onTrue: () => Ref.set(isInitialRun, false).pipe(
-                    Effect.map(() =>
-                        () => runSync(Scope.close(initialScope, Exit.void))
-                    )
+                onTrue: () => Effect.as(
+                    Ref.set(isInitialRun, false),
+                    () => runSync(Scope.close(initialScope, Exit.void)),
                 ),
 
                 onFalse: () => Effect.Do.pipe(
@@ -492,17 +523,16 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
 
-    useSubscribePullStream<A, InitialA extends A | undefined, E, R>(
+    usePullStream<A, InitialA extends A | undefined, E, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
         initialValue?: InitialA,
-    ): [latest: InitialA extends A ? Option.Some<A> : Option.Option<A>, pull: () => void] {
+    ): [
+        latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
+        pull: () => void,
+    ] {
         const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
-
-        this.useFork(() => Stream.runForEach(
-            Stream.changesWith(stream, (x, y) => x === y),
-            v => Effect.sync(() => setReactStateValue(Option.some(v))),
-        ), [stream])
+        const pull = this.useMemo(() => Stream.toPull(stream), [stream])
 
         return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
