@@ -14,7 +14,7 @@ export interface ScopeOptions {
     readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
 }
 
-export interface UseScopeOptions extends ScopeOptions {
+export interface UseScopeOptions extends RenderOptions, ScopeOptions {
     readonly finalizerExecutionMode?: "sync" | "fork"
 }
 
@@ -102,7 +102,7 @@ export abstract class ReffuseNamespace<R> {
 
         const [isInitialRun, initialScope] = React.useMemo(() => runSync(Effect.all([
             Ref.make(true),
-            Scope.make(options?.finalizerExecutionStrategy),
+            Scope.make(options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential),
         ])), [])
 
         const [scope, setScope] = React.useState(initialScope)
@@ -133,7 +133,10 @@ export abstract class ReffuseNamespace<R> {
             }),
 
             runSync,
-        ), [runSync, runFork, ...deps])
+        ), [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],
+            ...deps,
+        ])
 
         return scope
     }
