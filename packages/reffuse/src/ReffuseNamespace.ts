@@ -483,12 +483,18 @@ export abstract class ReffuseNamespace<R> {
         return stream
     }
 
-    useSubscribeStream<A, InitialA extends A | undefined, E, R>(
+    useSubscribeStream<A, InitialA extends A | undefined, E, InitialE, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
-        initialValue?: InitialA,
+        initialValue?: () => Effect.Effect<InitialA, InitialE, R>,
     ): InitialA extends A ? Option.Some<A> : Option.Option<A> {
-        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
+        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(this.useMemo(
+            () => initialValue
+                ? Effect.map(initialValue(), v => Option.some(v as A))
+                : Effect.succeed(Option.none()),
+            [],
+            { doNotReExecuteOnRuntimeOrContextChange: true },
+        ))
 
         this.useFork(() => Stream.runForEach(
             Stream.changesWith(stream, (x, y) => x === y),
@@ -498,17 +504,24 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
     }
 
-    usePullStream<A, InitialA extends A | undefined, E, R>(
+    usePullStream<A, InitialA extends A | undefined, E, InitialE, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
-        initialValue?: InitialA,
+        initialValue?: () => Effect.Effect<InitialA, InitialE, R>,
     ): [
         latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
         pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>,
     ] {
         const scope = this.useScope([stream])
 
-        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
+        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(this.useMemo(
+            () => initialValue
+                ? Effect.map(initialValue(), v => Option.some(v as A))
+                : Effect.succeed(Option.none()),
+            [],
+            { doNotReExecuteOnRuntimeOrContextChange: true },
+        ))
+
         const pull = this.useMemo(() => Effect.context<R>().pipe(
             Effect.flatMap(context => Stream.toPull(Stream.changesWith(stream, (x, y) => x === y)).pipe(
                 Effect.map(effect => effect.pipe(
@@ -567,11 +580,11 @@ export abstract class ReffuseNamespace<R> {
         return props.children(this.useRefState(props.ref))
     }
 
-    SubscribeStream<A, InitialA extends A | undefined, E, R>(
+    SubscribeStream<A, InitialA extends A | undefined, E, InitialE, R>(
         this: ReffuseNamespace<R>,
         props: {
             readonly stream: Stream.Stream<A, E, R>
-            readonly initialValue?: InitialA
+            readonly initialValue?: () => Effect.Effect<InitialA, InitialE, R>
             readonly children: (latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>) => React.ReactNode
         },
     ): React.ReactNode {
