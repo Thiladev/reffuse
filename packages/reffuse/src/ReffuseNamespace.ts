@@ -30,7 +30,7 @@ export abstract class ReffuseNamespace<R> {
         this.SubRef = this.SubRef.bind(this as any) as any
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
-        // this.SubscribeStream = this.SubscribeStream.bind(this as any) as any
+        this.SubscribeStream = this.SubscribeStream.bind(this as any) as any
     }
 
 
@@ -592,16 +592,31 @@ export abstract class ReffuseNamespace<R> {
         return props.children(this.useRefState(props.ref))
     }
 
-    // SubscribeStream<A, E, R, InitialA extends A = never, InitialE = never>(
-    //     this: ReffuseNamespace<R>,
-    //     props: {
-    //         readonly stream: Stream.Stream<A, E, R>
-    //         readonly initialValue?: () => Effect.Effect<InitialA, InitialE, R>
-    //         readonly children: (latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>) => React.ReactNode
-    //     },
-    // ): React.ReactNode {
-    //     return props.children(this.useSubscribeStream(props.stream, props.initialValue))
-    // }
+    SubscribeStream<A, E, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly stream: Stream.Stream<A, E, R>
+            readonly children: (latestValue: Option.Option<A>) => React.ReactNode
+        },
+    ): React.ReactNode
+    SubscribeStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly stream: Stream.Stream<A, E, R>
+            readonly initialValue: () => Effect.Effect<A, IE, R>
+            readonly children: (latestValue: Option.Some<A>) => React.ReactNode
+        },
+    ): React.ReactNode
+    SubscribeStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly stream: Stream.Stream<A, E, R>
+            readonly initialValue?: () => Effect.Effect<A, IE, R>
+            readonly children: (latestValue: Option.Some<A>) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(this.useSubscribeStream(props.stream, props.initialValue as () => Effect.Effect<A, IE, R>))
+    }
 }
 
 
