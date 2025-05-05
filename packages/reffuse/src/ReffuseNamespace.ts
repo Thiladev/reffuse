@@ -487,15 +487,15 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
     ): Option.Option<A>
-    useSubscribeStream<A, E, R>(
+    useSubscribeStream<A, E, IE, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
-        initialValue: () => Effect.Effect<A, E, R>,
+        initialValue: () => Effect.Effect<A, IE, R>,
     ): Option.Some<A>
-    useSubscribeStream<A, E, R>(
+    useSubscribeStream<A, E, IE, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
-        initialValue?: () => Effect.Effect<A, E, R>,
+        initialValue?: () => Effect.Effect<A, IE, R>,
     ): Option.Option<A> {
         const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
             () => initialValue
@@ -513,19 +513,25 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue
     }
 
-    usePullStream<A, InitialA extends A | undefined, E, InitialE, R>(
+    usePullStream<A, E, IE, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
-        initialValue?: () => Effect.Effect<InitialA, InitialE, R>,
-    ): [
-        latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>,
-        pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>,
-    ] {
+    ): [latestValue: Option.Option<A>, pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>]
+    usePullStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        stream: Stream.Stream<A, E, R>,
+        initialValue: () => Effect.Effect<A, IE, R>,
+    ): [latestValue: Option.Some<A>, pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>]
+    usePullStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        stream: Stream.Stream<A, E, R>,
+        initialValue?: () => Effect.Effect<A, IE, R>,
+    ): [latestValue: Option.Option<A>, pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>] {
         const scope = this.useScope([stream])
 
-        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(this.useMemo(
+        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
             () => initialValue
-                ? Effect.map(initialValue(), v => Option.some(v as A))
+                ? Effect.map(initialValue(), Option.some)
                 : Effect.succeed(Option.none()),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true },
@@ -548,10 +554,7 @@ export abstract class ReffuseNamespace<R> {
             ))
         ), [stream, scope])
 
-        return [
-            reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>,
-            pull,
-        ]
+        return [reactStateValue, pull]
     }
 
 

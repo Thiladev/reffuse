@@ -18,20 +18,6 @@ export function VQueryErrorHandler() {
         ), [])
     )
 
-    const error2 = R.useSubscribeStream(
-        R.useMemo(() => AppQueryErrorHandler.pipe(
-            Effect.flatMap()
-
-            Effect.map(handler => handler.errors.pipe(
-                Stream.changes,
-                Stream.tap(Console.error),
-                Stream.tap(() => Effect.sync(() => setOpen(true))),
-            ))
-        ), []),
-
-        () => Effect.fail(new Error()),
-    )
-
     if (Option.isNone(error))
         return <></>
 
