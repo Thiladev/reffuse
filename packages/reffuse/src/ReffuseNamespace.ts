@@ -479,7 +479,6 @@ export abstract class ReffuseNamespace<R> {
         ), [])
 
         this.useEffect(() => Queue.offer(queue, values), values)
-
         return stream
     }
 
