@@ -1,4 +1,4 @@
-import { Chunk, type Context, Effect, ExecutionStrategy, Exit, type Fiber, flow, type Layer, Match, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { Chunk, type Context, Effect, ExecutionStrategy, Exit, type Fiber, flow, type Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -474,11 +474,11 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
-        const [queue, stream] = this.useMemo(() => Queue.unbounded<A>().pipe(
-            Effect.map(queue => [queue, Stream.fromQueue(queue)] as const)
+        const [pubsub, stream] = this.useMemo(() => PubSub.unbounded<A>().pipe(
+            Effect.map(pubsub => [pubsub, Stream.fromPubSub(pubsub)] as const)
         ), [])
 
-        this.useEffect(() => Queue.offer(queue, values), values)
+        this.useEffect(() => PubSub.publish(pubsub, values), values)
         return stream
     }
 
