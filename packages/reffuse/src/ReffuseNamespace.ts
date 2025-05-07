@@ -474,9 +474,11 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
+        const scope = this.useScope()
+
         const { latest, pubsub, stream } = this.useMemo(() => Effect.Do.pipe(
             Effect.bind("latest", () => Ref.make(values)),
-            Effect.bind("pubsub", () => PubSub.unbounded<A>()),
+            Effect.bind("pubsub", () => Effect.acquireRelease(PubSub.unbounded<A>(), PubSub.shutdown)),
             Effect.let("stream", ({ latest, pubsub }) => Ref.get(latest).pipe(
                 Effect.flatMap(a => Effect.map(
                     Stream.fromPubSub(pubsub, { scoped: true }),
@@ -484,7 +486,8 @@ export abstract class ReffuseNamespace<R> {
                 )),
                 Stream.unwrapScoped,
             )),
-        ), [])
+            Effect.provideService(Scope.Scope, scope),
+        ), [scope])
 
         this.useEffect(() => Effect.andThen(
             Ref.set(latest, values),
