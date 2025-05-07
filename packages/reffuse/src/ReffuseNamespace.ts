@@ -487,12 +487,12 @@ export abstract class ReffuseNamespace<R> {
                 Stream.unwrapScoped,
             )),
             Effect.provideService(Scope.Scope, scope),
-        ), [scope])
+        ), [scope], { doNotReExecuteOnRuntimeOrContextChange: true })
 
         this.useEffect(() => Ref.set(latest, values).pipe(
             Effect.andThen(PubSub.publish(pubsub, values)),
             Effect.unlessEffect(PubSub.isShutdown(pubsub)),
-        ), values)
+        ), values, { doNotReExecuteOnRuntimeOrContextChange: true })
 
         return stream
     }
