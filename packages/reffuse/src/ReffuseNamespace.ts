@@ -489,9 +489,9 @@ export abstract class ReffuseNamespace<R> {
             Effect.provideService(Scope.Scope, scope),
         ), [scope])
 
-        this.useEffect(() => Effect.andThen(
-            Ref.set(latest, values),
-            PubSub.publish(pubsub, values),
+        this.useEffect(() => Ref.set(latest, values).pipe(
+            Effect.andThen(PubSub.publish(pubsub, values)),
+            Effect.unlessEffect(PubSub.isShutdown(pubsub)),
         ), values)
 
         return stream
