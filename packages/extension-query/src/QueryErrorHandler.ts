@@ -1,4 +1,4 @@
-import { Cause, Context, Effect, identity, Layer, Queue, Stream } from "effect"
+import { Cause, Context, Effect, identity, Layer, PubSub, Stream } from "effect"
 import type { Mutable } from "effect/Types"
 
 
@@ -36,17 +36,17 @@ export const Service = <Self, HandledE = never>() => (
         const TagClass = Context.Tag(id)() as ServiceResult<Self, Id, FallbackA, HandledE>
 
         (TagClass as Mutable<typeof TagClass>).Live = Layer.effect(TagClass, Effect.gen(function*() {
-            const queue = yield* Queue.unbounded<Cause.Cause<HandledE>>()
-            const errors = Stream.fromQueue(queue)
+            const pubsub = yield* PubSub.unbounded<Cause.Cause<HandledE>>()
+            const errors = Stream.fromPubSub(pubsub)
 
             const handle = <A, E, R>(
                 self: Effect.Effect<A, E, R>
             ): Effect.Effect<A | FallbackA, Exclude<E, HandledE>, R> => f(
                 self as unknown as Effect.Effect<never, HandledE, never>,
-                (failure: HandledE) => Queue.offer(queue, Cause.fail(failure)).pipe(
+                (failure: HandledE) => PubSub.publish(pubsub, Cause.fail(failure)).pipe(
                     Effect.andThen(Effect.failCause(Cause.empty))
                 ),
-                (defect: unknown) => Queue.offer(queue, Cause.die(defect)).pipe(
+                (defect: unknown) => PubSub.publish(pubsub, Cause.die(defect)).pipe(
                     Effect.andThen(Effect.failCause(Cause.empty))
                 ),
             )
