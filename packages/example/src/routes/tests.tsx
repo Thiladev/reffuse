@@ -1,8 +1,8 @@
 import { R } from "@/reffuse"
-import { Button, Flex } from "@radix-ui/themes"
+import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Console, Effect, Scope } from "effect"
+import { Console, Effect, Option, Scope } from "effect"
 import { useEffect, useState } from "react"
 
 
@@ -21,6 +21,9 @@ function RouteComponent() {
         Effect.tap(v => Effect.sync(() => setUuid(v)))
     ), [])
 
+    const uuidStream = R.useStreamFromReactiveValues([uuid])
+    const uuidStreamLatestValue = R.useSubscribeStream(uuidStream)
+
     const scope = R.useScope([uuid])
 
     useEffect(() => Effect.addFinalizer(() => Console.log("Scope cleanup!")).pipe(
@@ -32,6 +35,12 @@ function RouteComponent() {
     return (
         <Flex direction="row" justify="center" align="center" gap="2">
             <Button onClick={generateUuid}>Generate UUID</Button>
+            <Text>
+                {Option.match(uuidStreamLatestValue, {
+                    onSome: ([v]) => v,
+                    onNone: () => <></>,
+                })}
+            </Text>
         </Flex>
     )
 }
