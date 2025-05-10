@@ -33,7 +33,8 @@ function RouteComponent() {
     ), [scope, runSync])
 
     return (
-        <Flex direction="row" justify="center" align="center" gap="2">
+        <Flex direction="column" justify="center" align="center" gap="2">
+            <Text>{uuid}</Text>
             <Button onClick={generateUuid}>Generate UUID</Button>
             <Text>
                 {Option.match(uuidStreamLatestValue, {
