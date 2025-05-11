@@ -15,7 +15,6 @@ export const Route = createFileRoute("/tests")({
 
 function RouteComponent() {
     const runSync = R.useRunSync()
-    const runPromise = R.useRunPromise()
 
     const [uuid, setUuid] = useState(R.useMemo(() => makeUuid, []))
     const generateUuid = R.useCallbackSync(() => makeUuid.pipe(
@@ -23,7 +22,7 @@ function RouteComponent() {
     ), [])
 
     const uuidStream = R.useStreamFromReactiveValues([uuid])
-    const [uuidStreamLatestValue, pullUuidStream] = R.usePullStream(uuidStream)
+    const uuidStreamLatestValue = R.useSubscribeStream(uuidStream)
 
     const scope = R.useScope([uuid])
 
@@ -43,7 +42,6 @@ function RouteComponent() {
                     onNone: () => <></>,
                 })}
             </Text>
-            <Button onClick={() => runPromise(pullUuidStream)}>Pull UUID</Button>
         </Flex>
     )
 }

@@ -1,4 +1,4 @@
-import { Chunk, type Context, Effect, ExecutionStrategy, Exit, type Fiber, flow, type Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -525,50 +525,6 @@ export abstract class ReffuseNamespace<R> {
         ), [stream])
 
         return reactStateValue
-    }
-
-    usePullStream<A, E, IE, R>(
-        this: ReffuseNamespace<R>,
-        stream: Stream.Stream<A, E, R>,
-    ): [latestValue: Option.Option<A>, pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>]
-    usePullStream<A, E, IE, R>(
-        this: ReffuseNamespace<R>,
-        stream: Stream.Stream<A, E, R>,
-        initialValue: () => Effect.Effect<A, IE, R>,
-    ): [latestValue: Option.Some<A>, pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>]
-    usePullStream<A, E, IE, R>(
-        this: ReffuseNamespace<R>,
-        stream: Stream.Stream<A, E, R>,
-        initialValue?: () => Effect.Effect<A, IE, R>,
-    ): [latestValue: Option.Option<A>, pull: Effect.Effect<Chunk.Chunk<A>, Option.Option<E>>] {
-        const scope = this.useScope([stream])
-
-        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
-            () => initialValue
-                ? Effect.map(initialValue(), Option.some)
-                : Effect.succeed(Option.none()),
-            [],
-            { doNotReExecuteOnRuntimeOrContextChange: true },
-        ))
-
-        const pull = this.useMemo(() => Effect.context<R>().pipe(
-            Effect.flatMap(context => Stream.toPull(Stream.changesWith(stream, (x, y) => x === y)).pipe(
-                Effect.map(effect => effect.pipe(
-                    Effect.tap(flow(
-                        Chunk.last,
-                        v => Option.match(v, {
-                            onSome: () => Effect.sync(() => setReactStateValue(v)),
-                            onNone: () => Effect.void,
-                        }),
-                    )),
-                    Effect.provide(context),
-                )),
-
-                Effect.provideService(Scope.Scope, scope),
-            ))
-        ), [stream, scope])
-
-        return [reactStateValue, pull]
     }
 
 
