@@ -1,4 +1,4 @@
-import { Chunk, type Context, Effect, ExecutionStrategy, Exit, type Fiber, flow, type Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Cause, Chunk, type Context, Effect, ExecutionStrategy, Exit, type Fiber, flow, Function, type Layer, Match, Option, pipe, Pipeable, PubSub, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -501,6 +501,11 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
     ): Option.Option<A>
+    useSubscribeStream<A, E, R>(
+        this: ReffuseNamespace<R>,
+        stream: Stream.Stream<A, E, R>,
+        pullLatestValue: true,
+    ): Option.Some<A>
     useSubscribeStream<A, E, IE, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
@@ -509,11 +514,25 @@ export abstract class ReffuseNamespace<R> {
     useSubscribeStream<A, E, IE, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
-        initialValue?: () => Effect.Effect<A, IE, R>,
+        pullLatestOrInitialValue?: true | (() => Effect.Effect<A, IE, R>),
     ): Option.Option<A> {
-        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
-            () => initialValue
-                ? Effect.map(initialValue(), Option.some)
+        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo<
+            Option.Option<A>,
+            Cause.NoSuchElementException | Cause.Cause<Option.Option<E>> | IE,
+            R
+        >(
+            () => pullLatestOrInitialValue
+                ? Function.isFunction(pullLatestOrInitialValue)
+                    ? Effect.map(pullLatestOrInitialValue(), Option.some)
+                    : Stream.toQueueOfElements(stream).pipe(
+                        Effect.flatMap(Queue.takeAll),
+                        Effect.flatMap(Chunk.last),
+                        Effect.flatMap(Exit.matchEffect({
+                            onSuccess: v => Effect.succeed(Option.some(v)),
+                            onFailure: Effect.fail,
+                        })),
+                        Effect.scoped,
+                    )
                 : Effect.succeed(Option.none()),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true },

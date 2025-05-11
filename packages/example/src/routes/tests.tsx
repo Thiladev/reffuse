@@ -22,7 +22,7 @@ function RouteComponent() {
     ), [])
 
     const uuidStream = R.useStreamFromReactiveValues([uuid])
-    const [uuidStreamLatestValue, pullUuidStream] = R.usePullStream(uuidStream)
+    const uuidStreamLatestValue = R.useSubscribeStream(uuidStream, true)
 
     const scope = R.useScope([uuid])
 
@@ -42,7 +42,7 @@ function RouteComponent() {
                     onNone: () => <></>,
                 })}
             </Text>
-            <Button onClick={() => runSync(pullUuidStream)}>Pull UUID</Button>
+            {/* <Button onClick={() => runSync(pullUuidStream)}>Pull UUID</Button> */}
         </Flex>
     )
 }
