@@ -2,7 +2,11 @@ import { R } from "@/reffuse"
 import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Console, Effect, Ref } from "effect"
+import { Console, Effect, Option, Scope } from "effect"
+import { useEffect, useState } from "react"
+
+
+const makeUuid = Effect.provide(makeUuid4, GetRandomValues.CryptoRandom)
 
 
 export const Route = createFileRoute("/tests")({
@@ -10,48 +14,34 @@ export const Route = createFileRoute("/tests")({
 })
 
 function RouteComponent() {
-    const deepRef = R.useRef({ value: "poulet" })
-    const deepValueRef = R.useSubRef(deepRef, ["value"])
+    const runSync = R.useRunSync()
 
-    // const value = R.useMemoScoped(Effect.addFinalizer(() => Console.log("cleanup")).pipe(
-    //     Effect.andThen(makeUuid4),
-    //     Effect.provide(GetRandomValues.CryptoRandom),
-    // ), [])
-    // console.log(value)
-
-    R.useFork(() => Effect.addFinalizer(() => Console.log("cleanup")).pipe(
-        Effect.andThen(Console.log("ouient")),
-        Effect.delay("1 second"),
+    const [uuid, setUuid] = useState(R.useMemo(() => makeUuid, []))
+    const generateUuid = R.useCallbackSync(() => makeUuid.pipe(
+        Effect.tap(v => Effect.sync(() => setUuid(v)))
     ), [])
 
+    const uuidStream = R.useStreamFromReactiveValues([uuid])
+    const uuidStreamLatestValue = R.useSubscribeStream(uuidStream)
 
-    const uuidRef = R.useRef("none")
-    const anotherRef = R.useRef(69)
+    const scope = R.useScope([uuid])
 
-
-    const logValue = R.useCallbackSync(Effect.fn(function*(value: string) {
-        yield* Effect.log(value)
-    }), [])
-
-    const generateUuid = R.useCallbackSync(() => makeUuid4.pipe(
-        Effect.provide(GetRandomValues.CryptoRandom),
-        Effect.tap(v => Ref.set(uuidRef, v)),
-        Effect.tap(v => Ref.set(deepValueRef, v)),
-    ), [])
-
+    useEffect(() => Effect.addFinalizer(() => Console.log("Scope cleanup!")).pipe(
+        Effect.andThen(Console.log("Scope changed")),
+        Effect.provideService(Scope.Scope, scope),
+        runSync,
+    ), [scope, runSync])
 
     return (
-        <Flex direction="row" justify="center" align="center" gap="2">
-            <R.SubscribeRefs refs={[uuidRef, anotherRef]}>
-                {(uuid, anotherRef) => <Text>{uuid} / {anotherRef}</Text>}
-            </R.SubscribeRefs>
-
-            <R.SubscribeRefs refs={[deepRef, deepValueRef]}>
-                {(deep, deepValue) => <Text>{JSON.stringify(deep)} / {deepValue}</Text>}
-            </R.SubscribeRefs>
-
-            <Button onClick={() => logValue("test")}>Log value</Button>
-            <Button onClick={() => generateUuid()}>Generate UUID</Button>
+        <Flex direction="column" justify="center" align="center" gap="2">
+            <Text>{uuid}</Text>
+            <Button onClick={generateUuid}>Generate UUID</Button>
+            <Text>
+                {Option.match(uuidStreamLatestValue, {
+                    onSome: ([v]) => v,
+                    onNone: () => <></>,
+                })}
+            </Text>
         </Flex>
     )
 }

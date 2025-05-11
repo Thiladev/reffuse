@@ -16,7 +16,7 @@ export function VTodos() {
     ), [])
 
     const todosRef = R.useMemo(() => TodosState.TodosState.pipe(Effect.map(state => state.todos)), [])
-    const [todos] = R.useRefState(todosRef)
+    const [todos] = R.useSubscribeRefs(todosRef)
 
 
     return (

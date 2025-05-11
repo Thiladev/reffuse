@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Option, pipe, Pipeable, Queue, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -12,6 +12,10 @@ export interface RenderOptions {
 
 export interface ScopeOptions {
     readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
+}
+
+export interface UseScopeOptions extends RenderOptions, ScopeOptions {
+    readonly finalizerExecutionMode?: "sync" | "fork"
 }
 
 export type RefsA<T extends readonly SubscriptionRef.SubscriptionRef<any>[]> = {
@@ -88,6 +92,55 @@ export abstract class ReffuseNamespace<R> {
         ), [runtime, context])
     }
 
+    useScope<R>(
+        this: ReffuseNamespace<R>,
+        deps: React.DependencyList = [],
+        options?: UseScopeOptions,
+    ): Scope.Scope {
+        const runSync = this.useRunSync()
+        const runFork = this.useRunFork()
+
+        const [isInitialRun, initialScope] = React.useMemo(() => runSync(Effect.all([
+            Ref.make(true),
+            Scope.make(options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential),
+        ])), [])
+
+        const [scope, setScope] = React.useState(initialScope)
+
+        React.useEffect(() => isInitialRun.pipe(
+            Effect.if({
+                onTrue: () => Effect.as(
+                    Ref.set(isInitialRun, false),
+                    () => Scope.close(initialScope, Exit.void).pipe(
+                        effect => Match.value(options?.finalizerExecutionMode ?? "sync").pipe(
+                            Match.when("sync", () => { runSync(effect) }),
+                            Match.when("fork", () => { runFork(effect) }),
+                            Match.exhaustive,
+                        )
+                    ),
+                ),
+
+                onFalse: () => Scope.make(options?.finalizerExecutionStrategy).pipe(
+                    Effect.tap(v => Effect.sync(() => setScope(v))),
+                    Effect.map(v => () => Scope.close(v, Exit.void).pipe(
+                        effect => Match.value(options?.finalizerExecutionMode ?? "sync").pipe(
+                            Match.when("sync", () => { runSync(effect) }),
+                            Match.when("fork", () => { runFork(effect) }),
+                            Match.exhaustive,
+                        )
+                    )),
+                ),
+            }),
+
+            runSync,
+        ), [
+            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],
+            ...deps,
+        ])
+
+        return scope
+    }
+
     /**
      * Reffuse equivalent to `React.useMemo`.
      *
@@ -109,53 +162,6 @@ export abstract class ReffuseNamespace<R> {
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
             ...deps,
         ])
-    }
-
-    useMemoScoped<A, E, R>(
-        this: ReffuseNamespace<R>,
-        effect: () => Effect.Effect<A, E, R | Scope.Scope>,
-        deps: React.DependencyList,
-        options?: RenderOptions & ScopeOptions,
-    ): A {
-        const runSync = this.useRunSync()
-
-        const [isInitialRun, initialScope, initialValue] = React.useMemo(() => Effect.Do.pipe(
-            Effect.bind("isInitialRun", () => Ref.make(true)),
-            Effect.bind("scope", () => Scope.make(options?.finalizerExecutionStrategy)),
-            Effect.bind("value", ({ scope }) => Effect.provideService(effect(), Scope.Scope, scope)),
-            Effect.map(({ isInitialRun, scope, value }) => [isInitialRun, scope, value] as const),
-            runSync,
-        ), [])
-
-        const [value, setValue] = React.useState(initialValue)
-
-        React.useEffect(() => isInitialRun.pipe(
-            Effect.if({
-                onTrue: () => Ref.set(isInitialRun, false).pipe(
-                    Effect.map(() =>
-                        () => runSync(Scope.close(initialScope, Exit.void))
-                    )
-                ),
-
-                onFalse: () => Effect.Do.pipe(
-                    Effect.bind("scope", () => Scope.make(options?.finalizerExecutionStrategy)),
-                    Effect.bind("value", ({ scope }) => Effect.provideService(effect(), Scope.Scope, scope)),
-                    Effect.tap(({ value }) =>
-                        Effect.sync(() => setValue(value))
-                    ),
-                    Effect.map(({ scope }) =>
-                        () => runSync(Scope.close(scope, Exit.void))
-                    ),
-                ),
-            }),
-
-            runSync,
-        ), [
-            ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync],
-            ...deps,
-        ])
-
-        return value
     }
 
     /**
@@ -378,15 +384,24 @@ export abstract class ReffuseNamespace<R> {
         ])
     }
 
-    useRef<A, R>(
+    useRef<A, E, R>(
         this: ReffuseNamespace<R>,
-        value: A,
+        initialValue: () => Effect.Effect<A, E, R>,
     ): SubscriptionRef.SubscriptionRef<A> {
         return this.useMemo(
-            () => SubscriptionRef.make(value),
+            () => Effect.flatMap(initialValue(), SubscriptionRef.make),
             [],
             { doNotReExecuteOnRuntimeOrContextChange: true }, // Do not recreate the ref when the context changes
         )
+    }
+
+    useRefFromReactiveValue<A, R>(
+        this: ReffuseNamespace<R>,
+        value: A,
+    ): SubscriptionRef.SubscriptionRef<A> {
+        const ref = this.useRef(() => Effect.succeed(value))
+        this.useEffect(() => Ref.set(ref, value), [value], { doNotReExecuteOnRuntimeOrContextChange: true })
+        return ref
     }
 
     useSubRef<B, const P extends PropertyPath.Paths<B>, R>(
@@ -455,32 +470,61 @@ export abstract class ReffuseNamespace<R> {
         return [reactStateValue, setValue]
     }
 
-    useStreamFromValues<const A extends React.DependencyList, R>(
+    useStreamFromReactiveValues<const A extends React.DependencyList, R>(
         this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
-        const [queue, stream] = this.useMemo(() => Queue.unbounded<A>().pipe(
-            Effect.map(queue => [queue, Stream.fromQueue(queue)] as const)
-        ), [])
+        const scope = this.useScope()
 
-        this.useEffect(() => Queue.offer(queue, values), values)
+        const { latest, pubsub, stream } = this.useMemo(() => Effect.Do.pipe(
+            Effect.bind("latest", () => Ref.make(values)),
+            Effect.bind("pubsub", () => Effect.acquireRelease(PubSub.unbounded<A>(), PubSub.shutdown)),
+            Effect.let("stream", ({ latest, pubsub }) => Ref.get(latest).pipe(
+                Effect.flatMap(a => Effect.map(
+                    Stream.fromPubSub(pubsub, { scoped: true }),
+                    s => Stream.concat(Stream.make(a), s),
+                )),
+                Stream.unwrapScoped,
+            )),
+            Effect.provideService(Scope.Scope, scope),
+        ), [scope], { doNotReExecuteOnRuntimeOrContextChange: true })
+
+        this.useEffect(() => Ref.set(latest, values).pipe(
+            Effect.andThen(PubSub.publish(pubsub, values)),
+            Effect.unlessEffect(PubSub.isShutdown(pubsub)),
+        ), values, { doNotReExecuteOnRuntimeOrContextChange: true })
 
         return stream
     }
 
-    useSubscribeStream<A, InitialA extends A | undefined, E, R>(
+    useSubscribeStream<A, E, R>(
         this: ReffuseNamespace<R>,
         stream: Stream.Stream<A, E, R>,
-        initialValue?: InitialA,
-    ): InitialA extends A ? Option.Some<A> : Option.Option<A> {
-        const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(Option.fromNullable(initialValue))
+    ): Option.Option<A>
+    useSubscribeStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        stream: Stream.Stream<A, E, R>,
+        initialValue: () => Effect.Effect<A, IE, R>,
+    ): Option.Some<A>
+    useSubscribeStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        stream: Stream.Stream<A, E, R>,
+        initialValue?: () => Effect.Effect<A, IE, R>,
+    ): Option.Option<A> {
+        const [reactStateValue, setReactStateValue] = React.useState(this.useMemo(
+            () => initialValue
+                ? Effect.map(initialValue(), Option.some)
+                : Effect.succeed(Option.none()),
+            [],
+            { doNotReExecuteOnRuntimeOrContextChange: true },
+        ))
 
         this.useFork(() => Stream.runForEach(
             Stream.changesWith(stream, (x, y) => x === y),
             v => Effect.sync(() => setReactStateValue(Option.some(v))),
         ), [stream])
 
-        return reactStateValue as InitialA extends A ? Option.Some<A> : Option.Option<A>
+        return reactStateValue
     }
 
 
@@ -518,15 +562,30 @@ export abstract class ReffuseNamespace<R> {
         return props.children(this.useRefState(props.ref))
     }
 
-    SubscribeStream<A, InitialA extends A | undefined, E, R>(
+    SubscribeStream<A, E, R>(
         this: ReffuseNamespace<R>,
         props: {
             readonly stream: Stream.Stream<A, E, R>
-            readonly initialValue?: InitialA
-            readonly children: (latestValue: InitialA extends A ? Option.Some<A> : Option.Option<A>) => React.ReactNode
+            readonly children: (latestValue: Option.Option<A>) => React.ReactNode
+        },
+    ): React.ReactNode
+    SubscribeStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly stream: Stream.Stream<A, E, R>
+            readonly initialValue: () => Effect.Effect<A, IE, R>
+            readonly children: (latestValue: Option.Some<A>) => React.ReactNode
+        },
+    ): React.ReactNode
+    SubscribeStream<A, E, IE, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly stream: Stream.Stream<A, E, R>
+            readonly initialValue?: () => Effect.Effect<A, IE, R>
+            readonly children: (latestValue: Option.Some<A>) => React.ReactNode
         },
     ): React.ReactNode {
-        return props.children(this.useSubscribeStream(props.stream, props.initialValue))
+        return props.children(this.useSubscribeStream(props.stream, props.initialValue as () => Effect.Effect<A, IE, R>))
     }
 }
 
