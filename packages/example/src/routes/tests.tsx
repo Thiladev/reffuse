@@ -2,8 +2,8 @@ import { R } from "@/reffuse"
 import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Console, Effect, Option, Scope } from "effect"
-import { useEffect, useState } from "react"
+import { Console, Effect, Option, Random, Scope, Stream } from "effect"
+import { useEffect, useMemo, useState } from "react"
 
 
 const makeUuid = Effect.provide(makeUuid4, GetRandomValues.CryptoRandom)
@@ -22,7 +22,8 @@ function RouteComponent() {
     ), [])
 
     const uuidStream = R.useStreamFromReactiveValues([uuid])
-    const uuidStreamLatestValue = R.useSubscribeStream(uuidStream, true)
+    const stream2 = useMemo(() => Stream.repeatEffect(Random.nextInt), [])
+    const uuidStreamLatestValue = R.useSubscribeStream(stream2, true)
 
     const scope = R.useScope([uuid])
 
@@ -38,7 +39,7 @@ function RouteComponent() {
             <Button onClick={generateUuid}>Generate UUID</Button>
             <Text>
                 {Option.match(uuidStreamLatestValue, {
-                    onSome: ([v]) => v,
+                    onSome: v => v,
                     onNone: () => <></>,
                 })}
             </Text>
