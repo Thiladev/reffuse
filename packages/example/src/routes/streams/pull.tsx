@@ -6,12 +6,12 @@ import { useMemo, useState } from "react"
 
 
 export const Route = createFileRoute("/streams/pull")({
-    component: RouteComponent,
+    component: RouteComponent
 })
 
 function RouteComponent() {
     const stream = useMemo(() => Stream.repeatEffect(Random.nextInt), [])
-    const streamScope = R.useScope([stream])
+    const streamScope = R.useScope([stream], { finalizerExecutionMode: "fork" })
 
     const queue = R.useMemo(() => Effect.provideService(Stream.toQueueOfElements(stream), Scope.Scope, streamScope), [streamScope])
 
