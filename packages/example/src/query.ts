@@ -9,11 +9,7 @@ export class AppQueryErrorHandler extends QueryErrorHandler.Service<AppQueryErro
     "AppQueryErrorHandler",
 
     (self, failure, defect) => self.pipe(
-        Effect.catchTags({
-            RequestError: failure,
-            ResponseError: failure,
-        }),
-
+        Effect.catchTag("RequestError", "ResponseError", failure),
         Effect.catchAllDefect(defect),
     ),
 ) {}
