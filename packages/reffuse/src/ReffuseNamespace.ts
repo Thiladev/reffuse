@@ -27,6 +27,7 @@ export abstract class ReffuseNamespace<R> {
     declare ["constructor"]: ReffuseNamespaceClass<R>
 
     constructor() {
+        this.useSubRefFromGetSet = this.useSubRefFromGetSet.bind(this as any) as any
         this.SubRefFromPath = this.SubRefFromPath.bind(this as any) as any
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
@@ -404,6 +405,18 @@ export abstract class ReffuseNamespace<R> {
         return ref
     }
 
+    useSubRefFromGetSet<A, B, R>(
+        this: ReffuseNamespace<R>,
+        parent: SubscriptionRef.SubscriptionRef<B>,
+        getter: (parentValue: B) => A,
+        setter: (parentValue: B, value: A) => B,
+    ): SubscriptionSubRef.SubscriptionSubRef<A, B> {
+        return React.useMemo(
+            () => SubscriptionSubRef.makeFromGetSet(parent, getter, setter),
+            [parent],
+        )
+    }
+
     useSubRefFromPath<B, const P extends PropertyPath.Paths<B>, R>(
         this: ReffuseNamespace<R>,
         parent: SubscriptionRef.SubscriptionRef<B>,
@@ -527,6 +540,18 @@ export abstract class ReffuseNamespace<R> {
         return reactStateValue
     }
 
+
+    SubRefFromGetSet<A, B, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly parent: SubscriptionRef.SubscriptionRef<B>,
+            readonly getter: (parentValue: B) => A,
+            readonly setter: (parentValue: B, value: A) => B,
+            readonly children: (subRef: SubscriptionSubRef.SubscriptionSubRef<A, B>) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(this.useSubRefFromGetSet(props.parent, props.getter, props.setter))
+    }
 
     SubRefFromPath<B, const P extends PropertyPath.Paths<B>, R>(
         this: ReffuseNamespace<R>,
