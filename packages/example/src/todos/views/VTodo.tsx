@@ -1,6 +1,6 @@
 import { Todo } from "@/domain"
 import { Box, Card, Flex, IconButton, TextArea } from "@radix-ui/themes"
-import { Effect, Ref, SubscriptionRef } from "effect"
+import { Effect, Ref, Stream, SubscriptionRef } from "effect"
 import { Delete } from "lucide-react"
 import { useState } from "react"
 import { R } from "../reffuse"
@@ -14,7 +14,15 @@ export interface VTodoProps {
 export function VTodo({ todoRef, remove }: VTodoProps) {
 
     const runSync = R.useRunSync()
-    const [todo] = R.useSubscribeRefs(todoRef)
+
+    const localTodoRef = R.useRef(() => todoRef)
+    const [content, setContent] = R.useRefState(R.useSubRefFromPath(localTodoRef, ["content"]))
+
+    R.useFork(() => localTodoRef.changes.pipe(
+        Stream.debounce("250 millis"),
+        Stream.runForEach(v => Ref.set(todoRef, v)),
+    ), [localTodoRef])
+
     const editorMode = useState(false)
 
 
@@ -23,13 +31,8 @@ export function VTodo({ todoRef, remove }: VTodoProps) {
             <Card>
                 <Flex direction="column" align="stretch" gap="1">
                     <TextArea
-                        value={todo.content}
-                        onChange={e => runSync(
-                            Ref.set(todoRef, Todo.Todo.make({
-                                ...todo,
-                                content: e.target.value,
-                            }, true))
-                        )}
+                        value={content}
+                        onChange={e => setContent(e.target.value)}
                         disabled={!editorMode}
                     />
 

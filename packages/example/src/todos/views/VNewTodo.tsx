@@ -1,7 +1,7 @@
 import { Todo } from "@/domain"
 import { Box, Button, Card, Flex, TextArea } from "@radix-ui/themes"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Effect, Option, Ref } from "effect"
+import { Chunk, Effect, Option, Ref } from "effect"
 import { R } from "../reffuse"
 import { TodosState } from "../services"
 
@@ -18,7 +18,7 @@ export function VNewTodo() {
     const [content, setContent] = R.useRefState(R.useSubRefFromPath(todoRef, ["content"]))
 
     const add = R.useCallbackSync(() => Effect.all([TodosState.TodosState, todoRef]).pipe(
-        Effect.flatMap(([state, todo]) => state.prepend(todo)),
+        Effect.flatMap(([state, todo]) => Ref.update(state.todos, Chunk.prepend(todo))),
         Effect.andThen(createEmptyTodo),
         Effect.flatMap(v => Ref.set(todoRef, v)),
     ), [todoRef])
