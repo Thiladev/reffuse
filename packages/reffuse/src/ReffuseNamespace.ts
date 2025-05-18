@@ -27,7 +27,7 @@ export abstract class ReffuseNamespace<R> {
     declare ["constructor"]: ReffuseNamespaceClass<R>
 
     constructor() {
-        this.useSubRefFromGetSet = this.useSubRefFromGetSet.bind(this as any) as any
+        this.SubRefFromGetSet = this.SubRefFromGetSet.bind(this as any) as any
         this.SubRefFromPath = this.SubRefFromPath.bind(this as any) as any
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
