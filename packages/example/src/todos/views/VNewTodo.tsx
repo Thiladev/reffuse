@@ -1,21 +1,21 @@
 import { Todo } from "@/domain"
 import { Box, Button, Card, Flex, TextArea } from "@radix-ui/themes"
+import { GetRandomValues, makeUuid4 } from "@typed/id"
 import { Effect, Option, Ref } from "effect"
 import { R } from "../reffuse"
 import { TodosState } from "../services"
 
 
-const createEmptyTodo = Effect.map(Todo.generateUniqueID, id => Todo.Todo.make({
-    id,
-    content: "",
-    completedAt: Option.none(),
-}, true))
+const createEmptyTodo = makeUuid4.pipe(
+    Effect.map(id => Todo.Todo.make({ id, content: "", completedAt: Option.none()}, true)),
+    Effect.provide(GetRandomValues.CryptoRandom),
+)
 
 
 export function VNewTodo() {
 
     const todoRef = R.useRef(() => createEmptyTodo)
-    const [content, setContent] = R.useRefState(R.useSubRef(todoRef, ["content"]))
+    const [content, setContent] = R.useRefState(R.useSubRefFromPath(todoRef, ["content"]))
 
     const add = R.useCallbackSync(() => Effect.all([TodosState.TodosState, todoRef]).pipe(
         Effect.flatMap(([state, todo]) => state.prepend(todo)),
