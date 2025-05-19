@@ -1,4 +1,4 @@
-import { Array, Context, Effect, ExecutionStrategy, Exit, Layer, Ref, Runtime, Scope } from "effect"
+import { Array, Context, Effect, ExecutionStrategy, Exit, Layer, Match, Ref, Runtime, Scope } from "effect"
 import * as React from "react"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
 
@@ -25,6 +25,8 @@ export type R<T> = T extends ReffuseContext<infer R> ? R : never
 export type ReactProvider<R> = React.FC<{
     readonly layer: Layer.Layer<R, unknown, Scope.Scope>
     readonly scope?: Scope.Scope
+    readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
+    readonly finalizerExecutionMode?: "sync" | "fork"
     readonly children?: React.ReactNode
 }>
 
@@ -32,16 +34,25 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
     return function ReffuseContextReactProvider(props) {
         const runtime = ReffuseRuntime.useRuntime()
         const runSync = React.useMemo(() => Runtime.runSync(runtime), [runtime])
+        const runFork = React.useMemo(() => Runtime.runFork(runtime), [runtime])
 
         const makeScope = React.useMemo(() => props.scope
-            ? Scope.fork(props.scope, ExecutionStrategy.sequential)
-            : Scope.make(),
+            ? Scope.fork(props.scope, props.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
+            : Scope.make(props.finalizerExecutionStrategy ?? ExecutionStrategy.sequential),
         [props.scope])
 
-        const makeContext = React.useCallback((scope: Scope.CloseableScope) => Effect.context<R>().pipe(
+        const makeContext = (scope: Scope.CloseableScope) => Effect.context<R>().pipe(
             Effect.provide(props.layer),
             Effect.provideService(Scope.Scope, scope),
-        ), [props.layer])
+        )
+
+        const closeScope = (scope: Scope.CloseableScope) => Scope.close(scope, Exit.void).pipe(
+            effect => Match.value(props.finalizerExecutionMode ?? "sync").pipe(
+                Match.when("sync", () => { runSync(effect) }),
+                Match.when("fork", () => { runFork(effect) }),
+                Match.exhaustive,
+            )
+        )
 
         const [isInitialRun, initialScope, initialValue] = React.useMemo(() => Effect.Do.pipe(
             Effect.bind("isInitialRun", () => Ref.make(true)),
@@ -57,7 +68,7 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
             Effect.if({
                 onTrue: () => Ref.set(isInitialRun, false).pipe(
                     Effect.map(() =>
-                        () => runSync(Scope.close(initialScope, Exit.void))
+                        () => closeScope(initialScope)
                     )
                 ),
 
@@ -68,13 +79,13 @@ const makeProvider = <R>(Context: React.Context<Context.Context<R>>): ReactProvi
                         Effect.sync(() => setValue(context))
                     ),
                     Effect.map(({ scope }) =>
-                        () => runSync(Scope.close(scope, Exit.void))
+                        () => closeScope(scope)
                     ),
                 ),
             }),
 
             runSync,
-        ), [makeScope, makeContext, runSync])
+        ), [makeScope, runSync, runFork])
 
         return React.createElement(Context, { ...props, value })
     }
@@ -84,6 +95,7 @@ export type AsyncReactProvider<R> = React.FC<{
     readonly layer: Layer.Layer<R, unknown, Scope.Scope>
     readonly scope?: Scope.Scope
     readonly finalizerExecutionStrategy?: ExecutionStrategy.ExecutionStrategy
+    readonly finalizerExecutionMode?: "sync" | "fork"
     readonly fallback?: React.ReactNode
     readonly children?: React.ReactNode
 }>
@@ -112,7 +124,7 @@ const makeAsyncProvider = <R>(Context: React.Context<Context.Context<R>>): Async
 
             const scope = runSync(props.scope
                 ? Scope.fork(props.scope, props.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
-                : Scope.make(props.finalizerExecutionStrategy)
+                : Scope.make(props.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
             )
 
             Effect.context<R>().pipe(
@@ -126,7 +138,13 @@ const makeAsyncProvider = <R>(Context: React.Context<Context.Context<R>>): Async
                 effect => runFork(effect, { ...props, scope }),
             )
 
-            return () => { runFork(Scope.close(scope, Exit.void)) }
+            return () => Scope.close(scope, Exit.void).pipe(
+                effect => Match.value(props.finalizerExecutionMode ?? "sync").pipe(
+                    Match.when("sync", () => { runSync(effect) }),
+                    Match.when("fork", () => { runFork(effect) }),
+                    Match.exhaustive,
+                )
+            )
         }, [props.layer, runSync, runFork])
 
         return React.createElement(React.Suspense, {
