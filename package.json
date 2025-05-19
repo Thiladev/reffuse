@@ -1,6 +1,6 @@
 {
   "name": "@reffuse/monorepo",
-  "packageManager": "bun@1.2.12",
+  "packageManager": "bun@1.2.13",
   "private": true,
   "workspaces": [
     "./packages/*"

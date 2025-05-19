@@ -1,6 +1,6 @@
 {
   "name": "reffuse",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "type": "module",
   "files": [
     "./README.md",
@@ -35,7 +35,7 @@
   },
   "peerDependencies": {
     "@types/react": "^19.0.0",
-    "effect": "^3.13.0",
+    "effect": "^3.15.0",
     "react": "^19.0.0"
   }
 }

@@ -1,5 +1,5 @@
 import { Box, Flex } from "@radix-ui/themes"
-import { Chunk, Effect, Stream } from "effect"
+import { Chunk, Effect, Ref } from "effect"
 import { R } from "../reffuse"
 import { TodosState } from "../services"
 import { VNewTodo } from "./VNewTodo"
@@ -8,14 +8,7 @@ import { VTodo } from "./VTodo"
 
 export function VTodos() {
 
-    // Sync changes to the todos with the local storage
-    R.useFork(() => TodosState.TodosState.pipe(
-        Effect.flatMap(state =>
-            Stream.runForEach(state.todos.changes, () => state.saveToLocalStorage)
-        )
-    ), [])
-
-    const todosRef = R.useMemo(() => TodosState.TodosState.pipe(Effect.map(state => state.todos)), [])
+    const todosRef = R.useMemo(() => Effect.map(TodosState.TodosState, state => state.todos), [])
     const [todos] = R.useSubscribeRefs(todosRef)
 
 
@@ -27,7 +20,16 @@ export function VTodos() {
 
             {Chunk.map(todos, (todo, index) => (
                 <Box key={todo.id} width="500px">
-                    <VTodo index={index} todo={todo} />
+                    <R.SubRefFromGetSet
+                        parent={todosRef}
+                        getter={parentValue => Chunk.unsafeGet(parentValue, index)}
+                        setter={(parentValue, value) => Chunk.replace(parentValue, index, value)}
+                    >
+                        {ref => <VTodo
+                            todoRef={ref}
+                            remove={Ref.update(todosRef, Chunk.remove(index))}
+                        />}
+                    </R.SubRefFromGetSet>
                 </Box>
             ))}
         </Flex>

@@ -52,7 +52,7 @@ class SubscriptionSubRefImpl<in out A, in out B> extends Effectable.Class<A> imp
         readonly setter: (parentValue: B, value: A) => B,
     ) {
         super()
-        this.get = Ref.get(this.parent).pipe(Effect.map(this.getter))
+        this.get = Effect.map(Ref.get(this.parent), this.getter)
     }
 
     commit() {

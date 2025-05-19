@@ -1,20 +1,28 @@
 import { Todo } from "@/domain"
 import { Box, Card, Flex, IconButton, TextArea } from "@radix-ui/themes"
-import { Effect } from "effect"
+import { Effect, Ref, Stream, SubscriptionRef } from "effect"
 import { Delete } from "lucide-react"
 import { useState } from "react"
 import { R } from "../reffuse"
-import { TodosState } from "../services"
 
 
 export interface VTodoProps {
-    readonly index: number
-    readonly todo: Todo.Todo
+    readonly todoRef: SubscriptionRef.SubscriptionRef<Todo.Todo>
+    readonly remove: Effect.Effect<void>
 }
 
-export function VTodo({ index, todo }: VTodoProps) {
+export function VTodo({ todoRef, remove }: VTodoProps) {
 
     const runSync = R.useRunSync()
+
+    const localTodoRef = R.useRef(() => todoRef)
+    const [content, setContent] = R.useRefState(R.useSubRefFromPath(localTodoRef, ["content"]))
+
+    R.useFork(() => localTodoRef.changes.pipe(
+        Stream.debounce("250 millis"),
+        Stream.runForEach(v => Ref.set(todoRef, v)),
+    ), [localTodoRef])
+
     const editorMode = useState(false)
 
 
@@ -23,14 +31,8 @@ export function VTodo({ index, todo }: VTodoProps) {
             <Card>
                 <Flex direction="column" align="stretch" gap="1">
                     <TextArea
-                        value={todo.content}
-                        onChange={e => TodosState.TodosState.pipe(
-                            Effect.flatMap(state => state.replace(
-                                index,
-                                Todo.Todo.make({ ...todo, content: e.target.value }, true),
-                            )),
-                            runSync,
-                        )}
+                        value={content}
+                        onChange={e => setContent(e.target.value)}
                         disabled={!editorMode}
                     />
 
@@ -38,12 +40,7 @@ export function VTodo({ index, todo }: VTodoProps) {
                         <Box></Box>
 
                         <Flex direction="row" align="center" gap="1">
-                            <IconButton
-                                onClick={() => TodosState.TodosState.pipe(
-                                    Effect.flatMap(state => state.remove(index)),
-                                    runSync,
-                                )}
-                            >
+                            <IconButton onClick={() => runSync(remove)}>
                                 <Delete />
                             </IconButton>
                         </Flex>

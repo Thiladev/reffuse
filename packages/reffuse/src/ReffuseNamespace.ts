@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -15,6 +15,7 @@ export interface ScopeOptions {
 }
 
 export interface UseScopeOptions extends RenderOptions, ScopeOptions {
+    readonly scope?: Scope.Scope
     readonly finalizerExecutionMode?: "sync" | "fork"
 }
 
@@ -27,7 +28,8 @@ export abstract class ReffuseNamespace<R> {
     declare ["constructor"]: ReffuseNamespaceClass<R>
 
     constructor() {
-        this.SubRef = this.SubRef.bind(this as any) as any
+        this.SubRefFromGetSet = this.SubRefFromGetSet.bind(this as any) as any
+        this.SubRefFromPath = this.SubRefFromPath.bind(this as any) as any
         this.SubscribeRefs = this.SubscribeRefs.bind(this as any) as any
         this.RefState = this.RefState.bind(this as any) as any
         this.SubscribeStream = this.SubscribeStream.bind(this as any) as any
@@ -96,14 +98,26 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         deps: React.DependencyList = [],
         options?: UseScopeOptions,
-    ): Scope.Scope {
+    ): readonly [scope: Scope.Scope, layer: Layer.Layer<Scope.Scope>] {
         const runSync = this.useRunSync()
         const runFork = this.useRunFork()
 
-        const [isInitialRun, initialScope] = React.useMemo(() => runSync(Effect.all([
-            Ref.make(true),
-            Scope.make(options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential),
-        ])), [])
+        const makeScope = React.useMemo(() => options?.scope
+            ? Scope.fork(options.scope, options.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
+            : Scope.make(options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential),
+        [options?.scope])
+
+        const closeScope = (scope: Scope.CloseableScope) => Scope.close(scope, Exit.void).pipe(
+            effect => Match.value(options?.finalizerExecutionMode ?? "sync").pipe(
+                Match.when("sync", () => { runSync(effect) }),
+                Match.when("fork", () => { runFork(effect) }),
+                Match.exhaustive,
+            )
+        )
+
+        const [isInitialRun, initialScope] = React.useMemo(() => runSync(
+            Effect.all([Ref.make(true), makeScope])
+        ), [makeScope])
 
         const [scope, setScope] = React.useState(initialScope)
 
@@ -111,34 +125,23 @@ export abstract class ReffuseNamespace<R> {
             Effect.if({
                 onTrue: () => Effect.as(
                     Ref.set(isInitialRun, false),
-                    () => Scope.close(initialScope, Exit.void).pipe(
-                        effect => Match.value(options?.finalizerExecutionMode ?? "sync").pipe(
-                            Match.when("sync", () => { runSync(effect) }),
-                            Match.when("fork", () => { runFork(effect) }),
-                            Match.exhaustive,
-                        )
-                    ),
+                    () => closeScope(initialScope),
                 ),
 
-                onFalse: () => Scope.make(options?.finalizerExecutionStrategy).pipe(
+                onFalse: () => makeScope.pipe(
                     Effect.tap(v => Effect.sync(() => setScope(v))),
-                    Effect.map(v => () => Scope.close(v, Exit.void).pipe(
-                        effect => Match.value(options?.finalizerExecutionMode ?? "sync").pipe(
-                            Match.when("sync", () => { runSync(effect) }),
-                            Match.when("fork", () => { runFork(effect) }),
-                            Match.exhaustive,
-                        )
-                    )),
+                    Effect.map(v => () => closeScope(v)),
                 ),
             }),
 
             runSync,
         ), [
+            makeScope,
             ...options?.doNotReExecuteOnRuntimeOrContextChange ? [] : [runSync, runFork],
             ...deps,
         ])
 
-        return scope
+        return React.useMemo(() => [scope, Layer.succeed(Scope.Scope, scope)] as const, [scope])
     }
 
     /**
@@ -404,7 +407,19 @@ export abstract class ReffuseNamespace<R> {
         return ref
     }
 
-    useSubRef<B, const P extends PropertyPath.Paths<B>, R>(
+    useSubRefFromGetSet<A, B, R>(
+        this: ReffuseNamespace<R>,
+        parent: SubscriptionRef.SubscriptionRef<B>,
+        getter: (parentValue: B) => A,
+        setter: (parentValue: B, value: A) => B,
+    ): SubscriptionSubRef.SubscriptionSubRef<A, B> {
+        return React.useMemo(
+            () => SubscriptionSubRef.makeFromGetSet(parent, getter, setter),
+            [parent],
+        )
+    }
+
+    useSubRefFromPath<B, const P extends PropertyPath.Paths<B>, R>(
         this: ReffuseNamespace<R>,
         parent: SubscriptionRef.SubscriptionRef<B>,
         path: P,
@@ -474,7 +489,7 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
-        const scope = this.useScope()
+        const [, scopeLayer] = this.useScope([], { finalizerExecutionMode: "fork" })
 
         const { latest, pubsub, stream } = this.useMemo(() => Effect.Do.pipe(
             Effect.bind("latest", () => Ref.make(values)),
@@ -486,8 +501,8 @@ export abstract class ReffuseNamespace<R> {
                 )),
                 Stream.unwrapScoped,
             )),
-            Effect.provideService(Scope.Scope, scope),
-        ), [scope], { doNotReExecuteOnRuntimeOrContextChange: true })
+            Effect.provide(scopeLayer),
+        ), [scopeLayer], { doNotReExecuteOnRuntimeOrContextChange: true })
 
         this.useEffect(() => Ref.set(latest, values).pipe(
             Effect.andThen(PubSub.publish(pubsub, values)),
@@ -528,7 +543,19 @@ export abstract class ReffuseNamespace<R> {
     }
 
 
-    SubRef<B, const P extends PropertyPath.Paths<B>, R>(
+    SubRefFromGetSet<A, B, R>(
+        this: ReffuseNamespace<R>,
+        props: {
+            readonly parent: SubscriptionRef.SubscriptionRef<B>,
+            readonly getter: (parentValue: B) => A,
+            readonly setter: (parentValue: B, value: A) => B,
+            readonly children: (subRef: SubscriptionSubRef.SubscriptionSubRef<A, B>) => React.ReactNode
+        },
+    ): React.ReactNode {
+        return props.children(this.useSubRefFromGetSet(props.parent, props.getter, props.setter))
+    }
+
+    SubRefFromPath<B, const P extends PropertyPath.Paths<B>, R>(
         this: ReffuseNamespace<R>,
         props: {
             readonly parent: SubscriptionRef.SubscriptionRef<B>,
@@ -536,7 +563,7 @@ export abstract class ReffuseNamespace<R> {
             readonly children: (subRef: SubscriptionSubRef.SubscriptionSubRef<PropertyPath.ValueFromPath<B, P>, B>) => React.ReactNode
         },
     ): React.ReactNode {
-        return props.children(this.useSubRef(props.parent, props.path))
+        return props.children(this.useSubRefFromPath(props.parent, props.path))
     }
 
     SubscribeRefs<

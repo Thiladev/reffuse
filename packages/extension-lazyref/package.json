@@ -35,7 +35,7 @@
   "peerDependencies": {
     "@typed/lazy-ref": "^0.3.0",
     "@types/react": "^19.0.0",
-    "effect": "^3.13.0",
+    "effect": "^3.15.0",
     "react": "^19.0.0",
     "reffuse": "^0.1.8"
   }
