@@ -2,7 +2,7 @@ import { R } from "@/reffuse"
 import { Button, Flex, Text } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
-import { Console, Effect, Option, Scope } from "effect"
+import { Console, Effect, Option } from "effect"
 import { useEffect, useState } from "react"
 
 
@@ -24,13 +24,13 @@ function RouteComponent() {
     const uuidStream = R.useStreamFromReactiveValues([uuid])
     const uuidStreamLatestValue = R.useSubscribeStream(uuidStream)
 
-    const scope = R.useScope([uuid])
+    const [, scopeLayer] = R.useScope([uuid])
 
     useEffect(() => Effect.addFinalizer(() => Console.log("Scope cleanup!")).pipe(
         Effect.andThen(Console.log("Scope changed")),
-        Effect.provideService(Scope.Scope, scope),
+        Effect.provide(scopeLayer),
         runSync,
-    ), [scope, runSync])
+    ), [scopeLayer, runSync])
 
     return (
         <Flex direction="column" justify="center" align="center" gap="2">

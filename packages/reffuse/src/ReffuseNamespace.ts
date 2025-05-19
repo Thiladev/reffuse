@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, type Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Fiber, Layer, Match, Option, pipe, Pipeable, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import * as ReffuseContext from "./ReffuseContext.js"
 import * as ReffuseRuntime from "./ReffuseRuntime.js"
@@ -98,7 +98,7 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         deps: React.DependencyList = [],
         options?: UseScopeOptions,
-    ): Scope.Scope {
+    ): readonly [scope: Scope.Scope, layer: Layer.Layer<Scope.Scope>] {
         const runSync = this.useRunSync()
         const runFork = this.useRunFork()
 
@@ -115,10 +115,9 @@ export abstract class ReffuseNamespace<R> {
             )
         )
 
-        const [isInitialRun, initialScope] = React.useMemo(() => runSync(Effect.all([
-            Ref.make(true),
-            makeScope,
-        ])), [makeScope])
+        const [isInitialRun, initialScope] = React.useMemo(() => runSync(
+            Effect.all([Ref.make(true), makeScope])
+        ), [makeScope])
 
         const [scope, setScope] = React.useState(initialScope)
 
@@ -142,7 +141,7 @@ export abstract class ReffuseNamespace<R> {
             ...deps,
         ])
 
-        return scope
+        return React.useMemo(() => [scope, Layer.succeed(Scope.Scope, scope)] as const, [scope])
     }
 
     /**
@@ -490,7 +489,7 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
-        const scope = this.useScope([], { finalizerExecutionMode: "fork" })
+        const [, scopeLayer] = this.useScope([], { finalizerExecutionMode: "fork" })
 
         const { latest, pubsub, stream } = this.useMemo(() => Effect.Do.pipe(
             Effect.bind("latest", () => Ref.make(values)),
@@ -502,8 +501,8 @@ export abstract class ReffuseNamespace<R> {
                 )),
                 Stream.unwrapScoped,
             )),
-            Effect.provideService(Scope.Scope, scope),
-        ), [scope], { doNotReExecuteOnRuntimeOrContextChange: true })
+            Effect.provide(scopeLayer),
+        ), [scopeLayer], { doNotReExecuteOnRuntimeOrContextChange: true })
 
         this.useEffect(() => Ref.set(latest, values).pipe(
             Effect.andThen(PubSub.publish(pubsub, values)),
