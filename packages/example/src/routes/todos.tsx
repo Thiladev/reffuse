@@ -26,9 +26,9 @@ function Todos() {
 
     return (
         <Container>
-            <TodosContext.AsyncProvider layer={todosLayer}>
+            <TodosContext.Provider layer={todosLayer} finalizerExecutionMode="fork">
                 <VTodos />
-            </TodosContext.AsyncProvider>
+            </TodosContext.Provider>
         </Container>
     )
 
