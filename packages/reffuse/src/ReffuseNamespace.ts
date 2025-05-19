@@ -490,7 +490,7 @@ export abstract class ReffuseNamespace<R> {
         this: ReffuseNamespace<R>,
         values: A,
     ): Stream.Stream<A> {
-        const scope = this.useScope()
+        const scope = this.useScope([], { finalizerExecutionMode: "fork" })
 
         const { latest, pubsub, stream } = this.useMemo(() => Effect.Do.pipe(
             Effect.bind("latest", () => Ref.make(values)),
