@@ -1,4 +1,3 @@
-import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
 import { type Cause, type Context, Effect, Fiber, identity, Option, Queue, Ref, type Scope, Stream, SubscriptionRef } from "effect"
 import type * as QueryClient from "../QueryClient.js"
@@ -27,7 +26,6 @@ export interface QueryRunner<K extends readonly unknown[], A, E, R> {
     ]>
 
     readonly fetchOnKeyChange: Effect.Effect<void, Cause.NoSuchElementException, Scope.Scope>
-    readonly refreshOnWindowFocus: Effect.Effect<void>
 }
 
 
@@ -169,11 +167,6 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         ))
     )
 
-    const refreshOnWindowFocus = Stream.runForEach(
-        BrowserStream.fromEventListenerWindow("focus"),
-        () => forkRefresh,
-    )
-
     return {
         context,
 
@@ -186,6 +179,27 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         forkRefresh,
 
         fetchOnKeyChange,
-        refreshOnWindowFocus,
     }
+})
+
+
+export interface RunOptions {
+    readonly refreshOnWindowFocus?: boolean
+}
+
+export const run = <K extends readonly unknown[], A, E, R>(
+    self: QueryRunner<K, A, E, R>,
+    options?: RunOptions,
+): Effect.Effect<void, Error | Cause.NoSuchElementException, Scope.Scope> => Effect.gen(function*() {
+    if (options?.refreshOnWindowFocus ?? false)
+        yield* Effect.tryPromise({
+            try: () => import("@effect/platform-browser/BrowserStream"),
+            catch: () => new Error("Could not import @effect/platform-browser, make sure it is installed as it is a requirement for 'refreshOnWindowFocus'."),
+        }).pipe(
+            Effect.flatMap(BrowserStream => Effect.forkScoped(
+                Stream.runForEach(BrowserStream.fromEventListenerWindow("focus"), () => self.forkRefresh)
+            ))
+        )
+
+    yield* self.fetchOnKeyChange
 })
