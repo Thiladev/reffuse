@@ -1,9 +1,9 @@
 import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
 import { type Cause, type Context, Effect, Fiber, identity, Option, Queue, Ref, type Scope, Stream, SubscriptionRef } from "effect"
-import type * as QueryClient from "../QueryClient.js"
-import * as QueryProgress from "../QueryProgress.js"
-import * as QueryState from "./QueryState.js"
+import type * as QueryClient from "./QueryClient.js"
+import * as QueryProgress from "./QueryProgress.js"
+import { QueryState } from "./internal/index.js"
 
 
 export interface QueryRunner<K extends readonly unknown[], A, E, R> {
@@ -97,7 +97,7 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         )),
 
         Effect.provide(context),
-        Effect.provide(QueryProgress.QueryProgress.Live),
+        Effect.provide(QueryProgress.QueryProgress.Default),
     )
 
     const forkFetch = Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>().pipe(

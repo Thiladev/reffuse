@@ -1,32 +1,18 @@
 import type * as AsyncData from "@typed/async-data"
-import { type Cause, type Context, Effect, type Fiber, Layer, type Option, type Stream, type SubscriptionRef } from "effect"
+import { type Context, Effect, type Fiber, Layer, type Stream, type SubscriptionRef } from "effect"
 import * as React from "react"
 import { ReffuseExtension, type ReffuseNamespace } from "reffuse"
+import { MutationRunner } from "./internal/index.js"
 import type * as MutationService from "./MutationService.js"
 import * as QueryClient from "./QueryClient.js"
 import type * as QueryProgress from "./QueryProgress.js"
-import type * as QueryService from "./QueryService.js"
-import { MutationRunner, QueryRunner } from "./internal/index.js"
+import * as QueryRunner from "./QueryRunner.js"
 
 
 export interface UseQueryProps<K extends readonly unknown[], A, E, R> {
     readonly key: Stream.Stream<K>
     readonly query: (key: K) => Effect.Effect<A, E, R | QueryProgress.QueryProgress>
-    readonly refreshOnWindowFocus?: boolean
-}
-
-export interface UseQueryResult<K extends readonly unknown[], A, E> {
-    readonly latestKey: SubscriptionRef.SubscriptionRef<Option.Option<K>>
-    readonly state: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
-
-    readonly forkRefresh: Effect.Effect<readonly [
-        fiber: Fiber.RuntimeFiber<AsyncData.Success<A> | AsyncData.Failure<E>, Cause.NoSuchElementException>,
-        state: Stream.Stream<AsyncData.AsyncData<A, E>>,
-    ]>
-
-    readonly layer: <Self, Id extends string>(
-        tag: Context.TagClass<Self, Id, QueryService.QueryService<K, A, E>>
-    ) => Layer.Layer<Self>
+    readonly options?: QueryRunner.RunOptions
 }
 
 
@@ -61,32 +47,16 @@ export const QueryExtension = ReffuseExtension.make(() => ({
     >(
         this: ReffuseNamespace.ReffuseNamespace<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
         props: UseQueryProps<QK, QA, QE, QR>,
-    ): UseQueryResult<QK, QA | FallbackA, Exclude<QE, HandledE>> {
+    ): QueryRunner.QueryRunner<QK, QA | FallbackA, Exclude<QE, HandledE>, QR> {
         const runner = this.useMemo(() => QueryRunner.make({
             QueryClient: QueryClient.makeGenericTagClass<FallbackA, HandledE>(),
             key: props.key,
             query: props.query,
         }), [props.key])
 
-        this.useFork(() => runner.fetchOnKeyChange, [runner])
+        this.useFork(() => QueryRunner.run(runner, props.options), [runner])
 
-        this.useFork(() => (props.refreshOnWindowFocus ?? true)
-            ? runner.refreshOnWindowFocus
-            : Effect.void,
-        [props.refreshOnWindowFocus, runner])
-
-        return React.useMemo(() => ({
-            latestKey: runner.latestKeyRef,
-            state: runner.stateRef,
-
-            forkRefresh: runner.forkRefresh,
-
-            layer: tag => Layer.succeed(tag, {
-                latestKey: runner.latestKeyRef,
-                state: runner.stateRef,
-                forkRefresh: runner.forkRefresh,
-            }),
-        }), [runner])
+        return runner
     },
 
     useMutation<

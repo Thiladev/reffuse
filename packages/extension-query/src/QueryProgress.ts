@@ -10,7 +10,7 @@ export class QueryProgress extends Effect.Tag("@reffuse/extension-query/QueryPro
         f: (previous: Option.Option<AsyncData.Progress>) => AsyncData.Progress
     ) => Effect.Effect<void>
 }>() {
-    static readonly Live: Layer.Layer<
+    static readonly Default: Layer.Layer<
         QueryProgress,
         never,
         QueryState.QueryState<any, any>

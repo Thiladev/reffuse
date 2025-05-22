@@ -55,7 +55,7 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         )),
 
         Effect.provide(context),
-        Effect.provide(QueryProgress.QueryProgress.Live),
+        Effect.provide(QueryProgress.QueryProgress.Default),
     )
 
     const mutate = (...key: K) => Effect.provide(run(key), QueryState.layer(
