@@ -192,13 +192,8 @@ export const run = <K extends readonly unknown[], A, E, R>(
     self: QueryRunner<K, A, E, R>,
     options?: RunOptions,
 ): Effect.Effect<void, Error | Cause.NoSuchElementException, Scope.Scope> => Effect.gen(function*() {
-    if (options?.refreshOnWindowFocus ?? true)
-        yield* Stream.runForEach(
-            typeof window !== "undefined"
-                ? BrowserStream.fromEventListenerWindow("focus")
-                : Stream.empty,
-            () => self.forkRefresh,
-        )
+    if (typeof window !== "undefined" && (options?.refreshOnWindowFocus ?? true))
+        yield* Stream.runForEach(BrowserStream.fromEventListenerWindow("focus"), () => self.forkRefresh)
 
     yield* self.fetchOnKeyChange
 })
