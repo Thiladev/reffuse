@@ -1,14 +1,12 @@
 import { BrowserStream } from "@effect/platform-browser"
 import * as AsyncData from "@typed/async-data"
-import { type Cause, type Context, Effect, Fiber, identity, Option, Queue, Ref, type Scope, Stream, SubscriptionRef } from "effect"
+import { type Cause, Effect, Fiber, identity, Option, Queue, Ref, type Scope, Stream, SubscriptionRef } from "effect"
 import type * as QueryClient from "./QueryClient.js"
 import * as QueryProgress from "./QueryProgress.js"
 import { QueryState } from "./internal/index.js"
 
 
-export interface QueryRunner<K extends readonly unknown[], A, E, R> {
-    readonly context: Context.Context<R>
-
+export interface QueryRunner<K extends readonly unknown[], A, E> {
     readonly latestKeyRef: SubscriptionRef.SubscriptionRef<Option.Option<K>>
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.RuntimeFiber<
@@ -43,7 +41,7 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         query,
     }: MakeProps<K, A, FallbackA, E, HandledE, R>
 ): Effect.Effect<
-    QueryRunner<K, A | FallbackA, Exclude<E, HandledE>, R>,
+    QueryRunner<K, A | FallbackA, Exclude<E, HandledE>>,
     never,
     R | QueryClient.TagClassShape<FallbackA, HandledE>
 > => Effect.gen(function*() {
@@ -188,8 +186,8 @@ export interface RunOptions {
     readonly refreshOnWindowFocus?: boolean
 }
 
-export const run = <K extends readonly unknown[], A, E, R>(
-    self: QueryRunner<K, A, E, R>,
+export const run = <K extends readonly unknown[], A, E>(
+    self: QueryRunner<K, A, E>,
     options?: RunOptions,
 ): Effect.Effect<void, Error | Cause.NoSuchElementException, Scope.Scope> => Effect.gen(function*() {
     if (typeof window !== "undefined" && (options?.refreshOnWindowFocus ?? true))

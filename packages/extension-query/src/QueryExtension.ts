@@ -47,7 +47,7 @@ export const QueryExtension = ReffuseExtension.make(() => ({
     >(
         this: ReffuseNamespace.ReffuseNamespace<R | QueryClient.TagClassShape<FallbackA, HandledE>>,
         props: UseQueryProps<QK, QA, QE, QR>,
-    ): QueryRunner.QueryRunner<QK, QA | FallbackA, Exclude<QE, HandledE>, QR> {
+    ): QueryRunner.QueryRunner<QK, QA | FallbackA, Exclude<QE, HandledE>> {
         const runner = this.useMemo(() => QueryRunner.make({
             QueryClient: QueryClient.makeGenericTagClass<FallbackA, HandledE>(),
             key: props.key,

@@ -13,5 +13,5 @@ export interface QueryService<K extends readonly unknown[], A, E> {
 }
 
 export const Tag = <const Id extends string>(id: Id) => <
-    Self, K extends readonly unknown[], A, E = never, R = never,
->() => Effect.Tag(id)<Self, QueryRunner.QueryRunner<K, A, E, R>>()
+    Self, K extends readonly unknown[], A, E = never
+>() => Effect.Tag(id)<Self, QueryRunner.QueryRunner<K, A, E>>()
