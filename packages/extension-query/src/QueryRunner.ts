@@ -7,6 +7,7 @@ import { QueryState } from "./internal/index.js"
 
 
 export interface QueryRunner<K extends readonly unknown[], A, E> {
+    readonly queryKey: Stream.Stream<K>
     readonly latestKeyRef: SubscriptionRef.SubscriptionRef<Option.Option<K>>
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
     readonly fiberRef: SubscriptionRef.SubscriptionRef<Option.Option<Fiber.RuntimeFiber<
@@ -14,7 +15,8 @@ export interface QueryRunner<K extends readonly unknown[], A, E> {
         Cause.NoSuchElementException
     >>>
 
-    readonly forkInterrupt: Effect.Effect<Fiber.RuntimeFiber<void, Cause.NoSuchElementException>>
+    readonly interrupt: Effect.Effect<void>
+    readonly forkInterrupt: Effect.Effect<Fiber.RuntimeFiber<void>>
     readonly forkFetch: Effect.Effect<readonly [
         fiber: Fiber.RuntimeFiber<AsyncData.Success<A> | AsyncData.Failure<E>, Cause.NoSuchElementException>,
         state: Stream.Stream<AsyncData.AsyncData<A, E>>,
@@ -23,9 +25,12 @@ export interface QueryRunner<K extends readonly unknown[], A, E> {
         fiber: Fiber.RuntimeFiber<AsyncData.Success<A> | AsyncData.Failure<E>, Cause.NoSuchElementException>,
         state: Stream.Stream<AsyncData.AsyncData<A, E>>,
     ]>
-
-    readonly fetchOnKeyChange: Effect.Effect<void, Cause.NoSuchElementException, Scope.Scope>
 }
+
+
+export const Tag = <const Id extends string>(id: Id) => <
+    Self, K extends readonly unknown[], A, E = never
+>() => Effect.Tag(id)<Self, QueryRunner<K, A, E>>()
 
 
 export interface MakeProps<K extends readonly unknown[], A, FallbackA, E, HandledE, R> {
@@ -158,26 +163,16 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         ))
     )
 
-    const fetchOnKeyChange = Effect.addFinalizer(() => interrupt).pipe(
-        Effect.andThen(Stream.runForEach(Stream.changes(key), latestKey =>
-            Ref.set(latestKeyRef, Option.some(latestKey)).pipe(
-                Effect.andThen(forkFetch)
-            )
-        ))
-    )
-
     return {
-        context,
-
+        queryKey: key,
         latestKeyRef,
         stateRef,
         fiberRef,
 
+        interrupt,
         forkInterrupt,
         forkFetch,
         forkRefresh,
-
-        fetchOnKeyChange,
     }
 })
 
@@ -193,5 +188,11 @@ export const run = <K extends readonly unknown[], A, E>(
     if (typeof window !== "undefined" && (options?.refreshOnWindowFocus ?? true))
         yield* Stream.runForEach(BrowserStream.fromEventListenerWindow("focus"), () => self.forkRefresh)
 
-    yield* self.fetchOnKeyChange
+    yield* Effect.addFinalizer(() => self.interrupt).pipe(
+        Effect.andThen(Stream.runForEach(Stream.changes(self.queryKey), latestKey =>
+            Ref.set(self.latestKeyRef, Option.some(latestKey)).pipe(
+                Effect.andThen(self.forkFetch)
+            )
+        ))
+    )
 })
