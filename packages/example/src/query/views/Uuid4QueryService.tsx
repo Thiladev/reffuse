@@ -8,7 +8,7 @@ export function Uuid4QueryService() {
     const runFork = R.useRunFork()
 
     const query = R.useMemo(() => Uuid4Query.Uuid4Query, [])
-    const [state] = R.useRefState(query.state)
+    const [state] = R.useSubscribeRefs(query.stateRef)
 
 
     return (
