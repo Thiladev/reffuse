@@ -188,11 +188,10 @@ export const run = <K extends readonly unknown[], A, E>(
     if (typeof window !== "undefined" && (options?.refreshOnWindowFocus ?? true))
         yield* Stream.runForEach(BrowserStream.fromEventListenerWindow("focus"), () => self.forkRefresh)
 
-    yield* Effect.addFinalizer(() => self.interrupt).pipe(
-        Effect.andThen(Stream.runForEach(Stream.changes(self.queryKey), latestKey =>
-            Ref.set(self.latestKeyRef, Option.some(latestKey)).pipe(
-                Effect.andThen(self.forkFetch)
-            )
-        ))
+    yield* Effect.addFinalizer(() => self.interrupt)
+    yield* Stream.runForEach(Stream.changes(self.queryKey), latestKey =>
+        Ref.set(self.latestKeyRef, Option.some(latestKey)).pipe(
+            Effect.andThen(self.forkFetch)
+        )
     )
 })
