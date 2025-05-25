@@ -186,7 +186,9 @@ export const run = <K extends readonly unknown[], A, E>(
     options?: RunOptions,
 ): Effect.Effect<void, Error | Cause.NoSuchElementException, Scope.Scope> => Effect.gen(function*() {
     if (typeof window !== "undefined" && (options?.refreshOnWindowFocus ?? true))
-        yield* Stream.runForEach(BrowserStream.fromEventListenerWindow("focus"), () => self.forkRefresh)
+        yield* Effect.forkScoped(
+            Stream.runForEach(BrowserStream.fromEventListenerWindow("focus"), () => self.forkRefresh)
+        )
 
     yield* Effect.addFinalizer(() => self.interrupt)
     yield* Stream.runForEach(Stream.changes(self.queryKey), latestKey =>
