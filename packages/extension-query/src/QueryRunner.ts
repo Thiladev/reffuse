@@ -61,26 +61,22 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
 
     const queryStateTag = QueryState.makeTag<A | FallbackA, Exclude<E, HandledE>>()
 
-    const interrupt = fiberRef.pipe(
-        Effect.flatMap(Option.match({
-            onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
-                Effect.andThen(Fiber.interrupt(fiber))
-            ),
-            onNone: () => Effect.void,
-        }))
-    )
+    const interrupt = Effect.flatMap(fiberRef, Option.match({
+        onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
+            Effect.andThen(Fiber.interrupt(fiber))
+        ),
+        onNone: () => Effect.void,
+    }))
 
-    const forkInterrupt = fiberRef.pipe(
-        Effect.flatMap(Option.match({
-            onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
-                Effect.andThen(Fiber.interrupt(fiber).pipe(
-                    Effect.asVoid,
-                    Effect.forkDaemon,
-                ))
-            ),
-            onNone: () => Effect.forkDaemon(Effect.void),
-        }))
-    )
+    const forkInterrupt = Effect.flatMap(fiberRef, Option.match({
+        onSome: fiber => Ref.set(fiberRef, Option.none()).pipe(
+            Effect.andThen(Fiber.interrupt(fiber).pipe(
+                Effect.asVoid,
+                Effect.forkDaemon,
+            ))
+        ),
+        onNone: () => Effect.forkDaemon(Effect.void),
+    }))
 
     const run = Effect.Do.pipe(
         Effect.bind("state", () => queryStateTag),
@@ -129,15 +125,13 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         ))
     )
 
-    const setInitialRefreshState = queryStateTag.pipe(
-        Effect.flatMap(state => state.update(previous => {
-            if (AsyncData.isSuccess(previous) || AsyncData.isFailure(previous))
-                return AsyncData.refreshing(previous)
-            if (AsyncData.isRefreshing(previous))
-                return AsyncData.refreshing(previous.previous)
-            return AsyncData.loading()
-        }))
-    )
+    const setInitialRefreshState = Effect.flatMap(queryStateTag, state => state.update(previous => {
+        if (AsyncData.isSuccess(previous) || AsyncData.isFailure(previous))
+            return AsyncData.refreshing(previous)
+        if (AsyncData.isRefreshing(previous))
+            return AsyncData.refreshing(previous.previous)
+        return AsyncData.loading()
+    }))
 
     const forkRefresh = Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>().pipe(
         Effect.flatMap(stateQueue => interrupt.pipe(
