@@ -17,8 +17,9 @@ function RouteComponent() {
         key: R.useStreamFromReactiveValues(["uuid4", 10 as number]),
         query: ([, count]) => Console.log(`Querying ${ count } IDs...`).pipe(
             Effect.andThen(Effect.sleep("500 millis")),
-            Effect.andThen(HttpClient.HttpClient.pipe(
-                Effect.map(HttpClient.withTracerPropagation(false))
+            Effect.andThen(Effect.map(
+                HttpClient.HttpClient,
+                HttpClient.withTracerPropagation(false),
             )),
             Effect.flatMap(client => client.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
             Effect.flatMap(res => res.json),
