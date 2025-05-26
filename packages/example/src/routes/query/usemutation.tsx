@@ -29,15 +29,18 @@ function RouteComponent() {
             Effect.tap(() => QueryProgress.QueryProgress.update(() =>
                 AsyncData.Progress.make({ loaded: 50, total: Option.some(100) })
             )),
-            Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
-            HttpClient.withTracerPropagation(false),
+            Effect.andThen(Effect.map(
+                HttpClient.HttpClient,
+                HttpClient.withTracerPropagation(false),
+            )),
+            Effect.flatMap(client => client.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
             Effect.flatMap(res => res.json),
             Effect.flatMap(Schema.decodeUnknown(Result)),
             Effect.scoped,
         )
     })
 
-    const [state] = R.useSubscribeRefs(mutation.state)
+    const [state] = R.useSubscribeRefs(mutation.stateRef)
 
 
     return (

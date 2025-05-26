@@ -23,15 +23,18 @@ function RouteComponent() {
         key: R.useStreamFromReactiveValues(["uuid4", count]),
         query: ([, count]) => Console.log(`Querying ${ count } IDs...`).pipe(
             Effect.andThen(Effect.sleep("500 millis")),
-            Effect.andThen(HttpClient.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
-            HttpClient.withTracerPropagation(false),
+            Effect.andThen(Effect.map(
+                HttpClient.HttpClient,
+                HttpClient.withTracerPropagation(false),
+            )),
+            Effect.flatMap(client => client.get(`https://www.uuidtools.com/api/generate/v4/count/${ count }`)),
             Effect.flatMap(res => res.json),
             Effect.flatMap(Schema.decodeUnknown(Result)),
             Effect.scoped,
         ),
     })
 
-    const [state] = R.useSubscribeRefs(query.state)
+    const [state] = R.useSubscribeRefs(query.stateRef)
 
 
     return (

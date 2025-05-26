@@ -28,7 +28,7 @@ export interface ServiceResult<Self, EH, FallbackA, HandledE> extends Context.Ta
     typeof id,
     QueryClient<FallbackA, HandledE>
 > {
-    readonly Live: Layer.Layer<
+    readonly Default: Layer.Layer<
         Self | (EH extends QueryErrorHandler.DefaultQueryErrorHandler ? EH : never),
         never,
         EH extends QueryErrorHandler.DefaultQueryErrorHandler ? never : EH
@@ -45,7 +45,7 @@ export const Service = <Self>() => (
     ): ServiceResult<Self, EH, FallbackA, HandledE> => {
         const TagClass = Context.Tag(id)() as ServiceResult<Self, EH, FallbackA, HandledE>
 
-        (TagClass as Mutable<typeof TagClass>).Live = Layer.effect(TagClass, Effect.Do.pipe(
+        (TagClass as Mutable<typeof TagClass>).Default = Layer.effect(TagClass, Effect.Do.pipe(
             Effect.bind("errorHandler", () =>
                 (props?.ErrorHandler ?? QueryErrorHandler.DefaultQueryErrorHandler) as Effect.Effect<
                     QueryErrorHandler.QueryErrorHandler<FallbackA, HandledE>,
@@ -56,7 +56,7 @@ export const Service = <Self>() => (
         )).pipe(
             Layer.provideMerge((props?.ErrorHandler
                 ? Layer.empty
-                : QueryErrorHandler.DefaultQueryErrorHandler.Live
+                : QueryErrorHandler.DefaultQueryErrorHandler.Default
             ) as Layer.Layer<EH>)
         )
 
