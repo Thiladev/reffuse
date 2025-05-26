@@ -21,7 +21,7 @@ export interface ServiceResult<
     Id,
     QueryErrorHandler<FallbackA, HandledE>
 > {
-    readonly Live: Layer.Layer<Self>
+    readonly Default: Layer.Layer<Self>
 }
 
 export const Service = <Self, HandledE = never>() => (
@@ -35,7 +35,7 @@ export const Service = <Self, HandledE = never>() => (
     ): ServiceResult<Self, Id, FallbackA, HandledE> => {
         const TagClass = Context.Tag(id)() as ServiceResult<Self, Id, FallbackA, HandledE>
 
-        (TagClass as Mutable<typeof TagClass>).Live = Layer.effect(TagClass, Effect.gen(function*() {
+        (TagClass as Mutable<typeof TagClass>).Default = Layer.effect(TagClass, Effect.gen(function*() {
             const pubsub = yield* PubSub.unbounded<Cause.Cause<HandledE>>()
             const errors = Stream.fromPubSub(pubsub)
 

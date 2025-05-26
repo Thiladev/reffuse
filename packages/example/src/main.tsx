@@ -11,8 +11,8 @@ import { routeTree } from "./routeTree.gen"
 
 
 const layer = Layer.empty.pipe(
-    Layer.provideMerge(AppQueryClient.Live),
-    Layer.provideMerge(AppQueryErrorHandler.Live),
+    Layer.provideMerge(AppQueryClient.Default),
+    Layer.provideMerge(AppQueryErrorHandler.Default),
     Layer.provideMerge(Clipboard.layer),
     Layer.provideMerge(Geolocation.layer),
     Layer.provideMerge(Permissions.layer),
