@@ -1,4 +1,4 @@
-import { type Effect, type Stream } from "effect"
+import type { Effect, Stream } from "effect"
 import { ReffuseExtension, type ReffuseNamespace } from "reffuse"
 import * as MutationRunner from "./MutationRunner.js"
 import * as QueryClient from "./QueryClient.js"
