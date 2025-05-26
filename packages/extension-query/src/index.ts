@@ -1,4 +1,4 @@
-export * as MutationService from "./MutationService.js"
+export * as MutationRunner from "./MutationRunner.js"
 export * as QueryClient from "./QueryClient.js"
 export * as QueryErrorHandler from "./QueryErrorHandler.js"
 export * from "./QueryExtension.js"

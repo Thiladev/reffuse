@@ -1,12 +1,11 @@
 import * as AsyncData from "@typed/async-data"
-import { type Context, Effect, type Fiber, Queue, Ref, Stream, SubscriptionRef } from "effect"
-import type * as QueryClient from "../QueryClient.js"
-import * as QueryProgress from "../QueryProgress.js"
-import * as QueryState from "./QueryState.js"
+import { Effect, type Fiber, Queue, Ref, Stream, SubscriptionRef } from "effect"
+import type * as QueryClient from "./QueryClient.js"
+import * as QueryProgress from "./QueryProgress.js"
+import { QueryState } from "./internal/index.js"
 
 
-export interface MutationRunner<K extends readonly unknown[], A, E, R> {
-    readonly context: Context.Context<R>
+export interface MutationRunner<K extends readonly unknown[], A, E> {
     readonly stateRef: SubscriptionRef.SubscriptionRef<AsyncData.AsyncData<A, E>>
 
     readonly mutate: (...key: K) => Effect.Effect<AsyncData.Success<A> | AsyncData.Failure<E>>
@@ -15,6 +14,11 @@ export interface MutationRunner<K extends readonly unknown[], A, E, R> {
         state: Stream.Stream<AsyncData.AsyncData<A, E>>,
     ]>
 }
+
+
+export const Tag = <const Id extends string>(id: Id) => <
+    Self, K extends readonly unknown[], A, E = never,
+>() => Effect.Tag(id)<Self, MutationRunner<K, A, E>>()
 
 
 export interface MakeProps<K extends readonly unknown[], A, FallbackA, E, HandledE, R> {
@@ -28,7 +32,7 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         mutation,
     }: MakeProps<K, A, FallbackA, E, HandledE, R>
 ): Effect.Effect<
-    MutationRunner<K, A | FallbackA, Exclude<E, HandledE>, R>,
+    MutationRunner<K, A | FallbackA, Exclude<E, HandledE>>,
     never,
     R | QueryClient.TagClassShape<FallbackA, HandledE>
 > => Effect.gen(function*() {
@@ -37,20 +41,13 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
 
     const queryStateTag = QueryState.makeTag<A | FallbackA, Exclude<E, HandledE>>()
 
-    const run = (key: K) => Effect.Do.pipe(
-        Effect.bind("state", () => queryStateTag),
-        Effect.bind("client", () => QueryClient),
-
-        Effect.flatMap(({ state, client }) => state.set(AsyncData.loading()).pipe(
+    const run = (key: K) => Effect.all([QueryClient, queryStateTag]).pipe(
+        Effect.flatMap(([client, state]) => state.set(AsyncData.loading()).pipe(
             Effect.andThen(mutation(key)),
             client.errorHandler.handle,
             Effect.matchCauseEffect({
-                onSuccess: v => Effect.succeed(AsyncData.success(v)).pipe(
-                    Effect.tap(state.set)
-                ),
-                onFailure: c => Effect.succeed(AsyncData.failure(c)).pipe(
-                    Effect.tap(state.set)
-                ),
+                onSuccess: v => Effect.tap(Effect.succeed(AsyncData.success(v)), state.set),
+                onFailure: c => Effect.tap(Effect.succeed(AsyncData.failure(c)), state.set),
             }),
         )),
 
@@ -64,11 +61,11 @@ export const make = <K extends readonly unknown[], A, FallbackA, E, HandledE, R>
         value => Ref.set(globalStateRef, value),
     ))
 
-    const forkMutate = (...key: K) => Effect.Do.pipe(
-        Effect.bind("stateRef", () => Ref.make(AsyncData.noData<A | FallbackA, Exclude<E, HandledE>>())),
-        Effect.bind("stateQueue", () => Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>()),
-
-        Effect.flatMap(({ stateRef, stateQueue }) =>
+    const forkMutate = (...key: K) => Effect.all([
+        Ref.make(AsyncData.noData<A | FallbackA, Exclude<E, HandledE>>()),
+        Queue.unbounded<AsyncData.AsyncData<A | FallbackA, Exclude<E, HandledE>>>(),
+    ]).pipe(
+        Effect.flatMap(([stateRef, stateQueue]) =>
             Effect.addFinalizer(() => Queue.shutdown(stateQueue)).pipe(
                 Effect.andThen(run(key)),
                 Effect.scoped,
