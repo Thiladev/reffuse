@@ -38,8 +38,8 @@ export interface ServiceResult<Self, EH, FallbackA, HandledE> extends Context.Ta
 export const Service = <Self>() => (
     <
         EH = QueryErrorHandler.DefaultQueryErrorHandler,
-        FallbackA = QueryErrorHandler.Fallback<Context.Tag.Service<QueryErrorHandler.DefaultQueryErrorHandler>>,
-        HandledE = QueryErrorHandler.Error<Context.Tag.Service<QueryErrorHandler.DefaultQueryErrorHandler>>,
+        FallbackA = QueryErrorHandler.Fallback<Context.Tag.Service<typeof QueryErrorHandler.DefaultQueryErrorHandler>>,
+        HandledE = QueryErrorHandler.Error<Context.Tag.Service<typeof QueryErrorHandler.DefaultQueryErrorHandler>>,
     >(
         props?: ServiceProps<EH, FallbackA, HandledE>
     ): ServiceResult<Self, EH, FallbackA, HandledE> => {
