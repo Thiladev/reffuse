@@ -1,16 +1,16 @@
 import { AlertDialog, Button, Flex, Text } from "@radix-ui/themes"
 import { Cause, Console, Effect, Either, flow, Match, Option, Stream } from "effect"
 import { useState } from "react"
-import { AppQueryClient } from "./query"
 import { R } from "./reffuse"
+import { AppQueryErrorHandler } from "./services"
 
 
 export function VQueryErrorHandler() {
     const [open, setOpen] = useState(false)
 
     const error = R.useSubscribeStream(
-        R.useMemo(() => AppQueryClient.pipe(
-            Effect.map(client => client.errorHandler.errors.pipe(
+        R.useMemo(() => AppQueryErrorHandler.AppQueryErrorHandler.pipe(
+            Effect.map(handler => handler.errors.pipe(
                 Stream.changes,
                 Stream.tap(Console.error),
                 Stream.tap(() => Effect.sync(() => setOpen(true))),

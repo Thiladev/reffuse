@@ -5,14 +5,14 @@ import { Layer } from "effect"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { ReffuseRuntime } from "reffuse"
-import { AppQueryClient, AppQueryErrorHandler } from "./query"
 import { RootContext } from "./reffuse"
 import { routeTree } from "./routeTree.gen"
+import { AppQueryClient, AppQueryErrorHandler } from "./services"
 
 
 const layer = Layer.empty.pipe(
-    Layer.provideMerge(AppQueryClient.Default),
-    Layer.provideMerge(AppQueryErrorHandler.Default),
+    Layer.provideMerge(AppQueryClient.AppQueryClient.Default),
+    Layer.provideMerge(AppQueryErrorHandler.AppQueryErrorHandler.Default),
     Layer.provideMerge(Clipboard.layer),
     Layer.provideMerge(Geolocation.layer),
     Layer.provideMerge(Permissions.layer),

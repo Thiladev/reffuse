@@ -3,11 +3,12 @@ import { Clipboard, Geolocation, Permissions } from "@effect/platform-browser"
 import { LazyRefExtension } from "@reffuse/extension-lazyref"
 import { QueryExtension } from "@reffuse/extension-query"
 import { Reffuse, ReffuseContext } from "reffuse"
-import { AppQueryClient } from "./query"
+import { AppQueryClient, AppQueryErrorHandler } from "./services"
 
 
 export const RootContext = ReffuseContext.make<
-    | AppQueryClient
+    | AppQueryClient.AppQueryClient
+    | AppQueryErrorHandler.AppQueryErrorHandler
     | Clipboard.Clipboard
     | Geolocation.Geolocation
     | Permissions.Permissions
