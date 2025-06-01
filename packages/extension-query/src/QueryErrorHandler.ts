@@ -1,4 +1,4 @@
-import { Cause, Effect, identity, PubSub, Stream } from "effect"
+import { Cause, Effect, PubSub, Stream } from "effect"
 
 
 export interface QueryErrorHandler<FallbackA, HandledE> {
@@ -25,19 +25,16 @@ export const make = <HandledE = never>() => (
             self: Effect.Effect<A, E, R>
         ): Effect.Effect<A | FallbackA, Exclude<E, HandledE>, R> => f(
             self as unknown as Effect.Effect<never, HandledE, never>,
-            (failure: HandledE) => PubSub.publish(pubsub, Cause.fail(failure)).pipe(
-                Effect.andThen(Effect.failCause(Cause.empty))
+            (failure: HandledE) => Effect.andThen(
+                PubSub.publish(pubsub, Cause.fail(failure)),
+                Effect.failCause(Cause.empty),
             ),
-            (defect: unknown) => PubSub.publish(pubsub, Cause.die(defect)).pipe(
-                Effect.andThen(Effect.failCause(Cause.empty))
+            (defect: unknown) => Effect.andThen(
+                PubSub.publish(pubsub, Cause.die(defect)),
+                Effect.failCause(Cause.empty),
             ),
         )
 
         return { errors, handle }
     })
 )
-
-
-export class DefaultQueryErrorHandler extends Effect.Service<DefaultQueryErrorHandler>()("@reffuse/extension-query/DefaultQueryErrorHandler", {
-    effect: make<never>()(identity)
-}) {}

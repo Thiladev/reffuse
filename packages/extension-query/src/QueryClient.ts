@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, identity, Layer } from "effect"
 import type { Mutable } from "effect/Types"
 import * as QueryErrorHandler from "./QueryErrorHandler.js"
 
@@ -8,14 +8,14 @@ export interface QueryClient<FallbackA, HandledE> {
 }
 
 
-export interface MakeProps<FallbackA, HandledE, E, R> {
-    readonly errorHandler: Effect.Effect<QueryErrorHandler.QueryErrorHandler<FallbackA, HandledE>, E, R>
+export interface MakeProps<FallbackA, HandledE> {
+    readonly errorHandler: QueryErrorHandler.QueryErrorHandler<FallbackA, HandledE>
 }
 
-export const make = <FallbackA, HandledE, E, R>(
-    { errorHandler }: MakeProps<FallbackA, HandledE, E, R>
-): Effect.Effect<QueryClient<FallbackA, HandledE>, E, R> => Effect.Do.pipe(
-    Effect.bind("errorHandler", () => errorHandler)
+export const make = <FallbackA, HandledE>(
+    { errorHandler }: MakeProps<FallbackA, HandledE>
+): Effect.Effect<QueryClient<FallbackA, HandledE>> => Effect.Do.pipe(
+    Effect.let("errorHandler", () => errorHandler)
 )
 
 
@@ -39,34 +39,19 @@ export interface ServiceResult<Self, FallbackA, HandledE, E, R> extends Context.
     typeof id,
     QueryClient<FallbackA, HandledE>
 > {
-    readonly Default: Layer.Layer<QueryErrorHandler.QueryErrorHandler<FallbackA, HandledE>, E, R>
+    readonly Default: Layer.Layer<Self, E, R>
 }
 
 export const Service = <Self>() => (
-    <
-        FallbackA = QueryErrorHandler.Fallback<Context.Tag.Service<typeof QueryErrorHandler.DefaultQueryErrorHandler>>,
-        HandledE = QueryErrorHandler.Error<Context.Tag.Service<typeof QueryErrorHandler.DefaultQueryErrorHandler>>,
-        E = never,
-        R = never,
-    >(
+    <FallbackA = never, HandledE = never, E = never, R = never>(
         props?: ServiceProps<FallbackA, HandledE, E, R>
-    ): ServiceResult<Self, EH, FallbackA, HandledE> => {
-        const TagClass = Context.Tag(id)() as ServiceResult<Self, EH, FallbackA, HandledE>
+    ): ServiceResult<Self, FallbackA, HandledE, E, R> => {
+        const TagClass = Context.Tag(id)() as ServiceResult<Self, FallbackA, HandledE, E, R>
 
-        (TagClass as Mutable<typeof TagClass>).Default = Layer.effect(TagClass, Effect.Do.pipe(
-            Effect.bind("errorHandler", () =>
-                (props?.ErrorHandler ?? QueryErrorHandler.DefaultQueryErrorHandler) as Effect.Effect<
-                    QueryErrorHandler.QueryErrorHandler<FallbackA, HandledE>,
-                    never,
-                    EH extends QueryErrorHandler.DefaultQueryErrorHandler ? never : EH
-                >
-            )
-        )).pipe(
-            Layer.provideMerge((props?.ErrorHandler
-                ? Layer.empty
-                : QueryErrorHandler.DefaultQueryErrorHandler.Default
-            ) as Layer.Layer<EH>)
-        )
+        (TagClass as Mutable<typeof TagClass>).Default = Layer.effect(TagClass, Effect.flatMap(
+            props?.errorHandler ?? QueryErrorHandler.make<never>()(identity),
+            errorHandler => make({ errorHandler }),
+        ))
 
         return TagClass
     }
