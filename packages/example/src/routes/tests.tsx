@@ -4,15 +4,16 @@ import { createFileRoute } from "@tanstack/react-router"
 import { GetRandomValues, makeUuid4 } from "@typed/id"
 import { Console, Effect, Option } from "effect"
 import { useEffect, useState } from "react"
-import { PropertyPath } from "reffuse/types"
 
 
 interface Node {
-    readonly value: string
-    readonly left?: Node
-    readonly right?: Node
+  value: string
+  left?: Leaf
+  right?: Leaf
 }
-type NodePaths = PropertyPath.Paths<Node>
+interface Leaf {
+  node: Node
+}
 
 
 const makeUuid = Effect.provide(makeUuid4, GetRandomValues.CryptoRandom)
