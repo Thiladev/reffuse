@@ -7,12 +7,12 @@ import { useEffect, useState } from "react"
 
 
 interface Node {
-  value: string
-  left?: Leaf
-  right?: Leaf
+    value: string
+    left?: Leaf
+    right?: Leaf
 }
 interface Leaf {
-  node: Node
+    node: Node
 }
 
 
