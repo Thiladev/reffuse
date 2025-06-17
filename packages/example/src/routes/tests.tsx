@@ -6,6 +6,16 @@ import { Console, Effect, Option } from "effect"
 import { useEffect, useState } from "react"
 
 
+interface Node {
+  value: string
+  left?: Leaf
+  right?: Leaf
+}
+interface Leaf {
+  node: Node
+}
+
+
 const makeUuid = Effect.provide(makeUuid4, GetRandomValues.CryptoRandom)
 
 
@@ -31,6 +41,11 @@ function RouteComponent() {
         Effect.provide(scopeLayer),
         runSync,
     ), [scopeLayer, runSync])
+
+
+    const nodeRef = R.useRef(() => Effect.succeed<Node>({ value: "prout" }))
+    const nodeValueRef = R.useSubRefFromPath(nodeRef, ["value"])
+
 
     return (
         <Flex direction="column" justify="center" align="center" gap="2">

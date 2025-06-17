@@ -1,24 +1,26 @@
 import { Array, Function, Option, Predicate } from "effect"
 
 
-export type Paths<T> = [] | (
-    T extends readonly any[] ? ArrayPaths<T> :
-    T extends object ? ObjectPaths<T> :
+export type Paths<T, Seen = never> = [] | (
+    T extends Seen ? [] :
+    T extends readonly any[] ? ArrayPaths<T, Seen | T> :
+    T extends object ? ObjectPaths<T, Seen | T> :
     never
 )
 
-export type ArrayPaths<T extends readonly any[]> = {
+export type ArrayPaths<T extends readonly any[], Seen> = {
     [K in keyof T as K extends number ? K : never]:
         | [K]
-        | [K, ...Paths<T[K]>]
+        | [K, ...Paths<T[K], Seen>]
 } extends infer O
     ? O[keyof O]
     : never
 
-export type ObjectPaths<T extends object> = {
-    [K in keyof T as K extends string | number | symbol ? K : never]:
-        | [K]
-        | [K, ...Paths<T[K]>]
+export type ObjectPaths<T extends object, Seen> = {
+    [K in keyof T as K extends string | number | symbol ? K : never]-?:
+        NonNullable<T[K]> extends infer V
+            ? [K] | [K, ...Paths<T[K], Seen>]
+            : never
 } extends infer O
     ? O[keyof O]
     : never

@@ -1,6 +1,6 @@
 {
   "name": "reffuse",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "type": "module",
   "files": [
     "./README.md",
