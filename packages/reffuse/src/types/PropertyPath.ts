@@ -19,7 +19,7 @@ export type ArrayPaths<T extends readonly any[], Seen> = {
 export type ObjectPaths<T extends object, Seen> = {
     [K in keyof T as K extends string | number | symbol ? K : never]-?:
         NonNullable<T[K]> extends infer V
-            ? [K] | [K, ...Paths<T[K], Seen>]
+            ? [K] | [K, ...Paths<V, Seen>]
             : never
 } extends infer O
     ? O[keyof O]
