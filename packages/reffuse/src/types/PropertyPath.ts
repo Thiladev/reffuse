@@ -1,24 +1,26 @@
 import { Array, Function, Option, Predicate } from "effect"
+import type { Includes } from "../utils.js"
 
 
-export type Paths<T> = [] | (
-    T extends readonly any[] ? ArrayPaths<T> :
-    T extends object ? ObjectPaths<T> :
+export type Paths<T, Seen extends any[] = []> = [] | (
+    Includes<Seen, T> extends true ? [] :
+    T extends readonly any[] ? ArrayPaths<T, [T, ...Seen]> :
+    T extends object ? ObjectPaths<T, [T, ...Seen]> :
     never
 )
 
-export type ArrayPaths<T extends readonly any[]> = {
+export type ArrayPaths<T extends readonly any[], Seen extends any[]> = {
     [K in keyof T as K extends number ? K : never]:
         | [K]
-        | [K, ...Paths<T[K]>]
+        | [K, ...Paths<T[K], Seen>]
 } extends infer O
     ? O[keyof O]
     : never
 
-export type ObjectPaths<T extends object> = {
+export type ObjectPaths<T extends object, Seen extends any[]> = {
     [K in keyof T as K extends string | number | symbol ? K : never]:
         | [K]
-        | [K, ...Paths<T[K]>]
+        | [K, ...Paths<T[K], Seen>]
 } extends infer O
     ? O[keyof O]
     : never
