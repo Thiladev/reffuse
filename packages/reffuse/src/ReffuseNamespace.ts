@@ -426,7 +426,7 @@ export abstract class ReffuseNamespace<R> {
     ): SubscriptionSubRef.SubscriptionSubRef<PropertyPath.ValueFromPath<B, P>, B> {
         return React.useMemo(
             () => SubscriptionSubRef.makeFromPath(parent, path),
-            [parent],
+            [parent, ...path],
         )
     }
 
