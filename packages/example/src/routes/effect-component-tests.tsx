@@ -1,7 +1,7 @@
 import { Box, Text, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { Console, Effect, Layer, ManagedRuntime, Runtime } from "effect"
-import { ReactComponent } from "effect-components"
+import { use } from "effect-components"
 import * as React from "react"
 
 
@@ -13,14 +13,16 @@ function RouteComponent() {
     const runtime = React.useMemo(() => ManagedRuntime.make(Layer.empty), [])
 
     return <>
-        {runtime.runSync(MyTestComponent.use(Component => (
+        {runtime.runSync(use(MyTestComponent, Component => (
             <Component />
-        )))}
+        )).pipe(
+            Effect.scoped
+        ))}
     </>
 }
 
 
-const MyTestComponent = ReactComponent.make(Effect.fn(function* MyTestComponent(props?: { readonly value?: string }) {
+const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly value?: string }) {
     const [state, setState] = React.useState("value")
     const effectValue = yield* Effect.succeed(`state: ${ state }`)
 
@@ -36,7 +38,7 @@ const MyTestComponent = ReactComponent.make(Effect.fn(function* MyTestComponent(
             />
         </Box>
     </>
-}))
+})
 
 
 const useEffect = <A, E, R>(
