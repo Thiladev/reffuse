@@ -1,6 +1,7 @@
 import { Box, Text, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { Console, Effect, Layer, ManagedRuntime, Runtime } from "effect"
+import { ReactComponent } from "effect-components"
 import * as React from "react"
 
 
@@ -11,25 +12,15 @@ export const Route = createFileRoute("/effect-component-tests")({
 function RouteComponent() {
     const runtime = React.useMemo(() => ManagedRuntime.make(Layer.empty), [])
 
-    return runtime.runSync(Effect.gen(function* RouteComponent() {
-        const MyTest = yield* useFunctionComponent(MyTestComponent)
-
-        return <>
-            <MyTest />
-        </>
-    }))
+    return <>
+        {runtime.runSync(MyTestComponent.use(Component => (
+            <Component />
+        )))}
+    </>
 }
 
 
-const useFunctionComponent = <P, E, R>(
-    self: (props: P) => Effect.Effect<React.ReactNode, E, R>
-): Effect.Effect<React.FC<P>, never, R> => Effect.gen(function* useFunctionComponent() {
-    const runtime = yield* Effect.runtime<R>()
-    return React.useCallback((props: P) => Runtime.runSync(runtime)(self(props)), [runtime])
-})
-
-
-const MyTestComponent = Effect.fn(function*(props?: { readonly value?: string }) {
+const MyTestComponent = ReactComponent.make(Effect.fn(function* MyTestComponent(props?: { readonly value?: string }) {
     const [state, setState] = React.useState("value")
     const effectValue = yield* Effect.succeed(`state: ${ state }`)
 
@@ -45,7 +36,7 @@ const MyTestComponent = Effect.fn(function*(props?: { readonly value?: string })
             />
         </Box>
     </>
-})
+}))
 
 
 const useEffect = <A, E, R>(
