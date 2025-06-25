@@ -1,6 +1,6 @@
 import { Box, Text, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { Console, Effect, Runtime } from "effect"
+import { Console, Effect, Layer, ManagedRuntime, Runtime } from "effect"
 import * as React from "react"
 
 
@@ -9,15 +9,31 @@ export const Route = createFileRoute("/effect-component-tests")({
 })
 
 function RouteComponent() {
-    return Effect.runSync(MyTestComponent)
+    const runtime = React.useMemo(() => ManagedRuntime.make(Layer.empty), [])
+
+    return runtime.runSync(Effect.gen(function* RouteComponent() {
+        const MyTest = yield* useFunctionComponent(MyTestComponent)
+
+        return <>
+            <MyTest />
+        </>
+    }))
 }
 
 
-const MyTestComponent = Effect.gen(function*() {
+const useFunctionComponent = <P, E, R>(
+    self: (props: P) => Effect.Effect<React.ReactNode, E, R>
+): Effect.Effect<React.FC<P>, never, R> => Effect.gen(function* useFunctionComponent() {
+    const runtime = yield* Effect.runtime<R>()
+    return React.useCallback((props: P) => Runtime.runSync(runtime)(self(props)), [runtime])
+})
+
+
+const MyTestComponent = Effect.fn(function*(props?: { readonly value?: string }) {
     const [state, setState] = React.useState("value")
     const effectValue = yield* Effect.succeed(`state: ${ state }`)
 
-    yield* useEffect(() => Console.log("ouient"), [state])
+    yield* useEffect(() => Console.log("ouient"), [])
 
     return <>
         <Text>{effectValue}</Text>
