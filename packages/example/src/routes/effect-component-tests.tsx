@@ -1,7 +1,7 @@
 import { Box, Text, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { Console, Effect, Layer, ManagedRuntime, Runtime } from "effect"
-import { use } from "effect-components"
+import { Console, Effect, Layer, ManagedRuntime } from "effect"
+import { ReactComponent, ReactHook } from "effect-components"
 import * as React from "react"
 
 
@@ -13,7 +13,7 @@ function RouteComponent() {
     const runtime = React.useMemo(() => ManagedRuntime.make(Layer.empty), [])
 
     return <>
-        {runtime.runSync(use(MyTestComponent, Component => (
+        {runtime.runSync(ReactComponent.use(MyTestComponent, Component => (
             <Component />
         )).pipe(
             Effect.scoped
@@ -26,7 +26,10 @@ const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly v
     const [state, setState] = React.useState("value")
     const effectValue = yield* Effect.succeed(`state: ${ state }`)
 
-    yield* useEffect(() => Console.log("ouient"), [])
+    yield* ReactHook.useEffect(() => Effect.andThen(
+        Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
+        Console.log("MyTestComponent mounted"),
+    ), [])
 
     return <>
         <Text>{effectValue}</Text>
@@ -38,14 +41,4 @@ const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly v
             />
         </Box>
     </>
-})
-
-
-const useEffect = <A, E, R>(
-    effect: () => Effect.Effect<A, E, R>,
-    deps?: React.DependencyList,
-): Effect.Effect<void, never, R> => Effect.gen(function* useEffect() {
-    const runtime = yield* Effect.runtime<R>()
-
-    React.useEffect(() => Runtime.runSync(runtime)(Effect.asVoid(effect())), deps)
 })

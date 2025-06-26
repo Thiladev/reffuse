@@ -22,7 +22,7 @@ export const use = <P, E, R>(
 export const useFC = <P, E, R>(
     self: ReactComponent<P, E, R>,
     options?: ReactHook.ScopeOptions,
-): Effect.Effect<React.FC<P>, never, R | Scope.Scope> => Effect.map(
+): Effect.Effect<React.FC<P>, never, Exclude<R, Scope.Scope>> => Effect.map(
     Effect.runtime(),
     runtime => props => Runtime.runSync(runtime)(Effect.provideService(self(props), Scope.Scope, useScope(runtime, options))),
 )
