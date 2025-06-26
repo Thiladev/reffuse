@@ -26,10 +26,10 @@ const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly v
     const [state, setState] = React.useState("value")
     const effectValue = yield* Effect.succeed(`state: ${ state }`)
 
-    yield* ReactHook.useEffect(() => Effect.andThen(
+    yield* ReactHook.useOnce(() => Effect.andThen(
         Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
         Console.log("MyTestComponent mounted"),
-    ), [])
+    ))
 
     return <>
         <Text>{effectValue}</Text>
