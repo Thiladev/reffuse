@@ -33,3 +33,7 @@ export const createElement = <P, E, R>(
         ...children,
     ),
 )
+
+export const useScope: Effect.Effect<void> = Effect.gen(function*() {
+
+})
