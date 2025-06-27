@@ -1,4 +1,4 @@
-import { Effect, ExecutionStrategy, Exit, Ref, Runtime, Scope } from "effect"
+import { Context, Effect, ExecutionStrategy, Exit, Ref, Runtime, Scope, Tracer } from "effect"
 import * as React from "react"
 import * as ReactHook from "./ReactHook.js"
 
@@ -14,9 +14,7 @@ export const use = <P, E, R>(
     options?: ReactHook.ScopeOptions,
 ): Effect.Effect<React.ReactNode, never, Exclude<R, Scope.Scope>> => Effect.map(
     Effect.runtime(),
-    runtime => fn(props =>
-        Runtime.runSync(runtime)(Effect.provideService(self(props), Scope.Scope, useScope(runtime, options)))
-    ),
+    runtime => fn(props => FC(self, runtime, props, options)),
 )
 
 export const useFC = <P, E, R>(
@@ -24,27 +22,16 @@ export const useFC = <P, E, R>(
     options?: ReactHook.ScopeOptions,
 ): Effect.Effect<React.FC<P>, never, Exclude<R, Scope.Scope>> => Effect.map(
     Effect.runtime(),
-    runtime => props => Runtime.runSync(runtime)(Effect.provideService(self(props), Scope.Scope, useScope(runtime, options))),
+    runtime => props => FC(self, runtime, props, options),
 )
 
-export const createElement = <P, E, R>(
+
+const FC = <P, E, R>(
     self: ReactComponent<P, E, R>,
-    props?: React.Attributes & P | null,
-    ...children: React.ReactNode[]
-): Effect.Effect<React.ReactNode, never, R | Scope.Scope> => Effect.map(
-    Effect.runtime(),
-    runtime => React.createElement(
-        props => Runtime.runSync(runtime)(self(props)),
-        props,
-        ...children,
-    ),
-)
-
-
-const useScope = (
-    runtime: Runtime.Runtime<never>,
+    runtime: Runtime.Runtime<R>,
+    props: P,
     options?: ReactHook.ScopeOptions,
-): Scope.Scope => {
+): React.ReactNode => {
     const [isInitialRun, initialScope] = React.useMemo(() => Runtime.runSync(runtime)(
         Effect.all([Ref.make(true), makeScope(options)])
     ), [])
@@ -64,7 +51,12 @@ const useScope = (
         })
     ), [])
 
-    return scope
+    return React.useMemo(() => Runtime.runSync(runtime)(
+        Effect.provideService(self(props), Scope.Scope, scope)
+    ), [
+        props,
+        ...Array.from(Context.omit(Tracer.ParentSpan)(runtime.context).unsafeMap.values()),
+    ])
 }
 
 const makeScope = (options?: ReactHook.ScopeOptions) => Scope.make(options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)

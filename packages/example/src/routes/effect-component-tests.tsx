@@ -1,6 +1,6 @@
 import { Box, Text, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { Console, Effect, Layer, ManagedRuntime } from "effect"
+import { Console, Effect, Layer, ManagedRuntime, SubscriptionRef } from "effect"
 import { ReactComponent, ReactHook } from "effect-components"
 import * as React from "react"
 
@@ -21,6 +21,10 @@ function RouteComponent() {
     </>
 }
 
+
+class TestService extends Effect.Service<TestService>()("TestService", {
+    effect: Effect.bind(Effect.Do, "ref", () => SubscriptionRef.make("value")),
+}) {}
 
 const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly value?: string }) {
     const [state, setState] = React.useState("value")
