@@ -27,7 +27,7 @@ class TestService extends Effect.Service<TestService>()("TestService", {
 const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly value?: string }) {
     const [state, setState] = React.useState("value")
 
-    // yield* ReactHook.useMemo(() => Effect.andThen(
+    // yield* ReactHook.useEffect(() => Effect.andThen(
     //     Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
     //     Console.log("MyTestComponent mounted"),
     // ), [])
