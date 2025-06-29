@@ -4,7 +4,7 @@ import * as ReactHook from "./ReactHook.js"
 
 
 export interface ReactComponent<P, E, R> {
-    (props: P): Effect.Effect<React.ReactNode, E, R | Scope.Scope>
+    (props: P): Effect.Effect<React.ReactNode, E, R>
 }
 
 
@@ -14,7 +14,7 @@ export const use = <P, E, R>(
     options?: ReactHook.ScopeOptions,
 ): Effect.Effect<React.ReactNode, never, Exclude<R, Scope.Scope>> => Effect.map(
     Effect.runtime(),
-    runtime => fn(props => FC(self, runtime, props, options)),
+    runtime => fn(props => FC(self as ReactComponent<P, E, Exclude<R, Scope.Scope>>, runtime, props, options)),
 )
 
 export const useFC = <P, E, R>(
@@ -22,7 +22,7 @@ export const useFC = <P, E, R>(
     options?: ReactHook.ScopeOptions,
 ): Effect.Effect<React.FC<P>, never, Exclude<R, Scope.Scope>> => Effect.map(
     Effect.runtime(),
-    runtime => props => FC(self, runtime, props, options),
+    runtime => props => FC(self as ReactComponent<P, E, Exclude<R, Scope.Scope>>, runtime, props, options),
 )
 
 
