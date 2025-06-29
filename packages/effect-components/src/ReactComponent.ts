@@ -8,22 +8,35 @@ export interface ReactComponent<P, E, R> {
 }
 
 
-export const use = <P, E, R>(
+export const useFC: {
+    <P, E, R>(
+        self: ReactComponent<P, E, R>,
+        options?: ReactHook.ScopeOptions,
+    ): Effect.Effect<React.FC<P>, never, Exclude<R, Scope.Scope>>
+} = Effect.fn(function* useFC<P, E, R>(
+    self: ReactComponent<P, E, R>,
+    options?: ReactHook.ScopeOptions,
+) {
+    const runtime = yield* Effect.runtime<Exclude<R, Scope.Scope>>()
+
+    return React.useCallback((props: P) => Runtime.runSync(runtime)(
+        self(props) as Effect.Effect<React.ReactNode, E, Exclude<R, Scope.Scope>>
+    ), [])
+})
+
+export const use: {
+    <P, E, R>(
+        self: ReactComponent<P, E, R>,
+        fn: (Component: React.FC<P>) => React.ReactNode,
+        options?: ReactHook.ScopeOptions,
+    ): Effect.Effect<React.ReactNode, never, Exclude<R, Scope.Scope>>
+} = Effect.fn(function* use<P, E, R>(
     self: ReactComponent<P, E, R>,
     fn: (Component: React.FC<P>) => React.ReactNode,
     options?: ReactHook.ScopeOptions,
-): Effect.Effect<React.ReactNode, never, Exclude<R, Scope.Scope>> => Effect.map(
-    Effect.runtime(),
-    runtime => fn(props => FC(self as ReactComponent<P, E, Exclude<R, Scope.Scope>>, runtime, props, options)),
-)
-
-export const useFC = <P, E, R>(
-    self: ReactComponent<P, E, R>,
-    options?: ReactHook.ScopeOptions,
-): Effect.Effect<React.FC<P>, never, Exclude<R, Scope.Scope>> => Effect.map(
-    Effect.runtime(),
-    runtime => props => FC(self as ReactComponent<P, E, Exclude<R, Scope.Scope>>, runtime, props, options),
-)
+) {
+    return fn(yield* useFC(self, options))
+})
 
 
 const FC = <P, E, R>(
