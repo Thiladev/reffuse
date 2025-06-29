@@ -15,9 +15,7 @@ function RouteComponent() {
     return <>
         {runtime.runSync(ReactComponent.use(MyTestComponent, Component => (
             <Component />
-        )).pipe(
-            Effect.scoped
-        ))}
+        )))}
     </>
 }
 
@@ -30,10 +28,10 @@ const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly v
     const [state, setState] = React.useState("value")
     const effectValue = yield* Effect.succeed(`state: ${ state }`)
 
-    yield* ReactHook.useOnce(() => Effect.andThen(
+    yield* ReactHook.useEffect(() => Effect.andThen(
         Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
         Console.log("MyTestComponent mounted"),
-    ))
+    ), [])
 
     return <>
         <Text>{effectValue}</Text>
