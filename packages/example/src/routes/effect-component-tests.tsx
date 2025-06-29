@@ -41,3 +41,4 @@ const MyTestComponent = Effect.fn(function* MyTestComponent(props?: { readonly v
         </Box>
     </>
 })
+console.log(MyTestComponent)

@@ -20,7 +20,9 @@ export const useFC: {
 ) {
     const runtime = yield* Effect.runtime<R>()
 
-    return React.useCallback((props: P) => Runtime.runSync(runtime)(self(props)), Array.from(
+    return React.useMemo(() => {
+        return (props: P) => Runtime.runSync(runtime)(self(props))
+    }, Array.from(
         Context.omit(...nonReactiveTags)(runtime.context).unsafeMap.values()
     ))
 })
