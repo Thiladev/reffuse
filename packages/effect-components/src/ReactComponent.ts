@@ -5,6 +5,7 @@ import * as ReactHook from "./ReactHook.js"
 
 export interface ReactComponent<P, E, R> {
     (props: P): Effect.Effect<React.ReactNode, E, R>
+    readonly displayName?: string
 }
 
 export const nonReactiveTags = [Tracer.ParentSpan] as const
@@ -21,7 +22,9 @@ export const useFC: {
     const runtime = yield* Effect.runtime<R>()
 
     return React.useMemo(() => {
-        return (props: P) => Runtime.runSync(runtime)(self(props))
+        const FC = (props: P) => Runtime.runSync(runtime)(self(props))
+        if (self.displayName) FC.displayName = self.displayName
+        return FC
     }, Array.from(
         Context.omit(...nonReactiveTags)(runtime.context).unsafeMap.values()
     ))
