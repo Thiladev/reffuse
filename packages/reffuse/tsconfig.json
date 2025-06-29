@@ -26,7 +26,13 @@
 
     // Build
     "outDir": "./dist",
-    "declaration": true
+    "declaration": true,
+
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ]
   },
 
   "include": ["./src"]

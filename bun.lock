@@ -13,6 +13,9 @@
     "packages/effect-components": {
       "name": "effect-components",
       "version": "0.1.0",
+      "devDependencies": {
+        "@effect/language-service": "^0.23.3",
+      },
       "peerDependencies": {
         "@types/react": "^19.0.0",
         "effect": "^3.15.0",
@@ -137,6 +140,8 @@
     "@babel/traverse": ["@babel/traverse@7.27.1", "", { "dependencies": { "@babel/code-frame": "^7.27.1", "@babel/generator": "^7.27.1", "@babel/parser": "^7.27.1", "@babel/template": "^7.27.1", "@babel/types": "^7.27.1", "debug": "^4.3.1", "globals": "^11.1.0" } }, "sha512-ZCYtZciz1IWJB4U61UPu4KEaqyfj+r5T1Q5mqPo+IBpcG9kHv30Z0aD8LXPgC1trYa6rK0orRyAhqUgk4MjmEg=="],
 
     "@babel/types": ["@babel/types@7.27.1", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.27.1" } }, "sha512-+EzkxvLNfiUeKMgy/3luqfsCWFRXLb7U6wNQTk60tovuckwB15B191tJWvpp4HjiQWdJkCxO3Wbvc6jlk3Xb2Q=="],
+
+    "@effect/language-service": ["@effect/language-service@0.23.3", "", {}, "sha512-yurF+FHd1HwM/3Mh7kQCea+z4wvbs2/NLPyk6FiEWA2sppRKv4Kp4luwfUqWqyd9/uyScWJcHX7WK1caLpx4Pw=="],
 
     "@effect/platform": ["@effect/platform@0.82.1", "", { "dependencies": { "find-my-way-ts": "^0.1.5", "msgpackr": "^1.11.2", "multipasta": "^0.2.5" }, "peerDependencies": { "effect": "^3.15.1" } }, "sha512-fX5Lu//VkLXPegouxT1AdSyuRkxF55k70YaLV0vIzjgK97/u3Mow0ux8fYglm2dWDXWTLBkNprlhheGm/5/bvQ=="],
 
