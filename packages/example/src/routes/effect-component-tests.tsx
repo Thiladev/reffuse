@@ -1,8 +1,7 @@
 import { Box, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { Console, Effect, Layer, pipe, SubscriptionRef } from "effect"
+import { Console, Effect, Layer, pipe, Ref, Runtime, SubscriptionRef } from "effect"
 import { ReactComponent, ReactHook, ReactManagedRuntime } from "effect-components"
-import * as React from "react"
 
 
 const LogLive = Layer.scopedDiscard(Effect.acquireRelease(
@@ -43,7 +42,10 @@ const MyRoute = pipe(
 
 const MyTestComponent = pipe(
     Effect.fn(function*() {
-        const [state, setState] = React.useState("value")
+        const runtime = yield* Effect.runtime()
+
+        const testService = yield* TestService
+        const [value] = yield* ReactHook.useSubscribeRefs(testService.ref)
 
         yield* ReactHook.useEffect(() => Effect.andThen(
             Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
@@ -53,8 +55,8 @@ const MyTestComponent = pipe(
         return <>
             <Box>
                 <TextField.Root
-                    value={state}
-                    onChange={e => setState(e.target.value)}
+                    value={value}
+                    onChange={e => Runtime.runSync(runtime)(Ref.set(testService.ref, e.target.value))}
                 />
             </Box>
         </>

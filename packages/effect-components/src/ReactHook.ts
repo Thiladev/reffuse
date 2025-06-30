@@ -1,4 +1,4 @@
-import { Effect, ExecutionStrategy, Runtime, Scope } from "effect"
+import { Effect, ExecutionStrategy, Exit, pipe, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 
 
@@ -93,4 +93,59 @@ export const useLayoutEffect: {
             }
         }
     }, deps)
+})
+
+export const useFork: {
+    <E, R>(
+        effect: () => Effect.Effect<void, E, R>,
+        deps?: React.DependencyList,
+        options?: Runtime.RunForkOptions & ScopeOptions,
+    ): Effect.Effect<void, never, Exclude<R, Scope.Scope>>
+} = Effect.fnUntraced(function* <E, R>(
+    effect: () => Effect.Effect<void, E, R>,
+    deps?: React.DependencyList,
+    options?: Runtime.RunForkOptions & ScopeOptions,
+) {
+    const runtime = yield* Effect.runtime<Exclude<R, Scope.Scope>>()
+
+    React.useEffect(() => {
+        const scope = Runtime.runSync(runtime)(options?.scope
+            ? Scope.fork(options.scope, options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
+            : Scope.make(options?.finalizerExecutionStrategy)
+        )
+        Runtime.runFork(runtime)(Effect.provideService(effect(), Scope.Scope, scope), { ...options, scope })
+
+        return () => {
+            switch (options?.finalizerExecutionMode ?? "fork") {
+                case "sync":
+                    Runtime.runSync(runtime)(Scope.close(scope, Exit.void))
+                    break
+                case "fork":
+                    Runtime.runFork(runtime)(Scope.close(scope, Exit.void))
+                    break
+            }
+        }
+    }, deps)
+})
+
+export const useSubscribeRefs: {
+    <const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[]>(
+        ...refs: Refs
+    ): Effect.Effect<{ [K in keyof Refs]: Effect.Effect.Success<Refs[K]> }>
+} = Effect.fnUntraced(function* <const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[]>(
+    ...refs: Refs
+) {
+    const [reactStateValue, setReactStateValue] = React.useState(yield* useOnce(() =>
+        Effect.all(refs as readonly SubscriptionRef.SubscriptionRef<any>[])
+    ))
+
+    yield* useFork(() => pipe(
+        refs.map(ref => Stream.changesWith(ref.changes, (x, y) => x === y)),
+        streams => Stream.zipLatestAll(...streams),
+        Stream.runForEach(v =>
+            Effect.sync(() => setReactStateValue(v))
+        ),
+    ), refs)
+
+    return reactStateValue as any
 })
