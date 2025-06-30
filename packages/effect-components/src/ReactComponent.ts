@@ -1,23 +1,30 @@
-import { Context, Effect, Runtime, Tracer } from "effect"
+import { Context, Effect, Function, Runtime, Tracer } from "effect"
+import type { Mutable } from "effect/Types"
 import * as React from "react"
-import * as ReactHook from "./ReactHook.js"
 
 
-export interface ReactComponent<P, E, R> {
+export interface ReactComponent<E, R, P> {
     (props: P): Effect.Effect<React.ReactNode, E, R>
     readonly displayName?: string
 }
 
 export const nonReactiveTags = [Tracer.ParentSpan] as const
 
+export const withDisplayName: {
+    <C extends ReactComponent<any, any, any>>(displayName: string): (self: C) => C
+    <C extends ReactComponent<any, any, any>>(self: C, displayName: string): C
+} = Function.dual(2, <C extends ReactComponent<any, any, any>>(
+    self: C,
+    displayName: string,
+): C => {
+    (self as Mutable<C>).displayName = displayName
+    return self
+})
 
 export const useFC: {
-    <P, E, R>(
-        self: ReactComponent<P, E, R>,
-        options?: ReactHook.ScopeOptions,
-    ): Effect.Effect<React.FC<P>, never, R>
-} = Effect.fnUntraced(function* useFC<P, E, R>(
-    self: ReactComponent<P, E, R>
+    <E, R, P = {}>(self: ReactComponent<E, R, P>): Effect.Effect<React.FC<P>, never, R>
+} = Effect.fnUntraced(function* <E, R, P>(
+    self: ReactComponent<E, R, P>
 ) {
     const runtime = yield* Effect.runtime<R>()
 
@@ -31,14 +38,24 @@ export const useFC: {
 })
 
 export const use: {
-    <P, E, R>(
-        self: ReactComponent<P, E, R>,
+    <E, R, P = {}>(
+        self: ReactComponent<E, R, P>,
         fn: (Component: React.FC<P>) => React.ReactNode,
     ): Effect.Effect<React.ReactNode, never, R>
-} = Effect.fnUntraced(function* use(self, fn) {
+} = Effect.fnUntraced(function*(self, fn) {
     return fn(yield* useFC(self))
 })
 
+export const withRuntime: {
+    <E, R, P = {}>(context: React.Context<Runtime.Runtime<R>>): (self: ReactComponent<E, R, P>) => React.FC<P>
+    <E, R, P = {}>(self: ReactComponent<E, R, P>, context: React.Context<Runtime.Runtime<R>>): React.FC<P>
+} = Function.dual(2, <E, R, P extends {}>(
+    self: ReactComponent<E, R, P>,
+    context: React.Context<Runtime.Runtime<R>>,
+): React.FC<P> => function WithRuntime(props) {
+    const runtime = React.useContext(context)
+    return React.createElement(Runtime.runSync(runtime)(useFC(self)), props)
+})
 
 // export const useFC: {
 //     <P, E, R>(

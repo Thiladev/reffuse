@@ -13,7 +13,7 @@ export const useMemo: {
         factory: () => Effect.Effect<A, E, R>,
         deps: React.DependencyList,
     ): Effect.Effect<A, never, R>
-} = Effect.fnUntraced(function* useMemo<A, E, R>(
+} = Effect.fnUntraced(function* <A, E, R>(
     factory: () => Effect.Effect<A, E, R>,
     deps: React.DependencyList,
 ) {
@@ -23,7 +23,7 @@ export const useMemo: {
 
 export const useOnce: {
     <A, E, R>(factory: () => Effect.Effect<A, E, R>): Effect.Effect<A, never, R>
-} = Effect.fnUntraced(function* useOnce<A, E, R>(
+} = Effect.fnUntraced(function* <A, E, R>(
     factory: () => Effect.Effect<A, E, R>
 ) {
     return yield* useMemo(factory, [])
@@ -31,16 +31,16 @@ export const useOnce: {
 
 export const useEffect: {
     <E, R>(
-        effect: () => Effect.Effect<void, E, R | Scope.Scope>,
+        effect: () => Effect.Effect<void, E, R>,
         deps?: React.DependencyList,
         options?: ScopeOptions,
-    ): Effect.Effect<void, never, R>
-} = Effect.fnUntraced(function* useEffect<E, R>(
-    effect: () => Effect.Effect<void, E, R | Scope.Scope>,
+    ): Effect.Effect<void, never, Exclude<R, Scope.Scope>>
+} = Effect.fnUntraced(function* <E, R>(
+    effect: () => Effect.Effect<void, E, R>,
     deps?: React.DependencyList,
     options?: ScopeOptions,
 ) {
-    const runtime = yield* Effect.runtime<R>()
+    const runtime = yield* Effect.runtime<Exclude<R, Scope.Scope>>()
 
     React.useEffect(() => {
         const { scope, exit } = Effect.Do.pipe(
@@ -64,16 +64,16 @@ export const useEffect: {
 
 export const useLayoutEffect: {
     <E, R>(
-        effect: () => Effect.Effect<void, E, R | Scope.Scope>,
+        effect: () => Effect.Effect<void, E, R>,
         deps?: React.DependencyList,
         options?: ScopeOptions,
-    ): Effect.Effect<void, never, R>
-} = Effect.fnUntraced(function* useLayoutEffect<E, R>(
-    effect: () => Effect.Effect<void, E, R | Scope.Scope>,
+    ): Effect.Effect<void, never, Exclude<R, Scope.Scope>>
+} = Effect.fnUntraced(function* <E, R>(
+    effect: () => Effect.Effect<void, E, R>,
     deps?: React.DependencyList,
     options?: ScopeOptions,
 ) {
-    const runtime = yield* Effect.runtime<R>()
+    const runtime = yield* Effect.runtime<Exclude<R, Scope.Scope>>()
 
     React.useLayoutEffect(() => {
         const { scope, exit } = Effect.Do.pipe(
