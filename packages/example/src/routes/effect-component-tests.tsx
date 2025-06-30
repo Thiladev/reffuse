@@ -18,9 +18,9 @@ export const Route = createFileRoute("/effect-component-tests")({
 
 function RouteComponent() {
     return (
-        <ReactManagedRuntime.SyncProvider runtime={runtime}>
+        <ReactManagedRuntime.AsyncProvider runtime={runtime}>
             <MyRoute />
-        </ReactManagedRuntime.SyncProvider>
+        </ReactManagedRuntime.AsyncProvider>
     )
 }
 
