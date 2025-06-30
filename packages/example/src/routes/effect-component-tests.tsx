@@ -5,11 +5,19 @@ import { ReactComponent, ReactHook, ReactManagedRuntime } from "effect-component
 import * as React from "react"
 
 
+const LogLive = Layer.scopedDiscard(Effect.acquireRelease(
+    Console.log("Runtime built."),
+    () => Console.log("Runtime destroyed."),
+))
+
 class TestService extends Effect.Service<TestService>()("TestService", {
     effect: Effect.bind(Effect.Do, "ref", () => SubscriptionRef.make("value")),
 }) {}
 
-const runtime = ReactManagedRuntime.make(Layer.empty)
+const runtime = ReactManagedRuntime.make(Layer.empty.pipe(
+    Layer.provideMerge(LogLive),
+    Layer.provideMerge(TestService.Default),
+))
 
 
 export const Route = createFileRoute("/effect-component-tests")({
