@@ -36,10 +36,7 @@ export const useMemoLayer: {
 } = Effect.fnUntraced(function* <ROut, E, RIn>(
     layer: Layer.Layer<ROut, E, RIn>
 ) {
-    const runtime = yield* Effect.runtime<RIn>()
-    return React.useMemo(() => Runtime.runSync(runtime)(
-        Effect.provide(Effect.context<ROut>(), layer)
-    ), [layer])
+    return yield* useMemo(() => Effect.provide(Effect.context<ROut>(), layer), [layer])
 })
 
 export const useEffect: {
