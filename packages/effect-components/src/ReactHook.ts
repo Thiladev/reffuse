@@ -12,17 +12,17 @@ export const useMemo: {
     <A, E, R>(
         factory: () => Effect.Effect<A, E, R>,
         deps: React.DependencyList,
-    ): Effect.Effect<A, never, R>
+    ): Effect.Effect<A, E, R>
 } = Effect.fnUntraced(function* <A, E, R>(
     factory: () => Effect.Effect<A, E, R>,
     deps: React.DependencyList,
 ) {
-    const runtime = yield* Effect.runtime<R>()
-    return React.useMemo(() => Runtime.runSync(runtime)(factory()), deps)
+    const runtime = yield* Effect.runtime()
+    return yield* React.useMemo(() => Runtime.runSync(runtime)(Effect.cached(factory())), deps)
 })
 
 export const useOnce: {
-    <A, E, R>(factory: () => Effect.Effect<A, E, R>): Effect.Effect<A, never, R>
+    <A, E, R>(factory: () => Effect.Effect<A, E, R>): Effect.Effect<A, E, R>
 } = Effect.fnUntraced(function* <A, E, R>(
     factory: () => Effect.Effect<A, E, R>
 ) {
@@ -32,7 +32,7 @@ export const useOnce: {
 export const useMemoLayer: {
     <ROut, E, RIn>(
         layer: Layer.Layer<ROut, E, RIn>
-    ): Effect.Effect<Context.Context<ROut>, never, RIn>
+    ): Effect.Effect<Context.Context<ROut>, E, RIn>
 } = Effect.fnUntraced(function* <ROut, E, RIn>(
     layer: Layer.Layer<ROut, E, RIn>
 ) {
