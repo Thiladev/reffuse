@@ -2,6 +2,7 @@ import { Box, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { Console, Effect, Layer, pipe, Ref, Runtime, SubscriptionRef } from "effect"
 import { ReactComponent, ReactHook, ReactManagedRuntime } from "effect-components"
+import * as React from "react"
 
 
 const LogLive = Layer.scopedDiscard(Effect.acquireRelease(
@@ -11,6 +12,10 @@ const LogLive = Layer.scopedDiscard(Effect.acquireRelease(
 
 class TestService extends Effect.Service<TestService>()("TestService", {
     effect: Effect.bind(Effect.Do, "ref", () => SubscriptionRef.make("value")),
+}) {}
+
+class SubService extends Effect.Service<SubService>()("SubService", {
+    effect: Effect.bind(Effect.Do, "ref", () => SubscriptionRef.make("subvalue")),
 }) {}
 
 const runtime = ReactManagedRuntime.make(Layer.empty.pipe(
@@ -33,8 +38,30 @@ function RouteComponent() {
 
 const MyRoute = pipe(
     Effect.fn(function*() {
-        return yield* ReactComponent.use(MyTestComponent, C => <C />)
+        const runtime = yield* Effect.runtime()
+
+        const service = yield* TestService
+        const [value] = yield* ReactHook.useSubscribeRefs(service.ref)
+
+        return <>
+            <Box>
+                <TextField.Root
+                    value={value}
+                    onChange={e => Runtime.runSync(runtime)(Ref.set(service.ref, e.target.value))}
+                />
+            </Box>
+
+            {yield* ReactComponent.use(MyTestComponent, C => <C />).pipe(
+                Effect.provide(React.useMemo(() =>
+                    Effect.context<SubService>().pipe(
+                        Effect.provide(SubService.Default),
+                        Runtime.runSync(runtime),
+                    ),
+                []))
+            )}
+        </>
     }),
+
     ReactComponent.withDisplayName("MyRoute"),
     ReactComponent.withRuntime(runtime.context),
 )
@@ -44,8 +71,8 @@ const MyTestComponent = pipe(
     Effect.fn(function*() {
         const runtime = yield* Effect.runtime()
 
-        const testService = yield* TestService
-        const [value] = yield* ReactHook.useSubscribeRefs(testService.ref)
+        const service = yield* SubService
+        const [value] = yield* ReactHook.useSubscribeRefs(service.ref)
 
         yield* ReactHook.useEffect(() => Effect.andThen(
             Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
@@ -56,7 +83,7 @@ const MyTestComponent = pipe(
             <Box>
                 <TextField.Root
                     value={value}
-                    onChange={e => Runtime.runSync(runtime)(Ref.set(testService.ref, e.target.value))}
+                    onChange={e => Runtime.runSync(runtime)(Ref.set(service.ref, e.target.value))}
                 />
             </Box>
         </>
