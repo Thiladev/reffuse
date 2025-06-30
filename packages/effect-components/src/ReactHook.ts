@@ -1,4 +1,4 @@
-import { Effect, ExecutionStrategy, Exit, pipe, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Layer, pipe, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 
 
@@ -27,6 +27,19 @@ export const useOnce: {
     factory: () => Effect.Effect<A, E, R>
 ) {
     return yield* useMemo(factory, [])
+})
+
+export const useMemoLayer: {
+    <ROut, E, RIn>(
+        layer: Layer.Layer<ROut, E, RIn>
+    ): Effect.Effect<Context.Context<ROut>, never, RIn>
+} = Effect.fnUntraced(function* <ROut, E, RIn>(
+    layer: Layer.Layer<ROut, E, RIn>
+) {
+    const runtime = yield* Effect.runtime<RIn>()
+    return React.useMemo(() => Runtime.runSync(runtime)(
+        Effect.provide(Effect.context<ROut>(), layer)
+    ), [layer])
 })
 
 export const useEffect: {

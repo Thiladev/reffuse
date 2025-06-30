@@ -2,7 +2,6 @@ import { Box, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
 import { Console, Effect, Layer, pipe, Ref, Runtime, SubscriptionRef } from "effect"
 import { ReactComponent, ReactHook, ReactManagedRuntime } from "effect-components"
-import * as React from "react"
 
 
 const LogLive = Layer.scopedDiscard(Effect.acquireRelease(
@@ -52,12 +51,7 @@ const MyRoute = pipe(
             </Box>
 
             {yield* ReactComponent.use(MyTestComponent, C => <C />).pipe(
-                Effect.provide(React.useMemo(() =>
-                    Effect.context<SubService>().pipe(
-                        Effect.provide(SubService.Default),
-                        Runtime.runSync(runtime),
-                    ),
-                []))
+                Effect.provide(yield* ReactHook.useMemoLayer(SubService.Default))
             )}
         </>
     }),
