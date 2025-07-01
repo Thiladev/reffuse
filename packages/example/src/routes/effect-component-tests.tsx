@@ -42,10 +42,10 @@ const MyRoute = pipe(
         const service = yield* TestService
         const [value] = yield* ReactHook.useSubscribeRefs(service.ref)
 
-        const MyTestComponentFC = yield* Effect.provide(
-            ReactComponent.useFC(MyTestComponent),
-            yield* ReactHook.useMemoLayer(SubService.Default),
-        )
+        // const MyTestComponentFC = yield* Effect.provide(
+        //     ReactComponent.useFC(MyTestComponent),
+        //     yield* ReactHook.useMemoLayer(SubService.Default),
+        // )
 
         return <>
             <Box>
@@ -59,8 +59,17 @@ const MyRoute = pipe(
                 Effect.provide(yield* ReactHook.useMemoLayer(SubService.Default))
             )} */}
 
-            {Array.range(0, 3).map(k =>
+            {/* {Array.range(0, 3).map(k =>
                 <MyTestComponentFC key={k} />
+            )} */}
+
+            {yield* pipe(
+                Array.range(0, 3),
+                Array.map(k => ReactComponent.use(MyTestComponent, FC =>
+                    <FC key={k} />
+                )),
+                Effect.all,
+                Effect.provide(yield* ReactHook.useMemoLayer(SubService.Default)),
             )}
         </>
     }),
