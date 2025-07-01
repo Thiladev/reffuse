@@ -1,4 +1,4 @@
-import { Effect, type Layer, ManagedRuntime, Runtime } from "effect"
+import { Effect, type Layer, ManagedRuntime, type Runtime } from "effect"
 import * as React from "react"
 
 

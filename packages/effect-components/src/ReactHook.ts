@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Layer, pipe, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Layer, pipe, Ref, Runtime, Scope, Stream, type SubscriptionRef } from "effect"
 import * as React from "react"
 import { SetStateAction } from "./types/index.js"
 
