@@ -1,4 +1,4 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Layer, pipe, Ref, Runtime, Scope, Stream, type SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Layer, Option, pipe, PubSub, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
 import { SetStateAction } from "./types/index.js"
 
@@ -212,6 +212,14 @@ export const useFork: {
 })
 
 
+export const useRefFromReactiveValue: {
+    <A>(value: A): Effect.Effect<SubscriptionRef.SubscriptionRef<A>>
+} = Effect.fnUntraced(function*(value) {
+    const ref = yield* useOnce(() => SubscriptionRef.make(value))
+    yield* useEffect(() => Ref.set(ref, value), [value])
+    return ref
+})
+
 export const useSubscribeRefs: {
     <const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[]>(
         ...refs: Refs
@@ -253,4 +261,55 @@ export const useRefState: {
     [ref])
 
     return [reactStateValue, setValue]
+})
+
+
+export const useStreamFromReactiveValues: {
+    <const A extends React.DependencyList>(
+        values: A
+    ): Effect.Effect<Stream.Stream<A>, never, Scope.Scope>
+} = Effect.fnUntraced(function* <const A extends React.DependencyList>(values: A) {
+    const { latest, pubsub, stream } = yield* useOnce(() => Effect.Do.pipe(
+        Effect.bind("latest", () => Ref.make(values)),
+        Effect.bind("pubsub", () => Effect.acquireRelease(PubSub.unbounded<A>(), PubSub.shutdown)),
+        Effect.let("stream", ({ latest, pubsub }) => latest.pipe(
+            Effect.flatMap(a => Effect.map(
+                Stream.fromPubSub(pubsub, { scoped: true }),
+                s => Stream.concat(Stream.make(a), s),
+            )),
+            Stream.unwrapScoped,
+        )),
+    ))
+
+    yield* useEffect(() => Ref.set(latest, values).pipe(
+        Effect.andThen(PubSub.publish(pubsub, values)),
+        Effect.unlessEffect(PubSub.isShutdown(pubsub)),
+    ), values)
+
+    return stream
+})
+
+export const useSubscribeStream: {
+    <A, E, R>(stream: Stream.Stream<A, E, R>): Effect.Effect<Option.Option<A>, never, R>
+    <A, E, R>(
+        stream: Stream.Stream<A, E, R>,
+        initialValue: A,
+    ): Effect.Effect<Option.Some<A>, never, R>
+} = Effect.fnUntraced(function* <A, E, R>(
+    stream: Stream.Stream<A, E, R>,
+    initialValue?: A,
+) {
+    const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(
+        React.useMemo(() => initialValue
+            ? Option.some(initialValue)
+            : Option.none(),
+        [])
+    )
+
+    yield* useFork(() => Stream.runForEach(
+        Stream.changesWith(stream, (x, y) => x === y),
+        v => Effect.sync(() => setReactStateValue(Option.some(v))),
+    ), [stream])
+
+    return reactStateValue
 })
