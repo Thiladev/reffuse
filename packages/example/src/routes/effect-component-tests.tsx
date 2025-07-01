@@ -1,6 +1,6 @@
 import { Box, TextField } from "@radix-ui/themes"
 import { createFileRoute } from "@tanstack/react-router"
-import { Console, Effect, Layer, pipe, Ref, Runtime, SubscriptionRef } from "effect"
+import { Array, Console, Effect, Layer, pipe, Ref, Runtime, SubscriptionRef } from "effect"
 import { ReactComponent, ReactHook, ReactManagedRuntime } from "effect-components"
 
 
@@ -42,6 +42,11 @@ const MyRoute = pipe(
         const service = yield* TestService
         const [value] = yield* ReactHook.useSubscribeRefs(service.ref)
 
+        const MyTestComponentFC = yield* Effect.provide(
+            ReactComponent.useFC(MyTestComponent),
+            yield* ReactHook.useMemoLayer(SubService.Default),
+        )
+
         return <>
             <Box>
                 <TextField.Root
@@ -50,8 +55,12 @@ const MyRoute = pipe(
                 />
             </Box>
 
-            {yield* ReactComponent.use(MyTestComponent, C => <C />).pipe(
+            {/* {yield* ReactComponent.use(MyTestComponent, C => <C />).pipe(
                 Effect.provide(yield* ReactHook.useMemoLayer(SubService.Default))
+            )} */}
+
+            {Array.range(0, 3).map(k =>
+                <MyTestComponentFC key={k} />
             )}
         </>
     }),
