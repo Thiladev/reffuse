@@ -1,6 +1,7 @@
-import { Context, Effect, Function, Runtime, Tracer } from "effect"
+import { Context, Effect, Function, Runtime, Scope, Tracer } from "effect"
 import type { Mutable } from "effect/Types"
 import * as React from "react"
+import * as ReactHook from "./ReactHook.js"
 
 
 export interface ReactComponent<E, R, P> {
@@ -22,23 +23,33 @@ export const withDisplayName: {
 })
 
 export const useFC: {
-    <E, R, P = {}>(self: ReactComponent<E, R, P>): Effect.Effect<React.FC<P>, never, R>
-} = Effect.fnUntraced(function* <E, R, P>(
+    <E, R, P extends {} = {}>(
+        self: ReactComponent<E, R, P>
+    ): Effect.Effect<React.FC<P>, never, R>
+} = Effect.fnUntraced(function* <E, R, P extends {}>(
     self: ReactComponent<E, R, P>
 ) {
     const runtime = yield* Effect.runtime<R>()
 
-    return React.useMemo(() => {
-        const FC = (props: P) => Runtime.runSync(runtime)(self(props))
-        if (self.displayName) FC.displayName = self.displayName
-        return FC
+    return React.useMemo(() => function ScopeProvider(props: P) {
+        const scope = Runtime.runSync(runtime)(ReactHook.useScope())
+
+        const FC = React.useMemo(() => {
+            const f = (props: P) => Runtime.runSync(runtime)(
+                Effect.provideService(self(props), Scope.Scope, scope)
+            )
+            if (self.displayName) f.displayName = self.displayName
+            return f
+        }, [scope])
+
+        return React.createElement(FC, props)
     }, Array.from(
         Context.omit(...nonReactiveTags)(runtime.context).unsafeMap.values()
     ))
 })
 
 export const use: {
-    <E, R, P = {}>(
+    <E, R, P extends {} = {}>(
         self: ReactComponent<E, R, P>,
         fn: (Component: React.FC<P>) => React.ReactNode,
     ): Effect.Effect<React.ReactNode, never, R>
@@ -47,8 +58,8 @@ export const use: {
 })
 
 export const withRuntime: {
-    <E, R, P = {}>(context: React.Context<Runtime.Runtime<R>>): (self: ReactComponent<E, R, P>) => React.FC<P>
-    <E, R, P = {}>(self: ReactComponent<E, R, P>, context: React.Context<Runtime.Runtime<R>>): React.FC<P>
+    <E, R, P extends {} = {}>(context: React.Context<Runtime.Runtime<R>>): (self: ReactComponent<E, R, P>) => React.FC<P>
+    <E, R, P extends {} = {}>(self: ReactComponent<E, R, P>, context: React.Context<Runtime.Runtime<R>>): React.FC<P>
 } = Function.dual(2, <E, R, P extends {}>(
     self: ReactComponent<E, R, P>,
     context: React.Context<Runtime.Runtime<R>>,
@@ -56,58 +67,3 @@ export const withRuntime: {
     const runtime = React.useContext(context)
     return React.createElement(Runtime.runSync(runtime)(useFC(self)), props)
 })
-
-// export const useFC: {
-//     <P, E, R>(
-//         self: ReactComponent<P, E, R>,
-//         options?: ReactHook.ScopeOptions,
-//     ): Effect.Effect<React.FC<P>, never, Exclude<R, Scope.Scope>>
-// } = Effect.fnUntraced(function* useFC<P, E, R>(
-//     self: ReactComponent<P, E, R>,
-//     options?: ReactHook.ScopeOptions,
-// ) {
-//     const runtime = yield* Effect.runtime<Exclude<R, Scope.Scope>>()
-
-//     return React.useCallback((props: P) => {
-//         const [isInitialRun, initialScope] = React.useMemo(() => Runtime.runSync(runtime)(
-//             Effect.all([Ref.make(true), makeScope(options)])
-//         ), [])
-//         const [scope, setScope] = React.useState(initialScope)
-
-//         React.useEffect(() => Runtime.runSync(runtime)(
-//             Effect.if(isInitialRun, {
-//                 onTrue: () => Effect.as(
-//                     Ref.set(isInitialRun, false),
-//                     () => closeScope(scope, runtime, options),
-//                 ),
-
-//                 onFalse: () => makeScope(options).pipe(
-//                     Effect.tap(scope => Effect.sync(() => setScope(scope))),
-//                     Effect.map(scope => () => closeScope(scope, runtime, options)),
-//                 ),
-//             })
-//         ), [])
-
-//         return Runtime.runSync(runtime)(
-//             Effect.provideService(self(props), Scope.Scope, scope)
-//         )
-//     }, Array.from(
-//         Context.omit(...nonReactiveTags)(runtime.context).unsafeMap.values()
-//     ))
-// })
-
-// const makeScope = (options?: ReactHook.ScopeOptions) => Scope.make(options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
-// const closeScope = (
-//     scope: Scope.CloseableScope,
-//     runtime: Runtime.Runtime<never>,
-//     options?: ReactHook.ScopeOptions,
-// ) => {
-//     switch (options?.finalizerExecutionMode ?? "sync") {
-//         case "sync":
-//             Runtime.runSync(runtime)(Scope.close(scope, Exit.void))
-//             break
-//         case "fork":
-//             Runtime.runFork(runtime)(Scope.close(scope, Exit.void))
-//             break
-//     }
-// }

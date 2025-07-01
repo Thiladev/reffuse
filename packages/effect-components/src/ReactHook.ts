@@ -9,6 +9,50 @@ export interface ScopeOptions {
 }
 
 
+export const useScope: {
+    (options?: ScopeOptions): Effect.Effect<Scope.Scope>
+} = Effect.fnUntraced(function* (options?: ScopeOptions) {
+    const runtime = yield* Effect.runtime()
+
+    const [isInitialRun, initialScope] = React.useMemo(() => Runtime.runSync(runtime)(
+        Effect.all([Ref.make(true), makeScope(options)])
+    ), [])
+    const [scope, setScope] = React.useState(initialScope)
+
+    React.useEffect(() => Runtime.runSync(runtime)(
+        Effect.if(isInitialRun, {
+            onTrue: () => Effect.as(
+                Ref.set(isInitialRun, false),
+                () => closeScope(scope, runtime, options),
+            ),
+
+            onFalse: () => makeScope(options).pipe(
+                Effect.tap(scope => Effect.sync(() => setScope(scope))),
+                Effect.map(scope => () => closeScope(scope, runtime, options)),
+            ),
+        })
+    ), [])
+
+    return scope
+})
+
+const makeScope = (options?: ScopeOptions) => Scope.make(options?.finalizerExecutionStrategy ?? ExecutionStrategy.sequential)
+const closeScope = (
+    scope: Scope.CloseableScope,
+    runtime: Runtime.Runtime<never>,
+    options?: ScopeOptions,
+) => {
+    switch (options?.finalizerExecutionMode ?? "sync") {
+        case "sync":
+            Runtime.runSync(runtime)(Scope.close(scope, Exit.void))
+            break
+        case "fork":
+            Runtime.runFork(runtime)(Scope.close(scope, Exit.void))
+            break
+    }
+}
+
+
 export const useMemo: {
     <A, E, R>(
         factory: () => Effect.Effect<A, E, R>,
