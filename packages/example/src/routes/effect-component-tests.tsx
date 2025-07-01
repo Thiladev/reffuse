@@ -68,10 +68,10 @@ const MyTestComponent = pipe(
         const service = yield* SubService
         const [value] = yield* ReactHook.useSubscribeRefs(service.ref)
 
-        yield* ReactHook.useMemo(() => Effect.andThen(
-            Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
-            Console.log("MyTestComponent mounted"),
-        ), [])
+        // yield* ReactHook.useMemo(() => Effect.andThen(
+        //     Effect.addFinalizer(() => Console.log("MyTestComponent umounted")),
+        //     Console.log("MyTestComponent mounted"),
+        // ), [])
 
         return <>
             <Box>

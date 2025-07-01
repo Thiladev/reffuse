@@ -24,15 +24,17 @@ export const withDisplayName: {
 
 export const useFC: {
     <E, R, P extends {} = {}>(
-        self: ReactComponent<E, R, P>
+        self: ReactComponent<E, R, P>,
+        options?: ReactHook.ScopeOptions,
     ): Effect.Effect<React.FC<P>, never, Exclude<R, Scope.Scope>>
 } = Effect.fnUntraced(function* <E, R, P extends {}>(
-    self: ReactComponent<E, R, P>
+    self: ReactComponent<E, R, P>,
+    options?: ReactHook.ScopeOptions,
 ) {
     const runtime = yield* Effect.runtime<Exclude<R, Scope.Scope>>()
 
     return React.useMemo(() => function ScopeProvider(props: P) {
-        const scope = Runtime.runSync(runtime)(ReactHook.useScope())
+        const scope = Runtime.runSync(runtime)(ReactHook.useScope(options))
 
         const FC = React.useMemo(() => {
             const f = (props: P) => Runtime.runSync(runtime)(
@@ -52,9 +54,10 @@ export const use: {
     <E, R, P extends {} = {}>(
         self: ReactComponent<E, R, P>,
         fn: (Component: React.FC<P>) => React.ReactNode,
+        options?: ReactHook.ScopeOptions,
     ): Effect.Effect<React.ReactNode, never, Exclude<R, Scope.Scope>>
-} = Effect.fnUntraced(function*(self, fn) {
-    return fn(yield* useFC(self))
+} = Effect.fnUntraced(function*(self, fn, options) {
+    return fn(yield* useFC(self, options))
 })
 
 export const withRuntime: {
