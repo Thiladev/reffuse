@@ -1,5 +1,6 @@
-import { type Context, Effect, ExecutionStrategy, Exit, type Layer, pipe, Runtime, Scope, Stream, SubscriptionRef } from "effect"
+import { type Context, Effect, ExecutionStrategy, Exit, type Layer, pipe, Ref, Runtime, Scope, Stream, SubscriptionRef } from "effect"
 import * as React from "react"
+import { SetStateAction } from "./types/index.js"
 
 
 export interface ScopeOptions {
@@ -38,6 +39,34 @@ export const useMemoLayer: {
 ) {
     return yield* useMemo(() => Effect.provide(Effect.context<ROut>(), layer), [layer])
 })
+
+
+export const useCallbackSync: {
+    <Args extends unknown[], A, E, R>(
+        callback: (...args: Args) => Effect.Effect<A, E, R>,
+        deps: React.DependencyList,
+    ): Effect.Effect<(...args: Args) => A, never, R>
+} = Effect.fnUntraced(function* <Args extends unknown[], A, E, R>(
+    callback: (...args: Args) => Effect.Effect<A, E, R>,
+    deps: React.DependencyList,
+) {
+    const runtime = yield* Effect.runtime<R>()
+    return React.useCallback((...args: Args) => Runtime.runSync(runtime)(callback(...args)), deps)
+})
+
+export const useCallbackPromise: {
+    <Args extends unknown[], A, E, R>(
+        callback: (...args: Args) => Effect.Effect<A, E, R>,
+        deps: React.DependencyList,
+    ): Effect.Effect<(...args: Args) => Promise<A>, never, R>
+} = Effect.fnUntraced(function* <Args extends unknown[], A, E, R>(
+    callback: (...args: Args) => Effect.Effect<A, E, R>,
+    deps: React.DependencyList,
+) {
+    const runtime = yield* Effect.runtime<R>()
+    return React.useCallback((...args: Args) => Runtime.runPromise(runtime)(callback(...args)), deps)
+})
+
 
 export const useEffect: {
     <E, R>(
@@ -138,6 +167,7 @@ export const useFork: {
     }, deps)
 })
 
+
 export const useSubscribeRefs: {
     <const Refs extends readonly SubscriptionRef.SubscriptionRef<any>[]>(
         ...refs: Refs
@@ -158,4 +188,25 @@ export const useSubscribeRefs: {
     ), refs)
 
     return reactStateValue as any
+})
+
+export const useRefState: {
+    <A>(
+        ref: SubscriptionRef.SubscriptionRef<A>
+    ): Effect.Effect<readonly [A, React.Dispatch<React.SetStateAction<A>>]>
+} = Effect.fnUntraced(function* <A>(ref: SubscriptionRef.SubscriptionRef<A>) {
+    const [reactStateValue, setReactStateValue] = React.useState(yield* useOnce(() => ref))
+
+    yield* useFork(() => Stream.runForEach(
+        Stream.changesWith(ref.changes, (x, y) => x === y),
+        v => Effect.sync(() => setReactStateValue(v)),
+    ), [ref])
+
+    const setValue = yield* useCallbackSync((setStateAction: React.SetStateAction<A>) =>
+        Ref.update(ref, prevState =>
+            SetStateAction.value(setStateAction, prevState)
+        ),
+    [ref])
+
+    return [reactStateValue, setValue]
 })
