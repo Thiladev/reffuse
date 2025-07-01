@@ -290,16 +290,18 @@ export const useStreamFromReactiveValues: {
 })
 
 export const useSubscribeStream: {
-    <A, E, R>(stream: Stream.Stream<A, E, R>): Effect.Effect<Option.Option<A>, never, R>
     <A, E, R>(
+        stream: Stream.Stream<A, E, R>
+    ): Effect.Effect<Option.Option<A>, never, R>
+    <A extends NonNullable<unknown>, E, R>(
         stream: Stream.Stream<A, E, R>,
         initialValue: A,
     ): Effect.Effect<Option.Some<A>, never, R>
-} = Effect.fnUntraced(function* <A, E, R>(
+} = Effect.fnUntraced(function* <A extends NonNullable<unknown>, E, R>(
     stream: Stream.Stream<A, E, R>,
     initialValue?: A,
 ) {
-    const [reactStateValue, setReactStateValue] = React.useState<Option.Option<A>>(
+    const [reactStateValue, setReactStateValue] = React.useState(
         React.useMemo(() => initialValue
             ? Option.some(initialValue)
             : Option.none(),
@@ -311,5 +313,5 @@ export const useSubscribeStream: {
         v => Effect.sync(() => setReactStateValue(Option.some(v))),
     ), [stream])
 
-    return reactStateValue
+    return reactStateValue as Option.Some<A>
 })
